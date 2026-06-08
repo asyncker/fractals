@@ -28,6 +28,21 @@ Platform support:
 ![](render/pic9.png)
 10. Lyapunov
 ![](render/pic10.png)
+11. Sin
+![](render/pic15.png)
+12. Gamma
+![](render/pic16.png)
+13. Zeta
+![](render/pic17.png)
+14. Zsinh
+![](render/pic18.png)
+15. Zsin
+![](render/pic19.png)
+16. Zeta Burning Ship
+![](render/pic20.png)
+17. Zeta(iz) * Zeta(-iz)
+![](render/pic21.png)
+
 
 3d fractal:
 1. Mandelbulb
