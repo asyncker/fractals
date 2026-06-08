@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fractal</title>
+    <meta property="og:title" content="Fractal Gpu WebGL Render">
+    <meta property="og:description" content="Fast fractal mandelbrot render in browser">
+    <meta property="og:image" content="render/favicon.png">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Fractal - render fractal">
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+        #fractal-controls { position: fixed; top: 12px; right: 6px; background: rgba(0, 0, 0, 0.7); color: white;
+            padding: 14px; border-radius: 8px; font-family: Arial, sans-serif; font-size: 14px; z-index: 1000; min-width: 200px;
+            backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        #fractal-controls h3 { margin: 0 0 7px 0; color: #4fc3f7; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .control-group { margin-bottom: 11px; }
+        .control-group label { display: block; color: #bbbbbb; font-size: 12px; }
+        .control-buttons { display: flex; gap: 5px; margin-top: 5px; }
+        .control-btn { flex: 1; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 5px 6px;
+            border-radius: 4px; cursor: pointer; font-size: 12px; text-align: center; transition: all 0.2s; white-space: nowrap;
+        }
+        .control-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
+        .control-btn.active { background: rgba(79, 195, 247, 0.3); border-color: #4fc3f7; color: #4fc3f7; }
+        .close-btn { background: none; border: none; color: #ff6b6b; font-size: 18px; cursor: pointer; padding: 0; width: 20px; height: 20px; border-radius: 50%; }
+        .close-btn:hover { background: rgba(255, 107, 107, 0.2); }
+        .toggle-btn { position: fixed; top: 20px; right: 20px; background: rgba(0, 0, 0, 0.7); color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 4px; padding: 4px 7px; cursor: pointer; font-size: 13px; z-index: 999;
+        }
+        .toggle-btn:hover { background: rgba(0, 0, 0, 0.8); }
+        .hidden { display: none; }
+        .shortcuts { font-size: 11px; color: #888; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px; }
+    </style>
+    <link rel="icon" type="image/png" sizes="32x32" href="./render/favicon.png">
+</head>
+<body>
+    <button id="toggle-controls" class="toggle-btn" onclick="document.getElementById('fractal-controls').classList.remove('hidden'); document.getElementById('toggle-controls').classList.add('hidden');">Menu</button>
+    <div id="fractal-controls">
+        <h3>Settings <button id="close-controls" class="close-btn" onclick="document.getElementById('fractal-controls').classList.add('hidden'); document.getElementById('toggle-controls').classList.remove('hidden');">×</button></h3>
+        <div class="control-group">
+            <label>Power:</label>
+            <div class="control-buttons">
+                <button class="control-btn" data-index="0" onclick="power = -2; updateControls(true);">-2</button>
+                <button class="control-btn" data-index="1" onclick="power = -1; updateControls(true);">-1</button>
+                <button class="control-btn" data-index="2" onclick="power = hypercomplexindex == 1 || hypercomplexindex == 2 || hypercomplexindex == 4 ? 1.00001 : 1.0; updateControls(true);">1</button>
+                <button class="control-btn" data-index="3" onclick="power = 2; updateControls(true);">2</button>
+                <button class="control-btn" data-index="4" onclick="power = 3; updateControls(true);">3</button>
+            </div>
+        </div>
+        <div class="control-group">
+            <label>Fractal Type:</label>
+            <div class="control-buttons">
+                <button class="control-btn" data-index="0" onclick="fractalindex = 0; updateControls(true);">Mandelbrot</button>
+                <button class="control-btn" data-index="1" onclick="fractalindex = 1; updateControls(true);">Tricorn</button>
+                <button class="control-btn" data-index="2" onclick="fractalindex = 2; updateControls(true);">Burning Ship</button>
+            </div>
+            <div class="control-buttons">
+                <button class="control-btn" data-index="3" onclick="fractalindex = 3; hypercomplexindex = 0; updateControls(true);">Collatz cos</button>
+                <button class="control-btn" data-index="4" onclick="fractalindex = 4; hypercomplexindex = 0; updateControls(true);">Collatz exp</button>
+                <button class="control-btn" data-index="5" onclick="fractalindex = 5; hypercomplexindex = 0; updateControls(true);">Collatz exp^i</button>
+            </div>
+            <div class="control-buttons">
+                <button class="control-btn" data-index="6" onclick="fractalindex = 6; hypercomplexindex = 0; updateControls(true);">exp^z</button>
+                <button class="control-btn" data-index="7" onclick="fractalindex = 7; hypercomplexindex = 0; updateControls(true);">Phoenix</button>
+                <button class="control-btn" data-index="8" onclick="fractalindex = 8; hypercomplexindex = 0; updateControls(true);">Feather</button>
+            </div>
+            <div class="control-buttons">
+                <button class="control-btn" data-index="9" onclick="fractalindex = 9; hypercomplexindex = 0; updateControls(true);">Tan</button>
+                <button class="control-btn" data-index="13" onclick="fractalindex = 12; hypercomplexindex = 0; updateControls(true);">Lyapunov</button>
+            </div>
+            <div class="control-buttons">
+                <button class="control-btn" data-index="10" onclick="fractalindex = 10; hypercomplexindex = 0; updateControls(true);">Gamma</button>
+                <button class="control-btn" data-index="11" onclick="fractalindex = 11; hypercomplexindex = 0; updateControls(true);">Sin</button>
+                <button class="control-btn" data-index="13" onclick="fractalindex = 13; hypercomplexindex = 0; updateControls(true);">Zeta</button>
+            </div>
+        </div>
+        <div class="control-group">
+            <label>2D/3D/4D Type:</label>
+            <div class="control-buttons">
+                <button class="control-btn" data-hyper="0" onclick="hypercomplexindex = 0; updateControls(true);">Mandelbrot 2d</button>
+            </div>
+            <div class="control-buttons">
+                <button class="control-btn" data-hyper="1" onclick="hypercomplexindex = 1; updateControls(true);">Mandelbulb 3d phi</button>
+                <button class="control-btn" data-hyper="1" onclick="hypercomplexindex = 2; updateControls(true);">Mandelbulb 3d theta</button>
+            </div>
+            <div class="control-buttons">
+                <button class="control-btn" data-hyper="3" onclick="hypercomplexindex = 4; updateControls(true);">Quaternion 4d</button>
+                <button class="control-btn" data-hyper="4" onclick="hypercomplexindex = 5; updateControls(true);">Bicomplex 4d</button>
+            </div>
+            <div class="control-buttons">
+                <button class="control-btn" data-hyper="2" onclick="hypercomplexindex = 3; updateControls(true);">Mandelbox with bug ): 3d</button>
+            </div>
+        </div>
+        <div class="control-group">
+            <label>Switch:</label>
+            <div class="control-buttons">
+                <button class="control-btn" data-index="0" onclick="ismandel = ismandel == 1 ? 0 : 1; updateControls(true);">Mandel/Julia</button>
+                <button class="control-btn" data-index="0" onclick="inverse = inverse == 1 ? 0 : 1; updateControls(true);">1 / c</button>
+                <button class="control-btn" data-index="0" onclick="isnewton = isnewton == 1 ? 0 : 1; updateControls(true);">Newton</button>
+                <button class="control-btn" data-index="0" onclick="isburning = isburning == 1 ? 0 : 1; updateControls(true);">Burning</button>
+            </div>
+        </div>
+        <div class="control-group">
+            <label>Color:</label>
+            <div class="control-buttons">
+                <button class="control-btn" data-index="0" onclick="colorschemeindex = 1; updateControls(true);">Blue gradient</button>
+                <button class="control-btn" data-index="0" onclick="colorschemeindex = 0; updateControls(true);">RGB</button>
+            </div>
+        </div>
+        <div class="control-group">
+            <label>Iteration:</label>
+            <div class="control-buttons">
+                <button class="control-btn" data-index="0" onclick="iteration = 1; updateControls(true);">1</button>
+                <button class="control-btn" data-index="0" onclick="iteration = 2; updateControls(true);">2</button>
+                <button class="control-btn" data-index="0" onclick="iteration = 10; updateControls(true);">10</button>
+                <button class="control-btn" data-index="0" onclick="iteration = 30; updateControls(true);">30</button>
+                <button class="control-btn" data-index="0" onclick="iteration = 100; updateControls(true);">100</button>
+                <button class="control-btn" data-index="0" onclick="iteration = 220; updateControls(true);">220</button>
+            </div>
+        </div>
+        <div class="shortcuts">
+            V/C - next/prev fractal<br>
+            2/3 - increase/decrease speed (for 3d/4d zoom)<br>
+            U - switch mandel/julia<br>
+            ]/[ - add/sub pow<br>
+            R/T - add/sub 1 pow<br>
+            X/Z - add/sub bailout<br>
+            K/J - add/sub light<br>
+            F - 1/c<br>
+            wasd - move xy<br>
+            arrow - rotate xz<br>
+            numpad 4568 - move mandel for julia<br>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const gl = canvas.getContext('webgl', { alpha: false, antialias: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
+        const program = gl.createProgram();
+        function initGL(shaderCode) {
+            function compileShader(gl, source, type) {
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    console.error('Error compile shader:', gl.getShaderInfoLog(shader));
+                    gl.deleteShader(shader);
+                    return null;
+                }
+                return shader;
+            }
+            gl.attachShader(program, compileShader(gl, `attribute vec2 position; void main() { gl_Position = vec4(position, 0.0, 1.0); }`, gl.VERTEX_SHADER));
+            gl.attachShader(program, compileShader(gl, shaderCode, gl.FRAGMENT_SHADER));
+            gl.linkProgram(program);
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) { console.error('Error link program:', gl.getProgramInfoLog(program)); }
+            gl.useProgram(program);
+            gl.disable(gl.DEPTH_TEST);
+            gl.disable(gl.BLEND);
+            gl.disable(gl.STENCIL_TEST);
+            gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([ -1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1 ]), gl.STATIC_DRAW);
+            const positionLocation = gl.getAttribLocation(program, 'position');
+            gl.enableVertexAttribArray(positionLocation);
+            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+        }
+
+        const shaderCode = `
+            precision highp float;
+            uniform vec2 iResolution;
+            uniform float iTime;
+            uniform float cxval;
+            uniform float cyval;
+            uniform float zoommandel;
+            uniform float zxval;
+            uniform float zyval;
+            uniform float zoomjulia;
+            uniform float range;
+            uniform float power;
+            uniform float logval;
+            uniform float halflogval;
+            uniform float inverse;
+            uniform float zwval;
+            uniform float cwval;
+            uniform float cosrotx;
+            uniform float sinrotx;
+            uniform float cosrotz;
+            uniform float sinrotz;
+            uniform float multlight;
+            uniform int fractalindex;
+            uniform int ismandel;
+            uniform int isnewton;
+            uniform int isburning;
+            uniform int hypercomplexindex;
+            uniform int colorschemeindex;
+            uniform int iteration;
+            #define PI 3.14159265359
+
+            float fast_pow(float x, float y) {
+                if (y > 0.0) {
+                    if (y == 1.0) return x;
+                    if (y == 2.0) return x * x;
+                    if (y == 3.0) return x * x * x;
+                    return pow(x, y);
+                }
+                if (y == -1.0) return 1.0 / x;
+                if (y == -0.5) return 1.0 / sqrt(x);
+                if (y == -1.5) return 1.0 / x * (1.0 / sqrt(x));
+                if (y == -2.0) return 1.0 / (x * x);
+                return 1.0 / pow(x, -y);
+            }
+
+            float bounce(float x, float min, float max) {
+                float size = max - min;
+                float offset = mod(x - min, 2.0 * size);
+                return offset > size ? max - (offset - size) : min + offset;
+            }
+
+            float sinh(float x) { return (exp(x) - exp(-x)) * 0.5; }
+            float cosh(float x) { return (exp(x) + exp(-x)) * 0.5; }
+            float tanh(float x) { return sinh(x) / cosh(x); }
+            vec2 conj(vec2 z) { return vec2(z.x, -z.y); }
+            vec2 cmul_i(vec2 z) { return vec2(-z.y, z.x); }
+            vec2 cinv(vec2 z) { float r = 1.0 / (z.x * z.x + z.y * z.y); return vec2(z.x * r, -z.y * r); }
+            vec2 cexp(vec2 z) { float r = exp(z.x); return vec2(r * cos(z.y), r * sin(z.y)); }
+            vec2 clog(vec2 z) { return vec2(log(length(z)), atan(z.y, z.x)); }
+            vec2 cadd(vec2 z, vec2 w) { return vec2(z.x + w.x, z.y + w.y); }
+            vec2 cmul(vec2 z, vec2 w) { return vec2(z.x * w.x - z.y * w.y, z.x * w.y + z.y * w.x); }
+            vec2 cpow(vec2 z, vec2 w) { vec2 logz = clog(z); return cexp(vec2(logz.x * w.x - logz.y * w.y, logz.x * w.y + logz.y * w.x)); }
+            vec2 csub(vec2 z, vec2 w) { return cadd(z, w * -1.0); }
+            vec2 cdiv(vec2 z, vec2 w) { return cmul(z, cinv(w)); }
+            vec2 croot(vec2 z, vec2 w) { return cpow(z, cinv(w)); }
+            vec2 clogn(vec2 z, vec2 w) { return cdiv(clog(z), clog(w)); }
+            vec2 csin(vec2 z) { return vec2(sin(z.x) * cosh(z.y), cos(z.x) * sinh(z.y)); }
+            vec2 ccos(vec2 z) { return vec2(cos(z.x) * cosh(z.y), -sin(z.x) * sinh(z.y)); }
+            vec2 csinh(vec2 z) { return vec2(sinh(z.x) * cos(z.y), cosh(z.x) * sin(z.y)); }
+            vec2 ccosh(vec2 z) { return vec2(cosh(z.x) * cos(z.y), sinh(z.x) * sin(z.y)); }
+            vec2 ctan(vec2 z) { return cdiv(csin(z), ccos(z)); }
+            vec2 csec(vec2 z) { return cinv(ccos(z)); }
+            vec2 ccsc(vec2 z) { return cinv(csin(z)); }
+            vec2 ccot(vec2 z) { return cinv(ctan(z)); }
+            vec2 cpow(vec2 z, float w) {
+                if (w == 0.0) { return vec2(1.0, 0.0); }
+                if (w == 1.0) { return z; }
+                if (w == 2.0) { return cmul(z, z); }
+                if (w == 3.0) { return cmul(cmul(z, z), z); }
+                vec2 logz = clog(z); return cexp(vec2(logz.x * w, logz.y * w)); }
+            float cabs(vec2 z) { return sqrt(z.x * z.x + z.y * z.y); }
+
+            vec2 cgamma_right(vec2 z) {
+                vec2 w = z - vec2(1.0, 0.0);
+                vec2 t = w + vec2(7.5, 0.0);
+                vec2 x = vec2(0.99999999999980993, 0.0);
+                x += 676.5203681218851 * cinv(w + vec2(1.0, 0.0));
+                x -= 1259.1392167224028 * cinv(w + vec2(2.0, 0.0));
+                x += 771.32342877765313 * cinv(w + vec2(3.0, 0.0));
+                x -= 176.61502916214059 * cinv(w + vec2(4.0, 0.0));
+                x += 12.507343278686905 * cinv(w + vec2(5.0, 0.0));
+                x -= 0.13857109526572012 * cinv(w + vec2(6.0, 0.0));
+                x += 9.9843695780195716e-6 * cinv(w + vec2(7.0, 0.0));
+                x += 1.5056327351493116e-7 * cinv(w + vec2(8.0, 0.0));
+                return 2.50662827463 * cmul(x, cexp(cmul(clog(t), w + vec2(0.5, 0.0)) - t));
+            }
+
+            vec2 cgamma_left(vec2 z) {
+                return PI * cinv(cmul(csin(z * PI), cgamma_right(vec2(1.0, 0.0) - z)));
+            }
+
+            vec2 cgamma(vec2 z) {
+                if (z.x < 0.5) {
+                    return cgamma_left(z);
+                }
+                return cgamma_right(z);
+            }
+
+            vec2 cdigamma(vec2 z) {
+                vec2 s = vec2(0.0, 0.0);
+                const int SHIFT = 32;
+                for(int k = 0; k < SHIFT; ++k) {
+                    s = csub(s, cinv(z));
+                    z += vec2(1.0, 0.0);
+                }
+                vec2 inv  = cinv(z);
+                vec2 inv2 = cmul(inv, inv);
+                vec2 inv4 = cmul(inv2, inv2);
+                vec2 inv6 = cmul(inv4, inv2);
+                vec2 inv8 = cmul(inv4, inv4);
+                vec2 inv10 = cmul(inv8, inv2);
+                vec2 inv12 = cmul(inv10, inv2);
+                vec2 inv14 = cmul(inv12, inv2);
+                vec2 result = clog(z);
+                result = csub(result, cmul(inv, vec2(0.5, 0.0)));
+                result = csub(result, cmul(inv2, vec2(1.0 / 12.0, 0.0)));
+                result = cadd(result, cmul(inv4, vec2(1.0 / 120.0, 0.0)));
+                result = csub(result, cmul(inv6, vec2(1.0 / 252.0, 0.0)));
+                result = cadd(result, cmul(inv8, vec2(1.0 / 240.0, 0.0)));
+                result = csub(result, cmul(inv10, vec2(5.0 / 660.0, 0.0)));
+                result = cadd(result, cmul(inv12, vec2(691.0 / 32760.0, 0.0)));
+                result = csub(result, cmul(inv14, vec2(1.0 / 12.0,0.0)));
+                return cadd(result, s);
+            }
+
+            vec2 cbeta(vec2 z, vec2 w) {
+                return cmul(cmul(cgamma(z), cgamma(w)), cinv(cgamma(z + w)));
+            }
+
+            vec4 czeta_helper(vec2 z, mat4 ns, mat4 bases) {
+                mat4 phases = z.y * bases;
+                float cutoff = sqrt(z.y * 0.159154943092) + 100.0 * step(z.y, 120.0);
+                vec4 res = vec4(0);
+                for (int row = 0; row < 4; row++) {
+                    vec4 mags = exp(z.x*bases[row]);
+                    vec4 cutoffv = clamp(0.884*(cutoff-ns[row] + 0.5), 0.0, 1.0);
+                    vec4 mags2 = cutoffv/(ns[row] * mags);
+                    mags *= cutoffv;
+                    vec4 re = cos(phases[row]);
+                    vec4 im = sin(phases[row]);
+                    res += vec4(dot(mags, re), dot(mags, im), dot(mags2, re), -dot(mags2, im));
+                }
+                return res;
+            }
+
+            vec2 czeta_helper_2(vec2 z, mat4 bases, mat4 coeffs) {
+                mat4 phases = z.y*bases;
+                vec2 res = vec2(0);
+                for (int row = 0; row < 4; row++) {
+                    vec4 mags = exp(z.x*bases[row]) * coeffs[row];
+                    vec4 re = cos(phases[row]);
+                    vec4 im = sin(phases[row]);
+                    res += vec2(dot(mags, re), dot(mags, im));
+                }
+                return res;
+            }
+
+            vec2 zeta_character(vec2 z) {
+                vec2 zconj = vec2(1.0, 0.0) - 2.0 * z;
+                return cexp(cmul(z, vec2(-2.38629436112, 1.57079632679) + clog(zconj)) + 0.5 * (vec2(1.69314718056, 0) - clog(z)) + 0.572364942925 * zconj);
+            }
+
+            vec2 czeta_strip(vec2 z) {
+                vec4 zeta_est = vec4(1.0, 0, 1.0, 0);
+                zeta_est += czeta_helper(z,
+                mat4(2.,3.,4.,5.,6.,7.,8.,9.,10.,11.,12.,13.,14.,15.,16.,17.),
+                mat4(-0.693147180560,-1.098612288668,-1.386294361120,-1.609437912434,-1.791759469228,-1.945910149055,-2.079441541680,-2.197224577336,-2.302585092994,-2.397895272798,-2.484906649788,-2.564949357462,-2.639057329615,-2.708050201102,-2.772588722240,-2.833213344056));
+                zeta_est += czeta_helper(z,
+                mat4(18.,19.,20.,21.,22.,23.,24.,25.,26.,27.,28.,29.,30.,31.,32.,33.),
+                mat4(-2.890371757896,-2.944438979166,-2.995732273554,-3.044522437723,-3.091042453358,-3.135494215929,-3.178053830348,-3.218875824868,-3.258096538021,-3.295836866004,-3.332204510175,-3.367295829986,-3.401197381662,-3.433987204485,-3.465735902800,-3.496507561466));
+                vec2 zetaA = zeta_est.xy;
+                vec2 zetaB = zeta_est.zw;
+                zetaB = cmul(zetaB, conj(zeta_character(vec2(1.0, 0.0) - conj(z))));
+                if (z.y < 120.) {
+                    float t = 1.0 - min(z.x, 1.0);
+                    float alpha = t * t * (3.0 - 2.0 * t);
+                    return mix(zetaA, zetaB, alpha);
+                }
+                return zetaA + zetaB;
+            }
+
+            vec2 ceta_strip(vec2 z) {
+                return cmul((vec2(1.0, 0.0) - cexp(0.69314718056 * (vec2(1.0, 0.0) - z))), czeta_strip(z));
+            }
+
+            vec2 ceta_right(vec2 z) {
+                if (z.x < 3.0 && z.y > 54.) {return ceta_strip(z);}
+                vec2 result = vec2(1.,0.);
+                result += czeta_helper_2(z,
+                mat4(-0.69314718055995,-1.09861228866811,-1.38629436111989,-1.60943791243410,-1.79175946922805,-1.94591014905531,-2.07944154167984,-2.19722457733622,-2.30258509299405,-2.39789527279837,-2.48490664978800,-2.56494935746154,-2.63905732961526,-2.70805020110221,-2.77258872223978,-2.83321334405622),
+                mat4(-1.00000000000000,1.00000000000000,-1.00000000000000,1.00000000000000,-0.99999999999995,0.99999999999847,-0.99999999996425,0.99999999937104,-0.99999999142280,0.99999990708781,-0.99999918494666,0.99999411949279,-0.99996466193028,0.99982127062071,-0.99923254216349,0.99718148818347));
+                result += czeta_helper_2(z,
+                mat4(-2.89037175789616,-2.94443897916644,-2.99573227355399,-3.04452243772342,-3.09104245335832,-3.13549421592915,-3.17805383034795,-3.21887582486820,-3.25809653802148,-3.29583686600433,-3.33220451017520,-3.36729582998647,-3.40119738166216,-3.43398720448515,-3.46573590279973,-3.49650756146648),
+                mat4(-0.99109047939434,0.97562125072353,-0.94195422388664,0.87910910712444,-0.77852772396727,0.64073335549827,-0.47964042231228,0.31968999219853,-0.18572334624203,0.09196690020310,-0.03784892366350,0.01254701255408,-0.00320994916827,0.00059346134942,-0.00007044051625,0.00000402517236));
+                return result;
+            }
+
+            vec2 ceta_left(vec2 z) {
+                z.x *= -1.0;
+                vec2 component_a;
+                const float SQ2PI2 = 1.2533141373155001;
+                float log_r = log(length(z));
+                if (z.y > 200.0) {
+                    component_a = SQ2PI2 * cmul_i(cexp(vec2(z.x, 0) + (log_r - 1.0) * z - vec2(log_r * 0.5, 0.785398163397)));
+                } else if (z.y > 20.0) {
+                    float theta = atan(z.y, z.x);
+                    component_a = SQ2PI2 * cmul_i(cexp((theta - 1.57079632679) * cmul_i(z) + (log_r - 1.0) * z - 0.5 * vec2(log_r, theta)));
+                } else {
+                    component_a = cmul(cgamma(z), csin(z * 1.57079632679));
+                }
+                vec2 component_b = cmul(z, ceta_right(z + vec2(1.0, 0.0)));
+                vec2 multiplier_a = cexp(-1.14472988585 * (z + vec2(1.0, 0.0)));
+                vec2 multiplier_b = cmul(vec2(1.0, 0.0) - cexp(-0.69314718056 * (z + vec2(1.0, 0.0))), cinv(vec2(1.0, 0.0) - cexp(-0.69314718056 * z)));
+                vec2 component = cmul(component_a, component_b);
+                vec2 multiplier = cmul(multiplier_a, multiplier_b);
+                return 2.0 * conj(cmul(component, multiplier));
+            }
+
+            vec2 ceta(vec2 z) {
+                vec2 conjugate_mask = vec2(1.0, 1.0);
+                if (z.y < 0.0) {
+                    z = conj(z);
+                    conjugate_mask.y *= -1.0;
+                }
+                vec2 result;
+                if (z.x < 0.0) {
+                    result = ceta_left(z);
+                } else {
+                    result = ceta_right(z);
+                }
+                return result * conjugate_mask;
+            }
+
+            vec2 czeta(vec2 z) {
+                return cmul(ceta(z), cinv(vec2(1.0, 0.0) - cexp(0.69314718056 * (vec2(1.0, 0.0) - z))));
+            }
+
+            vec2 cdzeta(vec2 z) {
+                vec2 dz = vec2(0.0, 0.001);
+                return cmul(czeta(z + dz) - czeta(z - dz), cinv(2.0 * dz));
+            }
+
+            vec3 hsv2rgb(vec3 c) {
+                vec4 K = vec4(1.0, 0.666666666667, 0.333333333333, 3.0);
+                vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+            }
+
+            void mandelbrot_calc() {
+                vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
+                float xset = ismandel == 1 ? cxval : zxval;
+                float iset = ismandel == 1 ? cyval : zyval;
+                uv.x = uv.x * (ismandel == 1 ? zoommandel : zoomjulia) + xset;
+                uv.y = uv.y * (ismandel == 1 ? zoommandel : zoomjulia) + iset;
+                float cx = ismandel == 1 ? uv.x : cxval;
+                float ci = ismandel == 1 ? uv.y : cyval;
+                if (inverse != 0.0) {
+                    float cnorminv = 1.0 / (cx * cx + ci * ci) * inverse;
+                    cx = cx * cnorminv + (1.0 - inverse) * cx;
+                    ci = ci * cnorminv + (1.0 - inverse) * ci;
+                }
+                float zx = ismandel == 1 ? cx : uv.x;
+                float zi = ismandel == 1 ? ci : uv.y;
+                const int maxiter = 220;
+                float zcosx, zcosi, zmulx, zmuli, ex, ei, zpow, zinvnormpow;
+                float zx_prev = 0.0, zi_prev = 0.0, zxpow = 0.0, zipow = 0.0;
+                float zx_tmp = 0.0, zi_tmp = 0.0, zx2 = 0.0, zi2 = 0.0, px = -0.5, pi = 0.0, zxsubstzxtmp, zisubstzitmp;
+                float powval = power * 0.5, nu = 0.0, znorm = 0.0, zatan2 = 0.0;
+                int n = 0;
+                for (int i = 0; i < maxiter; i++) {
+                    zxpow = zx * zx;
+                    zipow = zi * zi;
+                    znorm = zxpow + zipow;
+                    if (znorm > range) {
+                        n = i;
+                        break;
+                    }
+                    if (fractalindex == 2 || isburning == 1) {
+                        zx = abs(zx);
+                        zi = -abs(zi);
+                    }
+                    if (power == 2.0) {
+                        zi_prev = zi * 2.0 * zx;
+                        zx_prev = zxpow - zipow;
+                    }
+                    else if (power == 1.0) {
+                        zi_prev = zi;
+                        zx_prev = zx;
+                    }
+                    else { // z ^ n
+                        zpow = fast_pow(znorm, powval);
+                        zatan2 = atan(zi, zx);
+                        zi_prev = zpow * sin(power * zatan2);
+                        zx_prev = zpow * cos(power * zatan2);
+                    }
+                    if (fractalindex < 3) { // mandelbrot
+                        if (fractalindex == 1) { // tricorn
+                            zi_prev = -zi_prev;
+                        }
+                        zx = zx_prev;
+                        zi = zi_prev;
+                    }
+                    if (fractalindex == 3) { // collatz
+                        ex = exp(-zi_prev * PI);
+                        ei = exp(zi_prev * PI);
+                        zcosx = cos(zx_prev * PI) * (0.5 * (ei + ex));
+                        zcosi = sin(zx_prev * PI) * (0.5 * (ei - ex));
+                        zmulx = 5.0 * zx_prev + 2.0;
+                        zmuli = 5.0 * zi_prev;
+                        zx = (7.0 * zx_prev + 2.0 - (zcosx * zmulx + zcosi * zmuli)) * 0.25;
+                        zi = (7.0 * zi_prev - (zcosx * zmuli - zcosi * zmulx)) * 0.25;
+                    }
+                    if (fractalindex == 4) { // collatz_mandelbrot
+                        ex = exp(zx_prev);
+                        zcosx = cos(zi_prev) * ex;
+                        zcosi = sin(zi_prev) * ex;
+                        zmulx = 5.0 * zx_prev + 2.0;
+                        zmuli = 5.0 * zi_prev;
+                        zx = (7.0 * zx_prev + 2.0 - (zcosx * zmulx - zcosi * zmuli)) * 0.25;
+                        zi = (7.0 * zi_prev - (zcosx * zmuli + zcosi * zmulx)) * 0.25;
+                    }
+                    if (fractalindex == 5) { // collatz_like_mandelbrot
+                        ex = exp(-zi_prev * PI);
+                        zcosx = cos(zx_prev * PI) * ex;
+                        zcosi = sin(zx_prev * PI) * ex;
+                        zmulx = 5.0 * zx_prev + 2.0;
+                        zmuli = 5.0 * zi_prev;
+                        zx = (7.0 * zx_prev + 2.0 - (zcosx * zmulx - zcosi * zmuli)) * 0.25;
+                        zi = (7.0 * zi_prev - (zcosx * zmuli + zcosi * zmulx)) * 0.25;
+                    }
+                    if (fractalindex == 6) { // e ^ z
+                        ex = exp(zx_prev);
+                        zcosx = cos(zi_prev) * ex;
+                        zcosi = sin(zi_prev) * ex;
+                        zx = zcosx;
+                        zi = zcosi;
+                    }
+                    if (fractalindex == 7) { // phoenix
+                    	zx_tmp = zx;
+                    	zi_tmp = zi;
+                    	zx = zx_prev + (zx2 * px - zi2 * pi);
+                    	zi = zi_prev + (zx2 * pi + zi2 * px);
+                    	zx2 = zx_tmp;
+                    	zi2 = zi_tmp;
+                    }
+                    if (fractalindex == 8) { // feather
+                    	zxpow += 1.0;
+                    	zinvnormpow = 1.0 / (zxpow * zxpow + zipow * zipow);
+                    	zi = (zi_prev * zxpow - zx_prev * zipow) * zinvnormpow;
+                        zx = (zx_prev * zxpow + zi_prev * zipow) * zinvnormpow;
+                    }
+                    if (fractalindex == 9) { // ctan
+                        vec2 z = ctan(vec2(zx_prev, zi_prev));
+                        zx = z.x;
+                        zi = z.y;
+                        if (n == iteration || n == 160) { n = iteration; break; }
+                    }
+                    if (fractalindex == 10) { // gamma
+                        vec2 z = cgamma(vec2(zx_prev, zi_prev));
+                        zx = z.x;
+                        zi = z.y;
+                        if (n == iteration || n == 110) { n = iteration; break; }
+                    }
+                    if (fractalindex == 11) { // sin
+                        vec2 z = csin(vec2(zx_prev, zi_prev));
+                        zx = z.x;
+                        zi = z.y;
+                    }
+                    if (fractalindex == 13) { // zeta
+                        vec2 z = czeta(vec2(zx_prev, zi_prev));
+                        zx = z.x;
+                        zi = z.y;
+                        if (n == iteration || n == 110) { n = iteration; break; }
+                    }
+                    zx += cx;
+                    zi += ci;
+                    n += 1;
+                    if (n >= iteration) {
+                        n = iteration;
+                        break;
+                    }
+                }
+                if (colorschemeindex == 0) {
+                    float hue = (atan(zi, zx) * 0.159154943092 + 0.5);
+                    vec3 color1 = vec3(0.0, 0.0, 0.0);
+                    if (hue > 0.0001) {
+                        float value = log((zx * zx + zi * zi) + 1.0) * 0.5;
+                        color1 = hsv2rgb(vec3(hue, 0.8, clamp(value, 0.0, 1.0)));
+                    }
+                    gl_FragColor = vec4(color1, 1.0);
+                } else if (colorschemeindex == 1) {
+                    float color = 0.0;
+                    if (n != 0 && n != iteration) {
+                        nu = log(log(znorm) * halflogval) * logval;
+                        if (nu < float(n)) { color = float(n) - nu; }
+                    } else {
+                        color = n == iteration ? 0.0 : float(n);
+                    }
+                    color *= 0.0078431372549 * multlight;
+                    float r = bounce(color, 0.0, 1.0);
+                    float g = bounce(color * 2.0, 0.0, 1.0);
+                    float b = bounce(color * 3.0, 0.0, 1.0);
+                    gl_FragColor = vec4(r, g, b, 1.0);
+                }
+            }
+
+            void newton_calc() {
+                vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
+                float xset = ismandel == 1 ? cxval : zxval;
+                float iset = ismandel == 1 ? cyval : zyval;
+                uv.x = uv.x * (ismandel == 1 ? zoommandel : zoomjulia) + xset;
+                uv.y = uv.y * (ismandel == 1 ? zoommandel : zoomjulia) + iset;
+                float cx = ismandel == 1 ? uv.x : cxval;
+                float ci = ismandel == 1 ? uv.y : cyval;
+                if (inverse != 0.0) {
+                    float cnorminv = 1.0 / (cx * cx + ci * ci) * inverse;
+                    cx = cx * cnorminv + (1.0 - inverse) * cx;
+                    ci = ci * cnorminv + (1.0 - inverse) * ci;
+                }
+                float zx = ismandel == 1 ? cx : uv.x;
+                float zi = ismandel == 1 ? ci : uv.y;
+                const int maxiter = 220;
+                float zinvnormpow, zx_prev = 0.0, zi_prev = 0.0, zxpow = 0.0, zipow = 0.0;
+                float zx_tmp = 0.0, zi_tmp = 0.0, zx2 = 0.0, zi2 = 0.0, px = -0.5, pii = 0.0, zxsubstzxtmp, zisubstzitmp;
+                float powval = power * 0.5, nu = 0.0, znorm = 0.0, zatan2 = 0.0, rangeval = 1.0 / (50.0 * range);
+                if (fractalindex == 4) {
+                    rangeval = 1.0 / (0.000005 * range);
+                }
+                float pi = 3.14159265359;
+                vec2 c = vec2(cx, ci);
+                vec2 z = vec2(zx, zi);
+                vec2 z_prev = z, func, derv;
+                int n = 0;
+                for (int i = 0; i < maxiter; i++) {
+                    z_prev = z;
+                    if (fractalindex < 3) {
+                        func = cpow(z, power);
+                        derv = power * cpow(z, power - 1.0);
+                        z = z_prev - cmul(func - vec2(1.0, 0.0), cinv(derv));
+                    }
+                    if (fractalindex == 3) { // collatz
+                        vec2 z_func = cpow(z, power);
+                        vec2 z_derv = power * cpow(z, power - 1.0);
+                        func = ((7.0 * z_func + vec2(2.0, 0.0)) - cmul(ccos(pi * z_func), (5.0 * z_func + vec2(2.0, 0.0)))) * 0.25;
+                        derv = cmul(0.25 * (vec2(7.0, 0.0) + pi * cmul(csin(pi * z_func), (5.0 * z_func + vec2(2.0, 0.0))) - 5.0 * ccos(pi * z_func)), z_derv);
+                        z = z_prev - cmul(func - vec2(0.0, 0.0), cinv(derv));
+                    }
+                    if (fractalindex == 4) { // collatz_mandelbrot
+                        vec2 z_func = cpow(z, power);
+                        vec2 z_derv = power * cpow(z, power - 1.0);
+                        func = ((7.0 * z_func + vec2(2.0, 0.0)) - cmul(cexp(z_func), (5.0 * z_func + vec2(2.0, 0.0)))) * 0.25;
+                        derv = cmul(0.25 * (vec2(7.0, 0.0) - cmul(cexp(z_func), 5.0 * z_func + vec2(7.0, 0.0))), z_derv);
+                        z = z_prev - cmul(func - vec2(1.0, 0.0), cinv(derv));
+                    }
+                    if (fractalindex == 5) { // collatz_like_mandelbrot
+                        vec2 z_func = cpow(z, power);
+                        vec2 z_derv = power * cpow(z, power - 1.0);
+                        func = ((7.0 * z_func + vec2(2.0, 0.0)) - cmul(cexp(cmul(z_func, vec2(0.0, pi))), (5.0 * z_func + vec2(2.0, 0.0)))) * 0.25;
+                        derv = cmul((vec2(7.0, 0.0) - cmul(cexp(cmul(z_func, vec2(0.0, pi))), vec2(5.0, 0.0) + cmul(vec2(0.0, pi), 5.0 * z_func + vec2(2.0, 0.0)))) * 0.25, z_derv);
+                        z = z_prev - cmul(func - vec2(0.0, 0.0), cinv(derv));
+                    }
+                    if (fractalindex == 6) { // e ^ z
+                        vec2 z_func = cpow(z, power);
+                        vec2 z_derv = power * cpow(z, power - 1.0);
+                        func = cexp(z_func);
+                        derv = cmul(cexp(z_func), z_derv);
+                        z = z_prev - cmul(func - vec2(1.0, 0.0), cinv(derv));
+                    }
+                    if (fractalindex == 7) { // phoenix
+                        func = cpow(z, power);
+                        derv = power * cpow(z, power - 1.0);
+                        z = z_prev - cmul(func - vec2(1.0, 0.0), cinv(derv));
+                    }
+                    if (fractalindex == 8) { // feather
+                        func = cmul(z, cinv(cpow(z, power) + vec2(1.0, 0.0)));
+                        vec2 z_pow = cpow(z, power);
+                        derv = cmul(vec2(1.0, 0.0) - cmul(vec2(power - 1.0, 0.0), z_pow), cinv(cpow(z_pow + vec2(1.0, 0.0), 2.0)));
+                        z = z_prev - cmul(func - vec2(1.0, 0.0), cinv(derv));
+                    }
+                    if (fractalindex == 9) { // tan
+                        vec2 z_func = cpow(z, power);
+                        vec2 z_derv = power * cpow(z, power - 1.0);
+                        func = ctan(z_func);
+                        derv = cmul(vec2(1.0, 0.0) + cpow(ccot(z_func), 2.0), z_derv);
+                        z = z_prev - cmul(func, cinv(derv));
+                    }
+                    if (fractalindex == 10) { // gamma
+                        vec2 z_func = cpow(z, power);
+                        vec2 z_derv = power * cpow(z, power - 1.0);
+                        func = cgamma(z_func);
+                        derv = cmul(cdigamma(z_func), cmul(func, z_derv));
+                        z = z_prev - cmul(func - vec2(1.0, 0.0), cinv(derv));
+                        if (n >= iteration / 3) {
+                            zx = z_prev.x;
+                            zi = z_prev.y;
+                            n = maxiter;
+                            break;
+                        }
+                    }
+                    if (fractalindex == 11) { // sin
+                        vec2 z_func = cpow(z, power);
+                        vec2 z_derv = power * cpow(z, power - 1.0);
+                        func = csin(z_func);
+                        derv = cmul(ccos(z_func), z_derv);
+                        z = z_prev - cmul(func, cinv(derv));
+                    }
+                    if (fractalindex == 13) { // zeta
+                        vec2 z_func = cpow(z, power);
+                        vec2 z_derv = power * cpow(z, power - 1.0);
+                        func = czeta(z_func);
+                        derv = cmul(cdzeta(z_func), z_derv);
+                        z = z_prev - cmul(func - vec2(0.0, 0.0), cinv(derv));
+
+                        // it's zeta(z)/zeta'(z)
+                        //func = czeta(z);
+                        //derv = cdzeta(z);
+                        //z = z_prev - cmul(func, cinv(derv));
+                        if (n == iteration / 3) {
+                            zx = z_prev.x;
+                            zi = z_prev.y;
+                            n = maxiter;
+                            break;
+                        }
+                    }
+                    n += 1;
+                    z += c;
+                    znorm = (z.x - z_prev.x) * (z.x - z_prev.x) + (z.y - z_prev.y) * (z.y - z_prev.y);
+                    if (n >= iteration) {
+                        zx = z_prev.x;
+                        zi = z_prev.y;
+                        n = maxiter;
+                        break;
+                    }
+                    if (znorm < rangeval) {
+                        zx = z_prev.x;
+                        zi = z_prev.y;
+                        n = i;
+                        break;
+                    }
+                }
+                if (colorschemeindex == 0) {
+                    float hue = (atan(zi, zx) * 0.159154943092 + 0.5);
+                    vec3 color1 = vec3(0.0, 0.0, 0.0);
+                    if (hue > 0.0001) {
+                        float value = log((zx * zx + zi * zi) + 1.0) * 0.5;
+                        color1 = hsv2rgb(vec3(hue, 0.8, clamp(value, 0.0, 1.0)));
+                    }
+                    gl_FragColor = vec4(color1, 1.0);
+                } else if (colorschemeindex == 1) {
+                    float color = n == iteration ? 0.0 : float(n);
+                    color *= 0.0078431372549 * multlight;
+                    float r = bounce(color, 0.0, 1.0);
+                    float g = bounce(color * 2.0, 0.0, 1.0);
+                    float b = bounce(color * 3.0, 0.0, 1.0);
+                    gl_FragColor = vec4(r, g, b, 1.0);
+                }
+            }
+
+            void lyapunov_calc() {
+                vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
+                float xset = ismandel == 1 ? cxval : zxval;
+                float iset = ismandel == 1 ? cyval : zyval;
+                uv.x = uv.x * (ismandel == 1 ? zoommandel : zoomjulia) + xset;
+                uv.y = uv.y * (ismandel == 1 ? zoommandel : zoomjulia) + iset;
+                float cx = ismandel == 1 ? uv.x : cxval;
+                float ci = ismandel == 1 ? uv.y : cyval;
+                if (inverse != 0.0) {
+                    float cnorminv = 1.0 / (cx * cx + ci * ci) * inverse;
+                    cx = cx * cnorminv + (1.0 - inverse) * cx;
+                    ci = ci * cnorminv + (1.0 - inverse) * ci;
+                }
+                float zx = ismandel == 1 ? cx : uv.x;
+                float zi = ismandel == 1 ? ci : uv.y;
+                const int maxiter = 220;
+                float lambda = 0.0, maxlambda = 120000.0, xn = 0.5, rx = 0.0, value = 0.0, invmaxiter = 1.0 / float(maxiter);
+                int modval = 0, n0 = iteration / 10; // n0 > 1
+                for (int i = 1; i < maxiter; i++) {
+                    modval = i - (i / 2) * 2;
+                    if (modval == 1) { rx = zx; }
+                    else if (modval == 0) { rx = zi; }
+                    xn = xn * rx * (1.0 - xn);
+                    if (i >= n0) {
+                        lambda += log(abs(rx * (1.0 - 2.0 * xn))) * invmaxiter;
+                    }
+                    if (abs(lambda) > maxlambda) {
+                        break;
+                    }
+                    if (i - 2 == iteration) break;
+                }
+                if (lambda > 0.0) {
+                    value = (exp(-3.3 * lambda) * 25.5);
+                }
+                else {
+                    lambda = exp(lambda);
+                    value = (lambda <= 0.98 ? lambda * 15.2653061226 : (1.76 + -37.0 * (0.98 - lambda)) * 8.5);
+                }
+                if (colorschemeindex == 0) {
+                    float hue = (atan(rx, value) * 0.159154943092 + 0.5);
+                    float value = log((rx * rx + value * value) + 1.0) * 0.5;
+                    vec3 color1 = hsv2rgb(vec3(hue, 0.8, clamp(value, 0.0, 1.0)));
+                    gl_FragColor = vec4(color1, 1.0);
+                } else if (colorschemeindex == 1) {
+                    float color = float(value) * multlight * 0.00392156862745 * 2.5;
+                    float r = bounce(color, 0.0, 1.0);
+                    float g = bounce(color * 2.0, 0.0, 1.0);
+                    float b = bounce(color * 3.0, 0.0, 1.0);
+                    gl_FragColor = vec4(r, g, b, 1.0);
+                }
+            }
+
+            vec2 mandel_quaternion(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
+                int n = 0;
+                float dr = 1.0, znorm = 0.0;
+                for (int i = 0; i < 26; i++) {
+                    float zxpow = zx * zx;
+                    float zypow = zy * zy;
+                    float zzpow = zz * zz;
+                    float zwpow = zw * zw;
+                    float unorm = zypow + zzpow + zwpow;
+                    znorm = sqrt(zxpow + unorm);
+                    n = i;
+                    if (znorm > range) { break; }
+                    if (fractalindex == 2) {
+                        zx = abs(zx);
+                        zy = -abs(zy);
+                        zz = -abs(zz);
+                        zw = abs(zw);
+                    }
+                    if (fractalindex == 1) {
+                        zy = -zy;
+                        zz = -zz;
+                    }
+                    dr = power * fast_pow(znorm, power - 1.0) * dr + 1.0;
+                    float zx_prev = 0.0, zy_prev = 0.0, zz_prev = 0.0, zw_prev = 0.0;
+                    if (power == 2.0) {
+                        zx_prev = zxpow - zypow - zzpow - zwpow;
+                        zy_prev = 2.0 * zx * zy;
+                        zz_prev = 2.0 * zx * zz;
+                        zw_prev = 2.0 * zx * zw;
+                    }
+                    else {
+                        float logx = 0.0, logy = 0.0, logz = 0.0, logw = 0.0;
+                        if (unorm == 0.0) { 
+                            logx = log(abs(zx)) * power;
+                        }
+                        else {
+                            float mul = acos(zx / znorm) / sqrt(unorm);
+                            logx = log(znorm) * power;
+                            logy = mul * zy * power;
+                            logz = mul * zz * power;
+                            logw = mul * zw * power;
+                        }
+                        float unorm1 = logy * logy + logz * logz + logw * logw;
+                        zx_prev = exp(logx);
+                        if (unorm1 != 0.0) {
+                            float zunorm1 = sqrt(unorm1);
+                            float mul = zx_prev * sin(zunorm1) / zunorm1;
+                            zx_prev = zx_prev * cos(zunorm1);
+                            zy_prev = mul * logy;
+                            zz_prev = mul * logz;
+                            zw_prev = mul * logw;
+                        }
+                    }
+                    zx = zx_prev + cx;
+                    zy = zy_prev + cy;
+                    zz = zz_prev + cz;
+                    zw = zw_prev + cw;
+                }
+                return vec2(0.5 * log(znorm) * znorm / dr, n);
+            }
+
+            vec2 mandel_bicomplex(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
+                int n = 0;
+                float dr = 1.0, znorm = 0.0;
+                for (int i = 0; i < 25; i++) {
+                    float zxpow = zx * zx;
+                    float zypow = zy * zy;
+                    float zzpow = zz * zz;
+                    float zwpow = zw * zw;
+                    znorm = sqrt(zxpow + zypow + zzpow + zwpow);
+                    n = i;
+                    if (znorm > range) { break; }
+                    if (fractalindex == 2) {
+                        zx = abs(zx);
+                        zy = -abs(zy);
+                        zz = -abs(zz);
+                        zw = abs(zw);
+                    }
+                    if (fractalindex == 1) {
+                        zy = -zy;
+                        zz = -zz;
+                    }
+                    dr = power * fast_pow(znorm, power - 1.0) * dr + 1.0;
+                    float zx_prev = 0.0, zy_prev = 0.0, zz_prev = 0.0, zw_prev = 0.0;
+                    if (power == 2.0) {
+                        zx_prev = zxpow - zypow - zzpow + zwpow;
+                        zy_prev = 2.0 * (zx * zy - zz * zw);
+                        zz_prev = 2.0 * (zx * zz - zy * zw);
+                        zw_prev = 2.0 * (zx * zw + zy * zz);
+                    } else {
+                        float a1 = zx + zw;
+                        float b1 = zy - zz;
+                        float r1 = sqrt(a1 * a1 + b1 * b1);
+                        float theta1 = atan(b1, a1);
+                        float r_pow1 = fast_pow(r1, power);
+                        float z01_real = r_pow1 * cos(power * theta1) * 0.5;
+                        float z01_imag = r_pow1 * sin(power * theta1) * 0.5;
+                        float a2 = zx - zw;
+                        float b2 = zy + zz;
+                        float r2 = sqrt(a2 * a2 + b2 * b2);
+                        float theta2 = atan(b2, a2);
+                        float r_pow2 = fast_pow(r2, power);
+                        float z02_real = r_pow2 * cos(power * theta2) * 0.5;
+                        float z02_imag = r_pow2 * sin(power * theta2) * 0.5;
+                        zx_prev = z01_real + z02_real;
+                        zy_prev = z01_imag + z02_imag;
+                        zz_prev = -(z01_imag - z02_imag);
+                        zw_prev = z01_real - z02_real;
+                    }
+                    zx = zx_prev + cx;
+                    zy = zy_prev + cy;
+                    zz = zz_prev + cz;
+                    zw = zw_prev + cw;
+                }
+                return vec2(0.5 * log(znorm) * znorm / dr, n);
+            }
+
+            vec2 mandelbulb(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
+                int n = 0;
+                float dr = 1.0, znorm = 0.0;
+                for (int i = 0; i < 25; i++) {
+                    float zxpow = zx * zx;
+                    float zypow = zy * zy;
+                    float zzpow = zz * zz;
+                    float zxypow = zxpow + zypow;
+                    znorm = sqrt(zxypow + zzpow);
+                    n = i;
+                    if (znorm > range) { break; }
+                    if (fractalindex == 2) {
+                        zx = abs(zx);
+                        zy = -abs(zy); // maybe not minus
+                        zz = -abs(zz);
+                    }
+                    if (fractalindex == 1) {
+                        zy = -zy;
+                    }
+                    if (hypercomplexindex == 1)  {
+                        if (power == 2.0 && 1 == 1) { // this code increase 4x for gpu
+                            float a = 1.0 - zzpow / zxypow;
+                            zy = 2.0 * zy * zx * a + cy;
+                            zz = 2.0 * zz * sqrt(zxypow) + cz;
+                            zx = (zxpow - zypow) * a + cx;
+                            dr = znorm * 2.0 * dr + 1.0;
+                        }
+                        else {
+                            float phi = asin(zz / znorm) * power;                    
+                            float theta = atan(zy, zx) * power;
+                            float zr = fast_pow(znorm, power);
+                            float cosphi = cos(phi);
+                            zx = zr * cos(theta) * cosphi + cx;
+                            zy = zr * sin(theta) * cosphi + cy;
+                            zz = zr * sin(phi) + cz;
+                            dr = fast_pow(znorm, power - 1.0) * power * dr + 1.0;
+                        }
+                    }
+                    else if (hypercomplexindex == 2) {
+                        float theta = acos(zz / znorm) * power;
+                        float phi = atan(zy, zx) * power;
+                        float zr = fast_pow(znorm, power);
+                        float sintheta = sin(theta);
+                        zx = zr * cos(phi) * sintheta + cx;
+                        zy = zr * sin(phi) * sintheta + cy;
+                        zz = zr * cos(theta) + cz;
+                        dr = fast_pow(znorm, power - 1.0) * power * dr + 1.0;
+                    }
+                }
+                return vec2(0.5 * log(znorm) * znorm / dr, n);
+            }
+
+            vec2 mandelbox(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
+                float scale = -2.0, fixedRadius = 1.0, minRadius = 0.5, foldingLimit = 1.0, dr = 1.0;
+                vec3 z = vec3(zx, zy, zz);
+                vec3 offset = vec3(zx, zy, zz);
+                int n = 0;
+                for (int i = 0; i < 20; i++) {
+                    n = i;
+                    z = clamp(z, -foldingLimit, foldingLimit) * 2.0 - z;
+                    float r2 = dot(z, z);
+                    if (r2 < minRadius) {
+                        float temp = (fixedRadius * fixedRadius) / (minRadius * minRadius); // float temp = (fixedRadius * fixedRadius) / minRadius
+                        z *= temp;
+                        dr *= temp;
+                    } else if (r2 < fixedRadius) {
+                        float temp = (fixedRadius * fixedRadius) / r2;
+                        z *= temp;
+                        dr *= temp;
+                    }
+                    z = z * scale + offset;
+                    dr = dr * abs(scale) + 1.0;
+                    if (dot(z, z) > range * 140.0) {
+                        break;
+                    }
+                }
+                float distance = length(z) / abs(dr);
+                return vec2(distance, float(n));
+            }
+
+            vec3 hue(float H) {
+                float W = sin(H * 0.0174532925199);
+                float U = cos(H * 0.0174532925199);
+                vec3 ret;
+                ret.x = 0.587 - 0.587 * U + 0.330 * W;
+                ret.z = 0.587 - 0.587 * U - 1.050 * W;
+                ret.y = 0.587 + 0.413 * U + 0.035 * W;
+                return ret;
+            }
+
+            void mandel3d_calc() {
+                vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
+                vec3 ro = vec3(ismandel == 1 ? cxval : zxval, ismandel == 1 ? cyval : zyval, ismandel == 1 ? -zoommandel : -zoomjulia);
+                vec3 rd = normalize(vec3(uv.x, uv.y, 1.0));
+                float czz = cosrotx * ro.z - sinrotx * ro.y;
+                float cy = cosrotx * ro.y + sinrotx * ro.z;
+                float cx = cosrotz * ro.x + sinrotz * czz;
+                float cz = cosrotz * czz - sinrotz * ro.x;
+                float cw = 0.0;
+                if (inverse != 0.0) {
+                    float cnorminv = 1.0 / (cx * cx + cy * cy + cz * cz + cw * cw) * inverse;
+                    cx = cx * cnorminv + (1.0 - inverse) * cx;
+                    cy = cy * cnorminv + (1.0 - inverse) * cy;
+                    cz = cz * cnorminv + (1.0 - inverse) * cz;
+                    cw = cw * cnorminv + (1.0 - inverse) * cw;
+                }
+                float zx = ismandel == 1 ? cx : cxval;
+                float zy = ismandel == 1 ? cy : cyval;
+                float zz = ismandel == 1 ? cz : zoommandel;
+                float zw = ismandel == 1 ? cw : 0.0;
+                float surDist = 0.1, col = 0.0, dO = 0.0, maxDist = 100.0;
+                const int raymarch_iterations = 100;
+                int ot = raymarch_iterations - 1;
+                if (hypercomplexindex == 1 || hypercomplexindex == 2) { surDist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001; }
+                if (hypercomplexindex == 3) { surDist = mandelbox(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001; }
+                if (hypercomplexindex == 4) { surDist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001; }
+                if (hypercomplexindex == 5) { surDist = mandel_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001; }
+                for(int i = 0; i < raymarch_iterations; i++) {
+                    vec2 dist = vec2(0, 0);
+                    float px = ro.x + rd.x * dO;
+                    float py = ro.y + rd.y * dO;
+                    float pz = ro.z + rd.z * dO;
+                    zy = cosrotx * py + sinrotx * pz;
+                    zz = cosrotx * pz - sinrotx * py;
+                    zx = cosrotz * px + sinrotz * zz;
+                    zz = cosrotz * zz - sinrotz * px;
+                    if (inverse != 0.0) {
+                        float cnorminv = 1.0 / (zx * zx + zy * zy + zz * zz + zw * zw) * inverse;
+                        zx = zx * cnorminv + (1.0 - inverse) * zx;
+                        zy = zy * cnorminv + (1.0 - inverse) * zy;
+                        zz = zz * cnorminv + (1.0 - inverse) * zz;
+                        zw = zw * cnorminv + (1.0 - inverse) * zw;
+                    }
+                    cx = ismandel == 1 ? zx : cxval;
+                    cy = ismandel == 1 ? zy : cyval;
+                    cz = ismandel == 1 ? zz : zoommandel;
+                    cw = ismandel == 1 ? zw : 0.0;
+                    if (hypercomplexindex == 1 || hypercomplexindex == 2) { dist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw); }
+                    if (hypercomplexindex == 3) { dist = mandelbox(zx, zy, zz, zw, cx, cy, cz, cw); }
+                    if (hypercomplexindex == 4) { dist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw); }
+                    if (hypercomplexindex == 5) { dist = mandel_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw); }
+                    dO += dist.x;
+                    if (dist.x < surDist) { ot = i; col = dist.y; break;}
+                    if (dO > maxDist) { ot = 0; break; }
+                }
+                vec3 col1 = vec3(0, 0, 0);
+                if (ot != 0) {
+                    float bright = 1.0 - 1.5 * float(ot) / float(raymarch_iterations);
+                    col1 = hue(1.0 + clamp(col, 3.0, 20.0) * 80.0) * bright * multlight;
+                }
+                gl_FragColor = vec4(col1.x, col1.y, col1.z, 1.0);
+            }
+
+            void main() {
+                if (hypercomplexindex == 0) {
+                    if (fractalindex == 12) {
+                        lyapunov_calc();
+                    } else {
+                        if (isnewton == 1) {
+                            newton_calc();
+                        } else {
+                            mandelbrot_calc();
+                        }
+                    }
+                }
+                else if (hypercomplexindex > 0) {
+                    mandel3d_calc();
+                }
+            }
+        `;
+        initGL(shaderCode);
+
+        function startRecording() {
+            const stream = canvas.captureStream(30);
+            const options = { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 65000000 };
+            try {
+                mediaRecorder = new MediaRecorder(stream, options);
+            } catch (e) {
+                console.warn('MediaRecorder creation warn:', e);
+                mediaRecorder = new MediaRecorder(stream);
+            }
+            recordedChunks = [];
+            mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) { recordedChunks.push(event.data); } };
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const timestamp = new Date().toISOString().slice(0,19).replace(/:/g, '-');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `fractal-recording-${timestamp}.webm`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            };
+            mediaRecorder.start();
+            isRecording = true;
+            console.log('Recording started...');
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                console.log('Recording stopped.');
+            }
+        }
+
+        const resolutionLocation = gl.getUniformLocation(program, 'iResolution');
+        const timeLocation = gl.getUniformLocation(program, 'iTime');
+        const cxvalLocation = gl.getUniformLocation(program, 'cxval');
+        const cyvalLocation = gl.getUniformLocation(program, 'cyval');
+        const zoommandelLocation = gl.getUniformLocation(program, 'zoommandel');
+        const cwvalLocation = gl.getUniformLocation(program, 'cwval');
+        const zxvalLocation = gl.getUniformLocation(program, 'zxval');
+        const zyvalLocation = gl.getUniformLocation(program, 'zyval');
+        const zoomjuliaLocation = gl.getUniformLocation(program, 'zoomjulia');
+        const zwvalLocation = gl.getUniformLocation(program, 'zwval');
+        const rangeLocation = gl.getUniformLocation(program, 'range');
+        const powerLocation = gl.getUniformLocation(program, 'power');
+        const logvalLocation = gl.getUniformLocation(program, 'logval');
+        const halflogvalLocation = gl.getUniformLocation(program, 'halflogval');
+        const inverseLocation = gl.getUniformLocation(program, 'inverse');
+        const multlightLocation = gl.getUniformLocation(program, 'multlight');
+        const cosrotxLocation = gl.getUniformLocation(program, 'cosrotx');
+        const sinrotxLocation = gl.getUniformLocation(program, 'sinrotx');
+        const cosrotzLocation = gl.getUniformLocation(program, 'cosrotz');
+        const sinrotzLocation = gl.getUniformLocation(program, 'sinrotz');
+        const ismandelLocation = gl.getUniformLocation(program, 'ismandel');
+        const isnewtonLocation = gl.getUniformLocation(program, 'isnewton');
+        const isburningLocation = gl.getUniformLocation(program, 'isburning');
+        const fractalindexLocation = gl.getUniformLocation(program, 'fractalindex');
+        const hypercomplexindexLocation = gl.getUniformLocation(program, 'hypercomplexindex');
+        const colorschemeindexLocation = gl.getUniformLocation(program, 'colorschemeindex');
+        const iterationLocation = gl.getUniformLocation(program, 'iteration');
+
+        let cxval = 0.0;
+        let cyval = 0.0;
+        let zoomMandel = 3.0;
+        let cwval = 0.0;
+        let zxval = 0.0;
+        let zyval = 0.0;
+        let zoomJulia = 3.0;
+        let zwval = 0.0;
+        let power = 2.0;
+        let range = 6.0;
+        let inverse = 0.0;
+        let lastChangeTime = 0;
+        let ismandel = 1;
+        let isnewton = 0;
+        let isburning = 0;
+        let fractalindex = 0;
+        let multlight = 1.0;
+        let rotx = 0.0;
+        let rotz = 0.0; // -3.14159 * 0.5
+        let rotationSpeed = 0.05;
+        let iteration = 220;
+        let hypercomplexindex = 0;
+        let colorschemeindex = 1;
+        let movespeedx = 0.025;
+        let movespeedy = 0.025 * 0.5;
+        let isRecording = 0;
+        let zoomSpeed = 0.07;
+        const keysPressed = {};
+        window.addEventListener('keydown', (event) => { keysPressed[event.key.toLowerCase()] = true; });
+        window.addEventListener('keyup', (event) => { keysPressed[event.key.toLowerCase()] = false; });
+        function updateControls(keyinit = false) {
+            let keypress = false;
+            const currentTime = Date.now();
+            if (keysPressed['w']) { if (ismandel) { cyval = cyval + zoomMandel * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } else { zyval = zyval + zoomJulia * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } keypress = true; }
+            if (keysPressed['s']) { if (ismandel) { cyval = cyval - zoomMandel * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } else { zyval = zyval - zoomJulia * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } keypress = true; }
+            if (keysPressed['d']) { if (ismandel) { cxval = cxval + zoomMandel * (hypercomplexindex == 0 ? movespeedx : movespeedy * 0.1); } else { zxval = zxval + zoomJulia * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } keypress = true; }
+            if (keysPressed['a']) { if (ismandel) { cxval = cxval - zoomMandel * (hypercomplexindex == 0 ? movespeedx : movespeedy * 0.1); } else { zxval = zxval - zoomJulia * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } keypress = true; }
+            if (keysPressed['e']) { if (ismandel) { zoomMandel /= 1.0 + (hypercomplexindex == 0 ? zoomSpeed : zoomSpeed * 0.1); } else { zoomJulia /= 1.0 + zoomSpeed; } keypress = true; }
+            if (keysPressed['q']) { if (ismandel) { zoomMandel *= 1.0 + (hypercomplexindex == 0 ? zoomSpeed : zoomSpeed * 0.1); } else { zoomJulia *= 1.0 + zoomSpeed; } keypress = true; }
+            if (keysPressed['r'] && currentTime - lastChangeTime > 200) { power = Math.floor(power + 1); lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['t'] && currentTime - lastChangeTime > 200) { power = Math.ceil(power - 1); lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['v'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 13 ? 0 : fractalindex + 1; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['c'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 0 ? 13 : fractalindex - 1; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['u'] && currentTime - lastChangeTime > 200) { ismandel = ismandel == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['f'] && currentTime - lastChangeTime > 800) { inverse = inverse == 1.0 ? 0.0 : 1.0; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['n'] && currentTime - lastChangeTime > 200) { hypercomplexindex = hypercomplexindex == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['b'] && currentTime - lastChangeTime > 200) { hypercomplexindex = hypercomplexindex == 2 ? 0 : 2; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['m'] && currentTime - lastChangeTime > 200) { hypercomplexindex = hypercomplexindex == 3 ? 0 : 3; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['y'] && currentTime - lastChangeTime > 200) { hypercomplexindex = hypercomplexindex == 4 ? 0 : 4; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['i'] && currentTime - lastChangeTime > 200) { hypercomplexindex = hypercomplexindex == 5 ? 0 : 5; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['x']) { range *= 2.0; keypress = true; }
+            if (keysPressed['z']) { range *= 1.0 / 1.125; keypress = true; }
+            if (keysPressed['2'] && currentTime - lastChangeTime > 200) { zoomSpeed = zoomSpeed / 2.0; rotationSpeed = rotationSpeed / 2.0; movespeedx = movespeedx / 2.0; movespeedy = movespeedy / 2.0; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['3'] && currentTime - lastChangeTime > 200) { zoomSpeed = zoomSpeed * 2.0; rotationSpeed = rotationSpeed * 2.0; movespeedx = movespeedx * 2.0; movespeedy = movespeedy * 2.0; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['0'] && currentTime - lastChangeTime > 500) { if (isRecording) { stopRecording(); } else { startRecording(); } lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['[']) { power -= 1.0 / 128.0; keypress = true; } // if (keysPressed['[']) { power *= 1.0 - 1.0 / 256.0; keypress = true; } // newton fractal interes near zero!
+            if (keysPressed[']']) { power += 1.0 / 128.0; keypress = true; } // if (keysPressed[']']) { power *= 1.0 + 1.0 / 256.0; keypress = true; } // newton fractal interes near zero!
+            if (keysPressed['j']) { multlight *= 1.0 - (1.0 / 128.0); keypress = true; }
+            if (keysPressed['k']) { multlight *= 1.0 + (1.0 / 128.0); keypress = true; }
+            if (keysPressed['h'] && currentTime - lastChangeTime > 200) { range = 6.0; rotx = 0.0; rotz = 0.0; if (ismandel) { zoomMandel = 3.0; cxval = 0.0; cyval = 0.0; } else { zoomJulia = 3.0; zxval = 0.0; zyval = 0.0; } lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['9']) { zoomMandel /= 1.0 + zoomSpeed; keypress = true; }
+            if (keysPressed['7']) { zoomMandel *= 1.0 + zoomSpeed; keypress = true; }
+            if (keysPressed['8']) { cyval = cyval + zoomMandel * movespeedy * 0.1; keypress = true; }
+            if (keysPressed['5']) { cyval = cyval - zoomMandel * movespeedy * 0.1; keypress = true; }
+            if (keysPressed['4']) { cxval = cxval - zoomMandel * movespeedx * 0.1; keypress = true; }
+            if (keysPressed['6']) { cxval = cxval + zoomMandel * movespeedx * 0.1; keypress = true; }
+            if (keysPressed['arrowup']) { rotx -= rotationSpeed * 0.1; keypress = true; }
+            if (keysPressed['arrowdown']) { rotx += rotationSpeed * 0.1; keypress = true; }
+            if (keysPressed['arrowleft']) { rotz += rotationSpeed * 0.1; keypress = true; }
+            if (keysPressed['arrowright']) { rotz -= rotationSpeed * 0.1; keypress = true; }
+            if (keypress || keyinit) {
+                const logval = power > 2.0 ? 1.0 / Math.log(Math.abs(power)) : 1.44269504088896;
+                let rangecalc = range;
+                if (power < 0 && hypercomplexindex == 0) { rangecalc = range * 8.0; }
+                if ((fractalindex == 0 || fractalindex == 1 || fractalindex == 2) && iteration <= 3 && hypercomplexindex == 0) { rangecalc = range * 1000.0; }
+                if (fractalindex == 3) { rangecalc = Math.pow(range, 1.618) * 5000.0; }
+                if (fractalindex == 4) { rangecalc = Math.pow(range, 1.5) * 1000000.0; }
+                if (fractalindex == 5) { rangecalc = range * 10000000.0; }
+                if (fractalindex == 6) { rangecalc = Math.pow(range, 1.5) * 1000000.0; }
+                if (fractalindex == 9) { rangecalc = range * 1000.0; }
+                if (fractalindex == 10) { rangecalc = range * 100000.0; }
+                if (fractalindex == 11) { rangecalc = range * 100000.0; }
+                if (fractalindex == 13) { rangecalc = range * 100000.0; }
+                gl.uniform1i(fractalindexLocation, fractalindex);
+                gl.uniform1i(hypercomplexindexLocation, hypercomplexindex);
+                gl.uniform1i(ismandelLocation, ismandel);
+                gl.uniform1i(isnewtonLocation, isnewton);
+                gl.uniform1i(isburningLocation, isburning);
+                gl.uniform1f(cxvalLocation, hypercomplexindex == 1 && power == 2.0 ? cxval + 0.00001 : cxval);
+                gl.uniform1f(cyvalLocation, cyval);
+                gl.uniform1f(zoommandelLocation, zoomMandel);
+                gl.uniform1f(cwvalLocation, cwval);
+                gl.uniform1f(zxvalLocation, zxval);
+                gl.uniform1f(zyvalLocation, zyval);
+                gl.uniform1f(zoomjuliaLocation, zoomJulia);
+                gl.uniform1f(zwvalLocation, zwval);
+                gl.uniform1f(powerLocation, power);
+                gl.uniform1f(inverseLocation, inverse);
+                gl.uniform1f(multlightLocation, multlight);
+                gl.uniform1f(cosrotxLocation, Math.cos(rotx));
+                gl.uniform1f(sinrotxLocation, Math.sin(rotx));
+                gl.uniform1f(cosrotzLocation, Math.cos(rotz));
+                gl.uniform1f(sinrotzLocation, Math.sin(rotz));
+                gl.uniform1f(logvalLocation, logval);
+                gl.uniform1f(halflogvalLocation, logval * 0.5);
+                gl.uniform1f(rangeLocation, rangecalc);
+                gl.uniform1i(colorschemeindexLocation, colorschemeindex);
+                gl.uniform1i(iterationLocation, iteration);
+            }
+        }
+
+        function render(currentTimeMs) {
+            updateControls();
+            gl.uniform1f(timeLocation, currentTimeMs * 0.001);
+            gl.clearColor(0, 0, 0, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+            requestAnimationFrame(render);
+        }
+
+        function resize() {
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
+            canvas.width = Math.floor(screenWidth);
+            canvas.height = Math.floor(screenHeight);
+            canvas.style.width = `${screenWidth}px`;
+            canvas.style.height = `${screenHeight}px`;
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+        }
+
+        resize();
+        updateControls(true);
+        render();
+        window.addEventListener('resize', () => { resize(); });
+    </script>
+</body>
+</html>
