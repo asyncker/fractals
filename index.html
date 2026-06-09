@@ -778,7 +778,7 @@
                 if (colorschemeindex == 0) {
                     float hue = (atan(zi, zx) * 0.159154943092 + 0.5);
                     vec3 color1 = vec3(0.0, 0.0, 0.0);
-                    if (hue > 0.0001) {
+                    if (hue != 0.0) {
                         float value = log((zx * zx + zi * zi) + 1.0) * 0.5;
                         color1 = hsv2rgb(vec3(hue, 0.8, clamp(value, 0.0, 1.0)));
                     }
@@ -1240,8 +1240,8 @@
             if (keysPressed['q']) { if (ismandel) { zoomMandel *= 1.0 + (hypercomplexindex == 0 ? zoomSpeed : zoomSpeed * 0.1); } else { zoomJulia *= 1.0 + zoomSpeed; } keypress = true; }
             if (keysPressed['r'] && currentTime - lastChangeTime > 200) { power = Math.floor(power + 1); lastChangeTime = currentTime; keypress = true; }
             if (keysPressed['t'] && currentTime - lastChangeTime > 200) { power = Math.ceil(power - 1); lastChangeTime = currentTime; keypress = true; }
-            if (keysPressed['v'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 13 ? 0 : fractalindex + 1; lastChangeTime = currentTime; keypress = true; }
-            if (keysPressed['c'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 0 ? 13 : fractalindex - 1; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['v'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 18 ? 0 : fractalindex + 1; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['c'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 0 ? 18 : fractalindex - 1; lastChangeTime = currentTime; keypress = true; }
             if (keysPressed['u'] && currentTime - lastChangeTime > 200) { ismandel = ismandel == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }
             if (keysPressed['f'] && currentTime - lastChangeTime > 800) { inverse = inverse == 1.0 ? 0.0 : 1.0; lastChangeTime = currentTime; keypress = true; }
             if (keysPressed['n'] && currentTime - lastChangeTime > 200) { hypercomplexindex = hypercomplexindex == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }

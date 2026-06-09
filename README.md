@@ -26,22 +26,26 @@ Platform support:
 ![](render/pic8.png)
 9. Newton
 ![](render/pic9.png)
+11. Sin
+![](render/pic14.png)
 10. Lyapunov
 ![](render/pic10.png)
-11. Sin
+11. Collatz Newton Mandelbrot (z = ((7 * z + 2) - exp(z) * (5 * z + 2)) / 4)
 ![](render/pic15.png)
 12. Gamma
 ![](render/pic16.png)
 13. Zeta
 ![](render/pic17.png)
-14. Zsinh
+14. Zsinh (Please note that the image is the same as zsin, it's just flipped, which is not conveyed due to float precision)
 ![](render/pic18.png)
-15. Zsin
+15. Zsin (Please note that the image is the same as zsin, it's just flipped, which is not conveyed due to float precision)
 ![](render/pic19.png)
-16. Zeta Burning Ship
+16. Ztan
 ![](render/pic20.png)
-17. Zeta(iz) * Zeta(-iz)
+17. Zeta Burning Ship
 ![](render/pic21.png)
+18. Zeta(iz) * Zeta(-iz)
+![](render/pic22.png)
 
 
 3d fractal:
