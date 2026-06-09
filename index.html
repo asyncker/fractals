@@ -1259,6 +1259,7 @@
             if (keysPressed['j']) { multlight *= 1.0 - (1.0 / 128.0); keypress = true; }
             if (keysPressed['k']) { multlight *= 1.0 + (1.0 / 128.0); keypress = true; }
             if (keysPressed['h'] && currentTime - lastChangeTime > 200) { range = 6.0; rotx = 0.0; rotz = 0.0; if (ismandel) { zoomMandel = 3.0; cxval = 0.0; cyval = 0.0; } else { zoomJulia = 3.0; zxval = 0.0; zyval = 0.0; } lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['l'] && currentTime - lastChangeTime > 200) { range = 6.0; rotx = 0.0; rotz = 0.0; if (ismandel) { zoomMandel = 60.0; cxval = 0.0; cyval = 0.0; } else { zoomJulia = 60.0; zxval = 0.0; zyval = 0.0; } lastChangeTime = currentTime; keypress = true; }
             if (keysPressed['9']) { zoomMandel /= 1.0 + zoomSpeed; keypress = true; }
             if (keysPressed['7']) { zoomMandel *= 1.0 + zoomSpeed; keypress = true; }
             if (keysPressed['8']) { cyval = cyval + zoomMandel * movespeedy * 0.1; keypress = true; }
