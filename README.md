@@ -47,6 +47,10 @@ Platform support:
 19. Zeta(iz) * Zeta(-iz)
 ![](render/pic22.png)
 
+<br />
+Visual similarity of exp and zeta with the same dynamics, comparing all functions, only exp and zeta behaved almost identically:<br />
+https://asyncker.github.io/zeta-trigonometry/img/exp_pow.png <br />
+https://asyncker.github.io/zeta-trigonometry/img/zeta_pow.png <br /> <br />
 
 3d fractal:
 1. Mandelbulb
