@@ -468,6 +468,7 @@
                 float zx_tmp = 0.0, zi_tmp = 0.0, zx2 = 0.0, zi2 = 0.0, px = -0.5, pi = 0.0, zxsubstzxtmp, zisubstzitmp;
                 float powval = power * 0.5, nu = 0.0, znorm = 0.0, zatan2 = 0.0;
                 int n = 0;
+                int iteration = 0;
                 for (int i = 0; i < maxiter; i++) {
                     zxpow = zx * zx;
                     zipow = zi * zi;
@@ -554,13 +555,13 @@
                         vec2 z = ctan(vec2(zx_prev, zi_prev));
                         zx = z.x;
                         zi = z.y;
-                        if (n == iteration || n == 160) { n = iteration; break; }
+                        if (n == 160) { n = iteration; break; }
                     }
                     if (fractalindex == 10) { // gamma
                         vec2 z = cgamma(vec2(zx_prev, zi_prev));
                         zx = z.x;
                         zi = z.y;
-                        if (n == iteration || n == 110) { n = iteration; break; }
+                        if (n == 110) { n = iteration; break; }
                     }
                     if (fractalindex == 11) { // sin
                         vec2 z = csin(vec2(zx_prev, zi_prev));
@@ -571,43 +572,37 @@
                         vec2 z = czeta(vec2(zx_prev, zi_prev));
                         zx = z.x;
                         zi = z.y;
-                        if (n == iteration || n == 110) { n = iteration; break; }
-                    }
-                    if (fractalindex == 13) { // zeta
-                        vec2 z = czeta(vec2(zx_prev, zi_prev));
-                        zx = z.x;
-                        zi = z.y;
-                        if (n == iteration || n == 110) { n = iteration; break; }
+                        if (n == 110) { n = iteration; break; }
                     }
                     if (fractalindex == 14) { // zsinh
                         vec2 z = czsinh(vec2(zx_prev, zi_prev));
                         zx = z.x;
                         zi = z.y;
-                        if (n == iteration || n == 110) { n = iteration; break; }
+                        if (n == 110) { n = iteration; break; }
                     }
                     if (fractalindex == 15) { // zeta identity
                         vec2 z = czeta(cmul(vec2(zx_prev, zi_prev), vec2(0.0, 1.0))) * czeta(cmul(vec2(zx_prev, zi_prev), vec2(0.0, -1.0)));
                         zx = z.x;
                         zi = z.y;
-                        if (n == iteration || n == 110) { n = iteration; break; }
+                        if (n == 110) { n = iteration; break; }
                     }
                     if (fractalindex == 16) { // zsin
                         vec2 z = czsin(vec2(zx_prev, zi_prev));
                         zx = z.x;
                         zi = z.y;
-                        if (n == iteration || n == 110) { n = iteration; break; }
+                        if (n == 110) { n = iteration; break; }
                     }
                     if (fractalindex == 17) { // zcos
                         vec2 z = czcos(vec2(zx_prev, zi_prev));
                         zx = z.x;
                         zi = z.y;
-                        if (n == iteration || n == 110) { n = iteration; break; }
+                        if (n == 110) { n = iteration; break; }
                     }
                     if (fractalindex == 18) { // ztan
                         vec2 z = cztan(vec2(zx_prev, zi_prev));
                         zx = z.x;
                         zi = z.y;
-                        if (n == iteration || n == 80) { n = iteration; break; }
+                        if (n == 80) { n = iteration; break; }
                     }
                     zx += cx;
                     zi += ci;
@@ -620,7 +615,7 @@
                 if (colorschemeindex == 0) {
                     float hue = (atan(zi, zx) * 0.159154943092 + 0.5);
                     vec3 color1 = vec3(0.0, 0.0, 0.0);
-                    if (hue != 0.00) {
+                    if (hue != 0.0) {
                         float value = log((zx * zx + zi * zi) + 1.0) * 0.5;
                         color1 = hsv2rgb(vec3(hue, 0.8, clamp(value, 0.0, 1.0)));
                     }
@@ -658,7 +653,7 @@
                 float zi = ismandel == 1 ? ci : uv.y;
                 const int maxiter = 220;
                 float zinvnormpow, zx_prev = 0.0, zi_prev = 0.0, zxpow = 0.0, zipow = 0.0;
-                float zx_tmp = 0.0, zi_tmp = 0.0, zx2 = 0.0, zi2 = 0.0, px = -0.5, pii = 0.0, zxsubstzxtmp, zisubstzitmp;
+                float zx_tmp = 0.0, zi_tmp = 0.0, zx2 = 0.0, zi2 = 0.0, px = -0.5, pii = 0.0;
                 float powval = power * 0.5, nu = 0.0, znorm = 0.0, zatan2 = 0.0, rangeval = 1.0 / (50.0 * range);
                 if (fractalindex == 4) {
                     rangeval = 1.0 / (0.000005 * range);
@@ -748,7 +743,7 @@
                         derv = cmul(cdzeta(z_func), z_derv);
                         z = z_prev - cmul(func - vec2(0.0, 0.0), cinv(derv));
 
-                        // it's zeta(z)/zeta'(z)
+                        //zeta(z)/zeta'(z):
                         //func = czeta(z);
                         //derv = cdzeta(z);
                         //z = z_prev - cmul(func, cinv(derv));
