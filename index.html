@@ -614,7 +614,7 @@
                 if (colorschemeindex == 0) {
                     float hue = (atan(zi, zx) * 0.159154943092 + 0.5);
                     vec3 color1 = vec3(0.0, 0.0, 0.0);
-                    if (hue != 0.0) {
+                    if (hue > 0.000001) {
                         float value = log((zx * zx + zi * zi) + 1.0) * 0.5;
                         color1 = hsv2rgb(vec3(hue, 0.8, clamp(value, 0.0, 1.0)));
                     }
