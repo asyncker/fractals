@@ -468,7 +468,6 @@
                 float zx_tmp = 0.0, zi_tmp = 0.0, zx2 = 0.0, zi2 = 0.0, px = -0.5, pi = 0.0, zxsubstzxtmp, zisubstzitmp;
                 float powval = power * 0.5, nu = 0.0, znorm = 0.0, zatan2 = 0.0;
                 int n = 0;
-                int iteration = 0;
                 for (int i = 0; i < maxiter; i++) {
                     zxpow = zx * zx;
                     zipow = zi * zi;
@@ -615,7 +614,7 @@
                 if (colorschemeindex == 0) {
                     float hue = (atan(zi, zx) * 0.159154943092 + 0.5);
                     vec3 color1 = vec3(0.0, 0.0, 0.0);
-                    if (hue > 0.00001) {
+                    if (hue != 0.0) {
                         float value = log((zx * zx + zi * zi) + 1.0) * 0.5;
                         color1 = hsv2rgb(vec3(hue, 0.8, clamp(value, 0.0, 1.0)));
                     }
