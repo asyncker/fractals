@@ -41,89 +41,90 @@
         <div class="control-group">
             <label>Power:</label>
             <div class="control-buttons">
-                <button class="control-btn" data-index="0" onclick="power = -2; updateControls(true);">-2</button>
-                <button class="control-btn" data-index="1" onclick="power = -1; updateControls(true);">-1</button>
-                <button class="control-btn" data-index="2" onclick="power = hypercomplexindex == 1 || hypercomplexindex == 2 || hypercomplexindex == 4 ? 1.00001 : 1.0; updateControls(true);">1</button>
-                <button class="control-btn" data-index="3" onclick="power = 2; updateControls(true);">2</button>
-                <button class="control-btn" data-index="4" onclick="power = 3; updateControls(true);">3</button>
+                <button class="control-btn" onclick="power = -2; updateControls(true);">-2</button>
+                <button class="control-btn" onclick="power = -1; updateControls(true);">-1</button>
+                <button class="control-btn" onclick="power = hypercomplexindex == 1 || hypercomplexindex == 2 || hypercomplexindex == 4 ? 1.00001 : 1.0; updateControls(true);">1</button>
+                <button class="control-btn" onclick="power = 2; updateControls(true);">2</button>
+                <button class="control-btn" onclick="power = 3; updateControls(true);">3</button>
             </div>
         </div>
         <div class="control-group">
             <label>Fractal Type:</label>
             <div class="control-buttons">
-                <button class="control-btn" data-index="0" onclick="fractalindex = 0; updateControls(true);">Mandelbrot</button>
-                <button class="control-btn" data-index="1" onclick="fractalindex = 1; updateControls(true);">Tricorn</button>
-                <button class="control-btn" data-index="2" onclick="fractalindex = 2; updateControls(true);">Burning Ship</button>
+                <button class="control-btn" onclick="fractalindex = 0; updateControls(true);">Mandelbrot</button>
+                <button class="control-btn" onclick="fractalindex = 1; updateControls(true);">Tricorn</button>
+                <button class="control-btn" onclick="fractalindex = 2; updateControls(true);">Burning Ship</button>
             </div>
             <div class="control-buttons">
-                <button class="control-btn" data-index="3" onclick="fractalindex = 3; hypercomplexindex = 0; updateControls(true);">Collatz cos</button>
-                <button class="control-btn" data-index="4" onclick="fractalindex = 4; hypercomplexindex = 0; updateControls(true);">Collatz exp</button>
-                <button class="control-btn" data-index="5" onclick="fractalindex = 5; hypercomplexindex = 0; updateControls(true);">Collatz exp^i</button>
+                <button class="control-btn" onclick="fractalindex = 3; hypercomplexindex = 0; updateControls(true);">Collatz cos</button>
+                <button class="control-btn" onclick="fractalindex = 4; hypercomplexindex = 0; updateControls(true);">Collatz exp</button>
+                <button class="control-btn" onclick="fractalindex = 5; hypercomplexindex = 0; updateControls(true);">Collatz exp^i</button>
             </div>
             <div class="control-buttons">
-                <button class="control-btn" data-index="6" onclick="fractalindex = 6; hypercomplexindex = 0; updateControls(true);">exp^z</button>
-                <button class="control-btn" data-index="7" onclick="fractalindex = 7; hypercomplexindex = 0; updateControls(true);">Phoenix</button>
-                <button class="control-btn" data-index="8" onclick="fractalindex = 8; hypercomplexindex = 0; updateControls(true);">Feather</button>
+                <button class="control-btn" onclick="fractalindex = 6; hypercomplexindex = 0; updateControls(true);">exp^z</button>
+                <button class="control-btn" onclick="fractalindex = 7; hypercomplexindex = 0; updateControls(true);">Phoenix</button>
+                <button class="control-btn" onclick="fractalindex = 8; hypercomplexindex = 0; updateControls(true);">Feather</button>
             </div>
             <div class="control-buttons">
-                <button class="control-btn" data-index="9" onclick="fractalindex = 9; hypercomplexindex = 0; updateControls(true);">Tan</button>
-                <button class="control-btn" data-index="13" onclick="fractalindex = 12; hypercomplexindex = 0; updateControls(true);">Lyapunov</button>
+                <button class="control-btn" onclick="fractalindex = 9; hypercomplexindex = 0; updateControls(true);">Tan</button>
+                <button class="control-btn" onclick="fractalindex = 12; hypercomplexindex = 0; updateControls(true);">Lyapunov</button>
             </div>
             <div class="control-buttons">
-                <button class="control-btn" data-index="11" onclick="fractalindex = 11; hypercomplexindex = 0; updateControls(true);">Sin</button>
-                <button class="control-btn" data-index="10" onclick="fractalindex = 10; hypercomplexindex = 0; updateControls(true);">Gamma</button>
-                <button class="control-btn" data-index="13" onclick="fractalindex = 13; hypercomplexindex = 0; updateControls(true);">Zeta</button>
-                <button class="control-btn" data-index="10" onclick="fractalindex = 14; hypercomplexindex = 0; updateControls(true);">Zsinh</button>
+                <button class="control-btn" onclick="fractalindex = 11; hypercomplexindex = 0; updateControls(true);">Sin</button>
+                <button class="control-btn" onclick="fractalindex = 10; hypercomplexindex = 0; updateControls(true);">Gamma</button>
+                <button class="control-btn" onclick="fractalindex = 13; hypercomplexindex = 0; updateControls(true);">Zeta</button>
             </div>
             <div class="control-buttons">
-                <button class="control-btn" data-index="10" onclick="fractalindex = 15; hypercomplexindex = 0; updateControls(true);">Zeta(iz)*Zeta(-iz)</button>
-                <button class="control-btn" data-index="10" onclick="fractalindex = 16; hypercomplexindex = 0; updateControls(true);">Zsin</button>
-                <button class="control-btn" data-index="11" onclick="fractalindex = 17; hypercomplexindex = 0; updateControls(true);">Zcos</button>
-                <button class="control-btn" data-index="11" onclick="fractalindex = 18; hypercomplexindex = 0; updateControls(true);">Ztan</button>
+                <button class="control-btn" onclick="fractalindex = 14; hypercomplexindex = 0; updateControls(true);">Zsinh</button>
+                <button class="control-btn" onclick="fractalindex = 15; hypercomplexindex = 0; updateControls(true);">Zcosh</button>
+            </div>
+            <div class="control-buttons">
+                <button class="control-btn" onclick="fractalindex = 16; hypercomplexindex = 0; updateControls(true);">Ztanh</button>
+                <button class="control-btn" onclick="fractalindex = 17; hypercomplexindex = 0; updateControls(true);">Zeta(z)*Zeta(-z)</button>
             </div>
         </div>
         <div class="control-group">
             <label>2D/3D/4D Type:</label>
             <div class="control-buttons">
-                <button class="control-btn" data-hyper="0" onclick="hypercomplexindex = 0; updateControls(true);">Mandelbrot 2d</button>
+                <button class="control-btn" onclick="hypercomplexindex = 0; updateControls(true);">Mandelbrot 2d</button>
             </div>
             <div class="control-buttons">
-                <button class="control-btn" data-hyper="1" onclick="hypercomplexindex = 1; updateControls(true);">Mandelbulb 3d phi</button>
-                <button class="control-btn" data-hyper="1" onclick="hypercomplexindex = 2; updateControls(true);">Mandelbulb 3d theta</button>
+                <button class="control-btn" onclick="hypercomplexindex = 1; updateControls(true);">Mandelbulb 3d phi</button>
+                <button class="control-btn" onclick="hypercomplexindex = 2; updateControls(true);">Mandelbulb 3d theta</button>
             </div>
             <div class="control-buttons">
-                <button class="control-btn" data-hyper="3" onclick="hypercomplexindex = 4; updateControls(true);">Quaternion 4d</button>
-                <button class="control-btn" data-hyper="4" onclick="hypercomplexindex = 5; updateControls(true);">Bicomplex 4d</button>
+                <button class="control-btn" onclick="hypercomplexindex = 4; updateControls(true);">Quaternion 4d</button>
+                <button class="control-btn" onclick="hypercomplexindex = 5; updateControls(true);">Bicomplex 4d</button>
             </div>
             <div class="control-buttons">
-                <button class="control-btn" data-hyper="2" onclick="hypercomplexindex = 3; updateControls(true);">Mandelbox with bug ): 3d</button>
+                <button class="control-btn" onclick="hypercomplexindex = 3; updateControls(true);">Mandelbox with bug ): 3d</button>
             </div>
         </div>
         <div class="control-group">
             <label>Switch:</label>
             <div class="control-buttons">
-                <button class="control-btn" data-index="0" onclick="ismandel = ismandel == 1 ? 0 : 1; updateControls(true);">Mandel/Julia</button>
-                <button class="control-btn" data-index="0" onclick="inverse = inverse == 1 ? 0 : 1; updateControls(true);">1 / c</button>
-                <button class="control-btn" data-index="0" onclick="isnewton = isnewton == 1 ? 0 : 1; updateControls(true);">Newton</button>
-                <button class="control-btn" data-index="0" onclick="isburning = isburning == 1 ? 0 : 1; updateControls(true);">Burning</button>
+                <button class="control-btn" onclick="ismandel = ismandel == 1 ? 0 : 1; updateControls(true);">Mandel/Julia</button>
+                <button class="control-btn" onclick="inverse = inverse == 1 ? 0 : 1; updateControls(true);">1 / c</button>
+                <button class="control-btn" onclick="isnewton = isnewton == 1 ? 0 : 1; updateControls(true);">Newton</button>
+                <button class="control-btn" onclick="isburning = isburning == 1 ? 0 : 1; updateControls(true);">Burning</button>
             </div>
         </div>
         <div class="control-group">
             <label>Color:</label>
             <div class="control-buttons">
-                <button class="control-btn" data-index="0" onclick="colorschemeindex = 1; updateControls(true);">Blue gradient</button>
-                <button class="control-btn" data-index="0" onclick="colorschemeindex = 0; updateControls(true);">RGB</button>
+                <button class="control-btn" onclick="colorschemeindex = 1; updateControls(true);">Blue gradient</button>
+                <button class="control-btn" onclick="colorschemeindex = 0; updateControls(true);">RGB</button>
             </div>
         </div>
         <div class="control-group">
             <label>Iteration:</label>
             <div class="control-buttons">
-                <button class="control-btn" data-index="0" onclick="iteration = 1; updateControls(true);">1</button>
-                <button class="control-btn" data-index="0" onclick="iteration = 2; updateControls(true);">2</button>
-                <button class="control-btn" data-index="0" onclick="iteration = 10; updateControls(true);">10</button>
-                <button class="control-btn" data-index="0" onclick="iteration = 30; updateControls(true);">30</button>
-                <button class="control-btn" data-index="0" onclick="iteration = 100; updateControls(true);">100</button>
-                <button class="control-btn" data-index="0" onclick="iteration = 220; updateControls(true);">220</button>
+                <button class="control-btn" onclick="iteration = 1; updateControls(true);">1</button>
+                <button class="control-btn" onclick="iteration = 2; updateControls(true);">2</button>
+                <button class="control-btn" onclick="iteration = 10; updateControls(true);">10</button>
+                <button class="control-btn" onclick="iteration = 30; updateControls(true);">30</button>
+                <button class="control-btn" onclick="iteration = 100; updateControls(true);">100</button>
+                <button class="control-btn" onclick="iteration = 220; updateControls(true);">220</button>
             </div>
         </div>
         <div class="shortcuts">
@@ -226,7 +227,6 @@
 
             float sinh(float x) { return (exp(x) - exp(-x)) * 0.5; }
             float cosh(float x) { return (exp(x) + exp(-x)) * 0.5; }
-            float tanh(float x) { return sinh(x) / cosh(x); }
             vec2 conj(vec2 z) { return vec2(z.x, -z.y); }
             vec2 cmul_i(vec2 z) { return vec2(-z.y, z.x); }
             vec2 cinv(vec2 z) { float r = 1.0 / (z.x * z.x + z.y * z.y); return vec2(z.x * r, -z.y * r); }
@@ -244,8 +244,6 @@
             vec2 csinh(vec2 z) { return vec2(sinh(z.x) * cos(z.y), cosh(z.x) * sin(z.y)); }
             vec2 ccosh(vec2 z) { return vec2(cosh(z.x) * cos(z.y), sinh(z.x) * sin(z.y)); }
             vec2 ctan(vec2 z) { return cdiv(csin(z), ccos(z)); }
-            vec2 csec(vec2 z) { return cinv(ccos(z)); }
-            vec2 ccsc(vec2 z) { return cinv(csin(z)); }
             vec2 ccot(vec2 z) { return cinv(ctan(z)); }
             vec2 cpow(vec2 z, float w) {
                 if (w == 0.0) { return vec2(1.0, 0.0); }
@@ -270,21 +268,13 @@
                 return 2.50662827463 * cmul(x, cexp(cmul(clog(t), w + vec2(0.5, 0.0)) - t));
             }
 
-            vec2 cgamma_left(vec2 z) {
-                return PI * cinv(cmul(csin(z * PI), cgamma_right(vec2(1.0, 0.0) - z)));
-            }
-
-            vec2 cgamma(vec2 z) {
-                if (z.x < 0.5) {
-                    return cgamma_left(z);
-                }
-                return cgamma_right(z);
-            }
+            vec2 cgamma_left(vec2 z) { return PI * cinv(cmul(csin(z * PI), cgamma_right(vec2(1.0, 0.0) - z))); }
+            vec2 cgamma(vec2 z) { return z.x < 0.5 ? cgamma_left(z) : cgamma_right(z); }
+            vec2 cbeta(vec2 z, vec2 w) { return cmul(cmul(cgamma(z), cgamma(w)), cinv(cgamma(z + w))); }
 
             vec2 cdigamma(vec2 z) {
                 vec2 s = vec2(0.0, 0.0);
-                const int SHIFT = 32;
-                for(int k = 0; k < SHIFT; ++k) {
+                for (int k = 0; k < 32; ++k) {
                     s = csub(s, cinv(z));
                     z += vec2(1.0, 0.0);
                 }
@@ -306,10 +296,6 @@
                 result = cadd(result, cmul(inv12, vec2(691.0 / 32760.0, 0.0)));
                 result = csub(result, cmul(inv14, vec2(1.0 / 12.0,0.0)));
                 return cadd(result, s);
-            }
-
-            vec2 cbeta(vec2 z, vec2 w) {
-                return cmul(cmul(cgamma(z), cgamma(w)), cinv(cgamma(z + w)));
             }
 
             vec4 czeta_helper(vec2 z, mat4 ns, mat4 bases) {
@@ -407,39 +393,15 @@
                     z = conj(z);
                     conjugate_mask.y *= -1.0;
                 }
-                vec2 result;
-                if (z.x < 0.0) {
-                    result = ceta_left(z);
-                } else {
-                    result = ceta_right(z);
-                }
+                vec2 result = z.x < 0.0 ? ceta_left(z) : ceta_right(z);
                 return result * conjugate_mask;
             }
 
-            vec2 czeta(vec2 z) {
-                return cmul(ceta(z), cinv(vec2(1.0, 0.0) - cexp(0.69314718056 * (vec2(1.0, 0.0) - z))));
-            }
-
-            vec2 czsin(vec2 z) {
-                return cdiv(czeta(cmul(z, vec2(0.0, 1.0))) - czeta(cmul(z, vec2(0.0, -1.0))), vec2(0.0, 2.0));
-            }
-
-            vec2 czcos(vec2 z) {
-                return czeta(cmul(z, vec2(0.0, 1.0))) + czeta(cmul(z, vec2(0.0, -1.0))) * 0.5;
-            }
-
-            vec2 czsinh(vec2 z) {
-                return czeta(z) - czeta(-z) / 2.0;
-            }
-
-            vec2 cztan(vec2 z) {
-                return cdiv(czsin(z), czcos(z));
-            }
-
-            vec2 cdzeta(vec2 z) {
-                vec2 dz = vec2(0.0, 0.001);
-                return cmul(czeta(z + dz) - czeta(z - dz), cinv(2.0 * dz));
-            }
+            vec2 czeta(vec2 z) { return cmul(ceta(z), cinv(vec2(1.0, 0.0) - cexp(0.69314718056 * (vec2(1.0, 0.0) - z)))); }
+            vec2 czsinh(vec2 z) { return (czeta(z) - czeta(-z)) * 0.5; }
+            vec2 czcosh(vec2 z) { return (czeta(z) + czeta(-z)) * 0.5; }
+            vec2 cztanh(vec2 z) { return cdiv(czsinh(z), czcosh(z)); }
+            vec2 cdzeta(vec2 z) { vec2 dz = vec2(0.0, 0.001); return cmul(czeta(z + dz) - czeta(z - dz), cinv(2.0 * dz)); }
 
             vec3 hsv2rgb(vec3 c) {
                 vec4 K = vec4(1.0, 0.666666666667, 0.333333333333, 3.0);
@@ -467,7 +429,7 @@
                 float zx_prev = 0.0, zi_prev = 0.0, zxpow = 0.0, zipow = 0.0;
                 float zx_tmp = 0.0, zi_tmp = 0.0, zx2 = 0.0, zi2 = 0.0, px = -0.5, pi = 0.0, zxsubstzxtmp, zisubstzitmp;
                 float powval = power * 0.5, nu = 0.0, znorm = 0.0, zatan2 = 0.0;
-                int n = 0;
+                int n = 0, maxn = (fractalindex >= 13 || fractalindex == 10) && iteration >= 110 ? 110 : iteration;
                 for (int i = 0; i < maxiter; i++) {
                     zxpow = zx * zx;
                     zipow = zi * zi;
@@ -552,61 +514,40 @@
                     }
                     if (fractalindex == 9) { // ctan
                         vec2 z = ctan(vec2(zx_prev, zi_prev));
-                        zx = z.x;
-                        zi = z.y;
-                        if (n == 160) { n = iteration; break; }
+                        zx = z.x; zi = z.y;
                     }
                     if (fractalindex == 10) { // gamma
                         vec2 z = cgamma(vec2(zx_prev, zi_prev));
-                        zx = z.x;
-                        zi = z.y;
-                        if (n == 110) { n = iteration; break; }
+                        zx = z.x; zi = z.y;
                     }
                     if (fractalindex == 11) { // sin
                         vec2 z = csin(vec2(zx_prev, zi_prev));
-                        zx = z.x;
-                        zi = z.y;
+                        zx = z.x; zi = z.y;
                     }
                     if (fractalindex == 13) { // zeta
                         vec2 z = czeta(vec2(zx_prev, zi_prev));
-                        zx = z.x;
-                        zi = z.y;
-                        if (n == 110) { n = iteration; break; }
+                        zx = z.x; zi = z.y;
                     }
                     if (fractalindex == 14) { // zsinh
                         vec2 z = czsinh(vec2(zx_prev, zi_prev));
-                        zx = z.x;
-                        zi = z.y;
-                        if (n == 110) { n = iteration; break; }
+                        zx = z.x; zi = z.y;
                     }
-                    if (fractalindex == 15) { // zeta identity
-                        vec2 z = czeta(cmul(vec2(zx_prev, zi_prev), vec2(0.0, 1.0))) * czeta(cmul(vec2(zx_prev, zi_prev), vec2(0.0, -1.0)));
-                        zx = z.x;
-                        zi = z.y;
-                        if (n == 110) { n = iteration; break; }
+                    if (fractalindex == 15) { // zcosh
+                        vec2 z = czcosh(vec2(zx_prev, zi_prev));
+                        zx = z.x; zi = z.y;
                     }
-                    if (fractalindex == 16) { // zsin
-                        vec2 z = czsin(vec2(zx_prev, zi_prev));
-                        zx = z.x;
-                        zi = z.y;
-                        if (n == 110) { n = iteration; break; }
+                    if (fractalindex == 16) { // ztanh
+                        vec2 z = cztanh(vec2(zx_prev, zi_prev));
+                        zx = z.x; zi = z.y;
                     }
-                    if (fractalindex == 17) { // zcos
-                        vec2 z = czcos(vec2(zx_prev, zi_prev));
-                        zx = z.x;
-                        zi = z.y;
-                        if (n == 110) { n = iteration; break; }
-                    }
-                    if (fractalindex == 18) { // ztan
-                        vec2 z = cztan(vec2(zx_prev, zi_prev));
-                        zx = z.x;
-                        zi = z.y;
-                        if (n == 80) { n = iteration; break; }
+                    if (fractalindex == 17) { // zeta identity
+                        vec2 z = czeta(vec2(zx_prev, zi_prev)) * czeta(vec2(zx_prev, zi_prev));
+                        zx = z.x; zi = z.y;
                     }
                     zx += cx;
                     zi += ci;
                     n += 1;
-                    if (n >= iteration) {
+                    if (n >= maxn) {
                         n = iteration;
                         break;
                     }
@@ -654,118 +595,77 @@
                 float zinvnormpow, zx_prev = 0.0, zi_prev = 0.0, zxpow = 0.0, zipow = 0.0;
                 float zx_tmp = 0.0, zi_tmp = 0.0, zx2 = 0.0, zi2 = 0.0, px = -0.5, pii = 0.0;
                 float powval = power * 0.5, nu = 0.0, znorm = 0.0, zatan2 = 0.0, rangeval = 1.0 / (50.0 * range);
-                if (fractalindex == 4) {
-                    rangeval = 1.0 / (0.000005 * range);
-                }
-                float pi = 3.14159265359;
+                if (fractalindex == 4) { rangeval = 1.0 / (0.000005 * range); }
                 vec2 c = vec2(cx, ci);
                 vec2 z = vec2(zx, zi);
                 vec2 z_prev = z, func, derv;
-                int n = 0;
+                int n = 0, maxn = fractalindex >= 13 && iteration >= 110 ? 110 : iteration;
                 for (int i = 0; i < maxiter; i++) {
                     z_prev = z;
+                    vec2 z_func = cpow(z, power);
+                    vec2 z_derv = power * cpow(z, power - 1.0);
                     if (fractalindex < 3) {
-                        func = cpow(z, power);
-                        derv = power * cpow(z, power - 1.0);
-                        z = z_prev - cmul(func - vec2(1.0, 0.0), cinv(derv));
+                        z = z_prev - cmul(z_func - vec2(1.0, 0.0), cinv(z_derv));
                     }
                     if (fractalindex == 3) { // collatz
-                        vec2 z_func = cpow(z, power);
-                        vec2 z_derv = power * cpow(z, power - 1.0);
-                        func = ((7.0 * z_func + vec2(2.0, 0.0)) - cmul(ccos(pi * z_func), (5.0 * z_func + vec2(2.0, 0.0)))) * 0.25;
-                        derv = cmul(0.25 * (vec2(7.0, 0.0) + pi * cmul(csin(pi * z_func), (5.0 * z_func + vec2(2.0, 0.0))) - 5.0 * ccos(pi * z_func)), z_derv);
+                        func = ((7.0 * z_func + vec2(2.0, 0.0)) - cmul(ccos(PI * z_func), (5.0 * z_func + vec2(2.0, 0.0)))) * 0.25;
+                        derv = cmul(0.25 * (vec2(7.0, 0.0) + PI * cmul(csin(PI * z_func), (5.0 * z_func + vec2(2.0, 0.0))) - 5.0 * ccos(PI * z_func)), z_derv);
                         z = z_prev - cmul(func - vec2(0.0, 0.0), cinv(derv));
                     }
                     if (fractalindex == 4) { // collatz_mandelbrot
-                        vec2 z_func = cpow(z, power);
-                        vec2 z_derv = power * cpow(z, power - 1.0);
                         func = ((7.0 * z_func + vec2(2.0, 0.0)) - cmul(cexp(z_func), (5.0 * z_func + vec2(2.0, 0.0)))) * 0.25;
                         derv = cmul(0.25 * (vec2(7.0, 0.0) - cmul(cexp(z_func), 5.0 * z_func + vec2(7.0, 0.0))), z_derv);
                         z = z_prev - cmul(func - vec2(1.0, 0.0), cinv(derv));
                     }
                     if (fractalindex == 5) { // collatz_like_mandelbrot
-                        vec2 z_func = cpow(z, power);
-                        vec2 z_derv = power * cpow(z, power - 1.0);
-                        func = ((7.0 * z_func + vec2(2.0, 0.0)) - cmul(cexp(cmul(z_func, vec2(0.0, pi))), (5.0 * z_func + vec2(2.0, 0.0)))) * 0.25;
-                        derv = cmul((vec2(7.0, 0.0) - cmul(cexp(cmul(z_func, vec2(0.0, pi))), vec2(5.0, 0.0) + cmul(vec2(0.0, pi), 5.0 * z_func + vec2(2.0, 0.0)))) * 0.25, z_derv);
+                        func = ((7.0 * z_func + vec2(2.0, 0.0)) - cmul(cexp(cmul(z_func, vec2(0.0, PI))), (5.0 * z_func + vec2(2.0, 0.0)))) * 0.25;
+                        derv = cmul((vec2(7.0, 0.0) - cmul(cexp(cmul(z_func, vec2(0.0, PI))), vec2(5.0, 0.0) + cmul(vec2(0.0, PI), 5.0 * z_func + vec2(2.0, 0.0)))) * 0.25, z_derv);
                         z = z_prev - cmul(func - vec2(0.0, 0.0), cinv(derv));
                     }
                     if (fractalindex == 6) { // e ^ z
-                        vec2 z_func = cpow(z, power);
-                        vec2 z_derv = power * cpow(z, power - 1.0);
                         func = cexp(z_func);
                         derv = cmul(cexp(z_func), z_derv);
                         z = z_prev - cmul(func - vec2(1.0, 0.0), cinv(derv));
                     }
                     if (fractalindex == 7) { // phoenix
-                        func = cpow(z, power);
-                        derv = power * cpow(z, power - 1.0);
-                        z = z_prev - cmul(func - vec2(1.0, 0.0), cinv(derv));
+                        z = z_prev - cmul(z_func - vec2(1.0, 0.0), cinv(z_derv));
                     }
                     if (fractalindex == 8) { // feather
-                        func = cmul(z, cinv(cpow(z, power) + vec2(1.0, 0.0)));
-                        vec2 z_pow = cpow(z, power);
-                        derv = cmul(vec2(1.0, 0.0) - cmul(vec2(power - 1.0, 0.0), z_pow), cinv(cpow(z_pow + vec2(1.0, 0.0), 2.0)));
-                        z = z_prev - cmul(func - vec2(1.0, 0.0), cinv(derv));
+                        //func = cmul(z, cinv(cpow(z, power) + vec2(1.0, 0.0)));
+                        //vec2 z_pow = cpow(z, power);
+                        //derv = cmul(vec2(1.0, 0.0) - cmul(vec2(power - 1.0, 0.0), z_pow), cinv(cpow(z_pow + vec2(1.0, 0.0), 2.0)));
+                        z = z_prev - cmul(z_func - vec2(1.0, 0.0), cinv(z_derv));
                     }
                     if (fractalindex == 9) { // tan
-                        vec2 z_func = cpow(z, power);
-                        vec2 z_derv = power * cpow(z, power - 1.0);
                         func = ctan(z_func);
                         derv = cmul(vec2(1.0, 0.0) + cpow(ccot(z_func), 2.0), z_derv);
                         z = z_prev - cmul(func, cinv(derv));
                     }
                     if (fractalindex == 10) { // gamma
-                        vec2 z_func = cpow(z, power);
-                        vec2 z_derv = power * cpow(z, power - 1.0);
                         func = cgamma(z_func);
                         derv = cmul(cdigamma(z_func), cmul(func, z_derv));
                         z = z_prev - cmul(func - vec2(1.0, 0.0), cinv(derv));
-                        if (n >= iteration / 3) {
-                            zx = z_prev.x;
-                            zi = z_prev.y;
-                            n = maxiter;
-                            break;
-                        }
                     }
                     if (fractalindex == 11) { // sin
-                        vec2 z_func = cpow(z, power);
-                        vec2 z_derv = power * cpow(z, power - 1.0);
                         func = csin(z_func);
                         derv = cmul(ccos(z_func), z_derv);
                         z = z_prev - cmul(func, cinv(derv));
                     }
                     if (fractalindex == 13) { // zeta
-                        vec2 z_func = cpow(z, power);
-                        vec2 z_derv = power * cpow(z, power - 1.0);
                         func = czeta(z_func);
                         derv = cmul(cdzeta(z_func), z_derv);
                         z = z_prev - cmul(func - vec2(0.0, 0.0), cinv(derv));
-
-                        //zeta(z)/zeta'(z):
                         //func = czeta(z);
                         //derv = cdzeta(z);
                         //z = z_prev - cmul(func, cinv(derv));
-                        if (n == iteration / 3) {
-                            zx = z_prev.x;
-                            zi = z_prev.y;
-                            n = maxiter;
-                            break;
-                        }
                     }
                     n += 1;
                     z += c;
                     znorm = (z.x - z_prev.x) * (z.x - z_prev.x) + (z.y - z_prev.y) * (z.y - z_prev.y);
-                    if (n >= iteration) {
+                    if (znorm < rangeval || n >= maxn) {
                         zx = z_prev.x;
                         zi = z_prev.y;
-                        n = maxiter;
-                        break;
-                    }
-                    if (znorm < rangeval) {
-                        zx = z_prev.x;
-                        zi = z_prev.y;
-                        n = i;
+                        n = n >= maxn ? maxiter : i;
                         break;
                     }
                 }
@@ -1039,11 +939,7 @@
             vec3 hue(float H) {
                 float W = sin(H * 0.0174532925199);
                 float U = cos(H * 0.0174532925199);
-                vec3 ret;
-                ret.x = 0.587 - 0.587 * U + 0.330 * W;
-                ret.z = 0.587 - 0.587 * U - 1.050 * W;
-                ret.y = 0.587 + 0.413 * U + 0.035 * W;
-                return ret;
+                return vec3(0.587 - 0.587 * U + 0.330 * W, 0.587 - 0.587 * U - 1.050 * W, 0.587 + 0.413 * U + 0.035 * W);
             }
 
             void mandel3d_calc() {
@@ -1126,7 +1022,15 @@
                 }
             }
         `;
-        initGL(shaderCode);
+
+        const minify = (code) => {
+            let result = code.replace(/\/\/.*$|\/\*[\s\S]*?\*\//gm, '');
+            result = result.replace(/^\s*[\r\n]/gm, '');
+            result = result.replace(/^[ \t]+|[ \t]+$/gm, '');
+            return result;
+        };
+
+        initGL(minify(shaderCode));
 
         function startRecording() {
             const stream = canvas.captureStream(30);
