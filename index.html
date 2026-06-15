@@ -398,8 +398,8 @@
             }
 
             vec2 czeta(vec2 z) { return cmul(ceta(z), cinv(vec2(1.0, 0.0) - cexp(0.69314718056 * (vec2(1.0, 0.0) - z)))); }
-            vec2 czsinh(vec2 z) { return (czeta(z + 0.5) - czeta(-z + 0.5)) * 0.5; }
-            vec2 czcosh(vec2 z) { return (czeta(z + 0.5) + czeta(-z + 0.5)) * 0.5; }
+            vec2 czsinh(vec2 z) { return (czeta(z + vec2(0.5, 0.0)) - czeta(-z + vec2(0.5, 0.0))) * 0.5; }
+            vec2 czcosh(vec2 z) { return (czeta(z + vec2(0.5, 0.0)) + czeta(-z + vec2(0.5, 0.0))) * 0.5; }
             vec2 cztanh(vec2 z) { return cdiv(czsinh(z), czcosh(z)); }
             vec2 cdzeta(vec2 z) { vec2 dz = vec2(0.0, 0.001); return cmul(czeta(z + dz) - czeta(z - dz), cinv(2.0 * dz)); }
 
