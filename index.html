@@ -939,7 +939,11 @@
             vec3 hue(float H) {
                 float W = sin(H * 0.0174532925199);
                 float U = cos(H * 0.0174532925199);
-                return vec3(0.587 - 0.587 * U + 0.330 * W, 0.587 - 0.587 * U - 1.050 * W, 0.587 + 0.413 * U + 0.035 * W);
+                vec3 ret;
+                ret.x = 0.587 - 0.587 * U + 0.330 * W;
+                ret.z = 0.587 - 0.587 * U - 1.050 * W;
+                ret.y = 0.587 + 0.413 * U + 0.035 * W;
+                return ret;
             }
 
             void mandel3d_calc() {
