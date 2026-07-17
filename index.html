@@ -187,7 +187,6 @@
             uniform float range;
             uniform float power;
             uniform float logval;
-            uniform float halflogval;
             uniform float inverse;
             uniform float zwval;
             uniform float cwval;
@@ -196,6 +195,7 @@
             uniform float cosrotz;
             uniform float sinrotz;
             uniform float multlight;
+            uniform float scaleval;
             uniform int fractalindex;
             uniform int ismandel;
             uniform int isnewton;
@@ -227,13 +227,19 @@
 
             float sinh(float x) { return (exp(x) - exp(-x)) * 0.5; }
             float cosh(float x) { return (exp(x) + exp(-x)) * 0.5; }
+            float csumsq(vec2 z) { return z.x * z.x + z.y * z.y; }
+            float cabs(vec2 z) { return sqrt(z.x * z.x + z.y * z.y); }
+            float carg(vec2 z) { return atan(z.y, z.x); }
+            float cinvsumsq(vec2 z) { return 1.0 / (z.x * z.x + z.y * z.y); }
+            vec2 cinv(vec2 z) { float r = cinvsumsq(z); return vec2(r * z.x, r * -z.y); }
             vec2 conj(vec2 z) { return vec2(z.x, -z.y); }
             vec2 cmul_i(vec2 z) { return vec2(-z.y, z.x); }
-            vec2 cinv(vec2 z) { float r = 1.0 / (z.x * z.x + z.y * z.y); return vec2(z.x * r, -z.y * r); }
             vec2 cexp(vec2 z) { float r = exp(z.x); return vec2(r * cos(z.y), r * sin(z.y)); }
-            vec2 clog(vec2 z) { return vec2(log(length(z)), atan(z.y, z.x)); }
+            vec2 clog(vec2 z) { return vec2(log(length(z)), carg(z)); }
             vec2 cadd(vec2 z, vec2 w) { return vec2(z.x + w.x, z.y + w.y); }
             vec2 cmul(vec2 z, vec2 w) { return vec2(z.x * w.x - z.y * w.y, z.x * w.y + z.y * w.x); }
+            vec2 cre(vec2 z) { return cmul(((z) + conj(z)), cinv(vec2(2.0, 0.0))); }
+            vec2 cim(vec2 z) { return cmul(((z) - conj(z)), cinv(vec2(0.0, 2.0))); }
             vec2 cpow(vec2 z, vec2 w) { vec2 logz = clog(z); return cexp(vec2(logz.x * w.x - logz.y * w.y, logz.x * w.y + logz.y * w.x)); }
             vec2 csub(vec2 z, vec2 w) { return cadd(z, w * -1.0); }
             vec2 cdiv(vec2 z, vec2 w) { return cmul(z, cinv(w)); }
@@ -250,8 +256,10 @@
                 if (w == 1.0) { return z; }
                 if (w == 2.0) { return cmul(z, z); }
                 if (w == 3.0) { return cmul(cmul(z, z), z); }
+                if (w == -2.0) return cinv(cmul(z, z));
+                if (w == -1.0) return cinv(z);
                 vec2 logz = clog(z); return cexp(vec2(logz.x * w, logz.y * w)); }
-            float cabs(vec2 z) { return sqrt(z.x * z.x + z.y * z.y); }
+            vec2 cfib(vec2 z) { return (cpow(vec2(1.61803398875, 0.0), z) - cpow(vec2(-0.61803398875, 0.0), z)) * 0.4472135955; }
 
             vec2 cgamma_right(vec2 z) {
                 vec2 w = z - vec2(1.0, 0.0);
@@ -379,9 +387,10 @@
                 } else {
                     component_a = cmul(cgamma(z), csin(z * 1.57079632679));
                 }
-                vec2 component_b = cmul(z, ceta_right(z + vec2(1.0, 0.0)));
-                vec2 multiplier_a = cexp(-1.14472988585 * (z + vec2(1.0, 0.0)));
-                vec2 multiplier_b = cmul(vec2(1.0, 0.0) - cexp(-0.69314718056 * (z + vec2(1.0, 0.0))), cinv(vec2(1.0, 0.0) - cexp(-0.69314718056 * z)));
+                vec2 zadd1 = z + vec2(1.0, 0.0);
+                vec2 component_b = cmul(z, ceta_right(zadd1));
+                vec2 multiplier_a = cexp(-1.14472988585 * zadd1);
+                vec2 multiplier_b = cmul(vec2(1.0, 0.0) - cexp(-0.69314718056 * zadd1), cinv(vec2(1.0, 0.0) - cexp(-0.69314718056 * z)));
                 vec2 component = cmul(component_a, component_b);
                 vec2 multiplier = cmul(multiplier_a, multiplier_b);
                 return 2.0 * conj(cmul(component, multiplier));
@@ -398,10 +407,9 @@
             }
 
             vec2 czeta(vec2 z) { return cmul(ceta(z), cinv(vec2(1.0, 0.0) - cexp(0.69314718056 * (vec2(1.0, 0.0) - z)))); }
-            vec2 czsinh(vec2 z) { return (czeta(z + vec2(0.5, 0.0)) - czeta(-z + vec2(0.5, 0.0))) * 0.5; }
-            vec2 czcosh(vec2 z) { return (czeta(z + vec2(0.5, 0.0)) + czeta(-z + vec2(0.5, 0.0))) * 0.5; }
-            vec2 cztanh(vec2 z) { return cdiv(czsinh(z), czcosh(z)); }
             vec2 cdzeta(vec2 z) { vec2 dz = vec2(0.0, 0.001); return cmul(czeta(z + dz) - czeta(z - dz), cinv(2.0 * dz)); }
+            vec2 czsinh(vec2 z, vec2 w) { return (czeta(z + w) - czeta(-z + w)) * 0.5; }
+            vec2 czcosh(vec2 z, vec2 w) { return (czeta(z + w) + czeta(-z + w)) * 0.5; }
 
             vec3 hsv2rgb(vec3 c) {
                 vec4 K = vec4(1.0, 0.666666666667, 0.333333333333, 3.0);
@@ -430,140 +438,100 @@
                 float zx_tmp = 0.0, zi_tmp = 0.0, zx2 = 0.0, zi2 = 0.0, px = -0.5, pi = 0.0, zxsubstzxtmp, zisubstzitmp;
                 float powval = power * 0.5, nu = 0.0, znorm = 0.0, zatan2 = 0.0;
                 int n = 0, maxn = (fractalindex >= 13 || fractalindex == 10) && iteration >= 110 ? 110 : iteration;
+                vec2 p = vec2(px, pi);
+                vec2 z = vec2(zx, zi);
+                vec2 c = vec2(cx, ci);
+                vec2 z0 = vec2(zx, zi);
+                vec2 z_tmp = vec2(zx, zi);
+                vec2 z2 = vec2(0.0, 0.0);
+                vec2 z_prev = z;
                 for (int i = 0; i < maxiter; i++) {
-                    zxpow = zx * zx;
-                    zipow = zi * zi;
-                    znorm = zxpow + zipow;
-                    if (znorm > range) {
+                    if (csumsq(z) > range) {
                         n = i;
                         break;
                     }
+                    z_tmp = z;
                     if (fractalindex == 2 || isburning == 1) {
-                        zx = abs(zx);
-                        zi = -abs(zi);
+                        z.x = abs(z.x);
+                        z.y = -abs(z.y);
                     }
-                    if (power == 2.0) {
-                        zi_prev = zi * 2.0 * zx;
-                        zx_prev = zxpow - zipow;
-                    }
-                    else if (power == 1.0) {
-                        zi_prev = zi;
-                        zx_prev = zx;
-                    }
-                    else { // z ^ n
-                        zpow = fast_pow(znorm, powval);
-                        zatan2 = atan(zi, zx);
-                        zi_prev = zpow * sin(power * zatan2);
-                        zx_prev = zpow * cos(power * zatan2);
-                    }
+                    z = cpow(z, power);
                     if (fractalindex < 3) { // mandelbrot
                         if (fractalindex == 1) { // tricorn
-                            zi_prev = -zi_prev;
+                            z = conj(z);
                         }
-                        zx = zx_prev;
-                        zi = zi_prev;
                     }
                     if (fractalindex == 3) { // collatz
-                        ex = exp(-zi_prev * PI);
-                        ei = exp(zi_prev * PI);
-                        zcosx = cos(zx_prev * PI) * (0.5 * (ei + ex));
-                        zcosi = sin(zx_prev * PI) * (0.5 * (ei - ex));
-                        zmulx = 5.0 * zx_prev + 2.0;
-                        zmuli = 5.0 * zi_prev;
-                        zx = (7.0 * zx_prev + 2.0 - (zcosx * zmulx + zcosi * zmuli)) * 0.25;
-                        zi = (7.0 * zi_prev - (zcosx * zmuli - zcosi * zmulx)) * 0.25;
+                        z = ((7.0 * z + vec2(2.0, 0.0)) - cmul(ccos(z * PI), (5.0 * z + vec2(2.0, 0.0)))) * 0.25;
                     }
                     if (fractalindex == 4) { // collatz_mandelbrot
-                        ex = exp(zx_prev);
-                        zcosx = cos(zi_prev) * ex;
-                        zcosi = sin(zi_prev) * ex;
-                        zmulx = 5.0 * zx_prev + 2.0;
-                        zmuli = 5.0 * zi_prev;
-                        zx = (7.0 * zx_prev + 2.0 - (zcosx * zmulx - zcosi * zmuli)) * 0.25;
-                        zi = (7.0 * zi_prev - (zcosx * zmuli + zcosi * zmulx)) * 0.25;
+                        z = ((7.0 * z + vec2(2.0, 0.0)) - cmul(cexp(z), (5.0 * z + vec2(2.0, 0.0)))) * 0.25;
                     }
                     if (fractalindex == 5) { // collatz_like_mandelbrot
-                        ex = exp(-zi_prev * PI);
-                        zcosx = cos(zx_prev * PI) * ex;
-                        zcosi = sin(zx_prev * PI) * ex;
-                        zmulx = 5.0 * zx_prev + 2.0;
-                        zmuli = 5.0 * zi_prev;
-                        zx = (7.0 * zx_prev + 2.0 - (zcosx * zmulx - zcosi * zmuli)) * 0.25;
-                        zi = (7.0 * zi_prev - (zcosx * zmuli + zcosi * zmulx)) * 0.25;
+                        z = ((7.0 * z + vec2(2.0, 0.0)) - cmul(cexp(cmul(z * PI, vec2(0.0, 1.0))), (5.0 * z + vec2(2.0, 0.0)))) * 0.25;
                     }
                     if (fractalindex == 6) { // e ^ z
-                        ex = exp(zx_prev);
-                        zcosx = cos(zi_prev) * ex;
-                        zcosi = sin(zi_prev) * ex;
-                        zx = zcosx;
-                        zi = zcosi;
+                        z = cexp(z);
                     }
                     if (fractalindex == 7) { // phoenix
-                    	zx_tmp = zx;
-                    	zi_tmp = zi;
-                    	zx = zx_prev + (zx2 * px - zi2 * pi);
-                    	zi = zi_prev + (zx2 * pi + zi2 * px);
-                    	zx2 = zx_tmp;
-                    	zi2 = zi_tmp;
+                        z = z + cmul(z2, p);
+                        z2 = z_tmp;
+                        z_tmp = z;
                     }
                     if (fractalindex == 8) { // feather
-                    	zxpow += 1.0;
+                        zxpow = z_tmp.x * z_tmp.x + 1.0;
+                        zipow = z_tmp.y * z_tmp.y;
                     	zinvnormpow = 1.0 / (zxpow * zxpow + zipow * zipow);
-                    	zi = (zi_prev * zxpow - zx_prev * zipow) * zinvnormpow;
-                        zx = (zx_prev * zxpow + zi_prev * zipow) * zinvnormpow;
+                    	zi = (z.y * zxpow - z.x * zipow) * zinvnormpow;
+                        zx = (z.x * zxpow + z.y * zipow) * zinvnormpow;
+                        z = vec2(zx, zi);
                     }
                     if (fractalindex == 9) { // ctan
-                        vec2 z = ctan(vec2(zx_prev, zi_prev));
-                        zx = z.x; zi = z.y;
+                        z = ctan(z);
                     }
                     if (fractalindex == 10) { // gamma
-                        vec2 z = cgamma(vec2(zx_prev, zi_prev));
-                        zx = z.x; zi = z.y;
+                        z = cgamma(z);
                     }
                     if (fractalindex == 11) { // sin
-                        vec2 z = csin(vec2(zx_prev, zi_prev));
-                        zx = z.x; zi = z.y;
+                        z = csin(z);
                     }
                     if (fractalindex == 13) { // zeta
-                        vec2 z = czeta(vec2(zx_prev, zi_prev));
-                        zx = z.x; zi = z.y;
+                        z = czeta(z);
                     }
-                    if (fractalindex == 14) { // zsinh
-                        vec2 z = czsinh(vec2(zx_prev, zi_prev));
-                        zx = z.x; zi = z.y;
+                    if (fractalindex == 14 || fractalindex == 16) {
+                        z = czsinh(z, vec2(0.5, scaleval));
                     }
-                    if (fractalindex == 15) { // zcosh
-                        vec2 z = czcosh(vec2(zx_prev, zi_prev));
-                        zx = z.x; zi = z.y;
+                    if (fractalindex == 15) {
+                        z = czcosh(z, vec2(0.5, scaleval));
                     }
-                    if (fractalindex == 16) { // ztanh
-                        vec2 z = cztanh(vec2(zx_prev, zi_prev));
-                        zx = z.x; zi = z.y;
+                    if (fractalindex == 16) {
+                        z = cdiv(z, czcosh(z, vec2(0.5, scaleval)));
                     }
-                    if (fractalindex == 17) { // zeta identity
-                        vec2 z = czeta(vec2(zx_prev, zi_prev)) * czeta(vec2(zx_prev, zi_prev));
-                        zx = z.x; zi = z.y;
+                    if (fractalindex == 17) {
+                        z = cmul(czeta(z), czeta(-z));
                     }
-                    zx += cx;
-                    zi += ci;
+                    z = z + c;
                     n += 1;
                     if (n >= maxn) {
                         n = iteration;
                         break;
                     }
                 }
+                zx = z.x;
+                zi = z.y;
+                znorm = csumsq(z);
                 if (colorschemeindex == 0) {
                     float hue = (atan(zi, zx) * 0.159154943092 + 0.5);
                     vec3 color1 = vec3(0.0, 0.0, 0.0);
-                    if (hue > 0.000001) {
-                        float value = log((zx * zx + zi * zi) + 1.0) * 0.5;
+                    if (hue != 0.0) {
+                        float value = log(znorm + 1.0) * 0.5;
                         color1 = hsv2rgb(vec3(hue, 0.8, clamp(value, 0.0, 1.0)));
                     }
                     gl_FragColor = vec4(color1, 1.0);
                 } else if (colorschemeindex == 1) {
                     float color = 0.0;
                     if (n != 0 && n != iteration) {
-                        nu = log(log(znorm) * halflogval) * logval;
+                        nu = log(log(znorm) * logval * 0.5) * logval;
                         if (nu < float(n)) { color = float(n) - nu; }
                     } else {
                         color = n == iteration ? 0.0 : float(n);
@@ -1086,13 +1054,13 @@
         const rangeLocation = gl.getUniformLocation(program, 'range');
         const powerLocation = gl.getUniformLocation(program, 'power');
         const logvalLocation = gl.getUniformLocation(program, 'logval');
-        const halflogvalLocation = gl.getUniformLocation(program, 'halflogval');
         const inverseLocation = gl.getUniformLocation(program, 'inverse');
         const multlightLocation = gl.getUniformLocation(program, 'multlight');
         const cosrotxLocation = gl.getUniformLocation(program, 'cosrotx');
         const sinrotxLocation = gl.getUniformLocation(program, 'sinrotx');
         const cosrotzLocation = gl.getUniformLocation(program, 'cosrotz');
         const sinrotzLocation = gl.getUniformLocation(program, 'sinrotz');
+        const scalevalLocation = gl.getUniformLocation(program, 'scaleval');
         const ismandelLocation = gl.getUniformLocation(program, 'ismandel');
         const isnewtonLocation = gl.getUniformLocation(program, 'isnewton');
         const isburningLocation = gl.getUniformLocation(program, 'isburning');
@@ -1128,6 +1096,7 @@
         let movespeedy = 0.025 * 0.5;
         let isRecording = 0;
         let zoomSpeed = 0.07;
+        let scaleval = 0.0;
         const keysPressed = {};
         window.addEventListener('keydown', (event) => { keysPressed[event.key.toLowerCase()] = true; });
         window.addEventListener('keyup', (event) => { keysPressed[event.key.toLowerCase()] = false; });
@@ -1172,6 +1141,8 @@
             if (keysPressed['arrowdown']) { rotx += rotationSpeed * 0.1; keypress = true; }
             if (keysPressed['arrowleft']) { rotz += rotationSpeed * 0.1; keypress = true; }
             if (keysPressed['arrowright']) { rotz -= rotationSpeed * 0.1; keypress = true; }
+            if (keysPressed['o']) { scaleval -= 0.01; keypress = true; }
+            if (keysPressed['p']) { scaleval += 0.01; keypress = true; }
             if (keypress || keyinit) {
                 const logval = power > 2.0 ? 1.0 / Math.log(Math.abs(power)) : 1.44269504088896;
                 let rangecalc = range;
@@ -1206,8 +1177,8 @@
                 gl.uniform1f(sinrotxLocation, Math.sin(rotx));
                 gl.uniform1f(cosrotzLocation, Math.cos(rotz));
                 gl.uniform1f(sinrotzLocation, Math.sin(rotz));
+                gl.uniform1f(scalevalLocation, scaleval);
                 gl.uniform1f(logvalLocation, logval);
-                gl.uniform1f(halflogvalLocation, logval * 0.5);
                 gl.uniform1f(rangeLocation, rangecalc);
                 gl.uniform1i(colorschemeindexLocation, colorschemeindex);
                 gl.uniform1i(iterationLocation, iteration);
