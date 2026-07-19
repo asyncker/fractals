@@ -70,27 +70,42 @@ g++ main.cpp -O2 -march=native -ffast-math -o output
 ```
 
 Hotkey:
-1. 'V' - переключение фракталов
-2. '0' - рендер fullhd (создайте рядом с исполняемым файлом папку render)
-3. 'U' - переключится на julia
-4. '4568' - перемещение Julia (или вращение для 3d)
-5. 'WASD' - перемещение
-6. 'QE' - зум
-7. 'Ctrl + Scroll Mouse' - увеличить разрешение превью
-8. 'N' - сменить на 3d вид
-9. 'F' - деление на 1/C
-10. 'RT' - сменить степень N
-11. 'B' - сменить на buddha-рендеринг
-12. '[]' - изменение степени
-13. 'I' - переключится на 4d проекцию в bicomplex
-14. 'Y' - переключится на 4d проекцию в quaternion
+1. 'V' - switch fractal
+2. '0' - render fullhd
+3. 'U' - switch julia/mandel
+4. '4568' - move Julia (or rotate 3d)
+5. 'WASD' - move
+6. 'QE' - zoom
+7. 'Ctrl + Scroll Mouse' - increase preview
+8. 'N' - switch on 3d view
+9. 'F' - divide 1/C
+10. 'RT' - change power on -1 or +1
+11. 'B' - switch on buddha-render (on ascii version)
+12. '[]' - change power
+13. 'I' - switch projection bicomplex
+14. 'Y' - switch projection quaternion
 
 Для всех фракталов из примеров всегда есть Julia.
 
 Любую формулу в математике, можно конвертировать в фрактал.
 
-Всего существует две основные формулы фракталов:
-1. z ^ 2
-2. e ^ z
+Очень много фракаталов в алгебре построены на exp:
+exp(z)
+z ^ 2 + c = exp(2 * ln(z)) + c
 
-Основные и самые значимые это Mandelbrot, Collatz, Netwon, Lyapunov
+Collatz можно рассмотреть как динамическую систему вместо cos(pi * z) заменить на exp(z) и отобразив ньютон фрактал и увидев сложные аттрактары.
+
+Нужно больше внимание обратить на ещё более многозначные функции чем ln!
+
+Нужно больше внимание сопряжённому и подобным функциям:
+1. burning ship и tricorn имеют связь по бокой линии (при z^2)
+2. zeta + burning ship крутой результат и есстественный узор
+3. Сопряжённый можно применить до zeta(conj(z)) + c или после просчёта conj(zeta(z) + c)
+4. Красиво выглядит кастомный mandelbulb 3d второй степени при burning ship эффекте
+
+Динамика zeta(zeta(zeta(zeta(z)))) совпадает с exp(exp(exp(exp(z)))) легко проверить при малом eps сделав z^0.001, но при этом у zeta явная сложная структура
+Визуальный пруф:
+https://asyncker.github.io/fractals/render/exp_pow.png
+https://asyncker.github.io/fractals/render/zeta_pow.png
+
+Основные и самые значимые это Exp, Zeta, Gamma, Netwon, Collatz, Lyapunov
