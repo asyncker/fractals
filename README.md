@@ -89,9 +89,10 @@ Hotkey:
 
 Любую формулу в математике, можно конвертировать в фрактал.
 
-Очень много фракаталов в алгебре построены на exp:
-exp(z)
-z ^ 2 + c = exp(2 * ln(z)) + c
+Очень много фракаталов в алгебре построены на exp(z):
+1. exp(z) + c = exp(z) + c
+2. sinh(z) + c = (exp(z) - exp(-z)) / 2 + c
+3. z ^ 2 + c = exp(2 * ln(z)) + c <br />
 
 Collatz можно рассмотреть как динамическую систему вместо cos(pi * z) заменить на exp(z) и отобразив ньютон фрактал и увидев сложные аттрактары.
 
@@ -104,8 +105,8 @@ Collatz можно рассмотреть как динамическую сис
 4. Красиво выглядит кастомный mandelbulb 3d второй степени при burning ship эффекте
 
 Динамика zeta(zeta(zeta(zeta(z)))) совпадает с exp(exp(exp(exp(z)))) легко проверить при малом eps сделав z^0.001, но при этом у zeta явная сложная структура
-Визуальный пруф:
-https://asyncker.github.io/fractals/render/exp_pow.png
-https://asyncker.github.io/fractals/render/zeta_pow.png
+Визуальный пруф:<br />
+https://asyncker.github.io/fractals/render/exp_pow.png <br />
+https://asyncker.github.io/fractals/render/zeta_pow.png <br />
 
 Основные и самые значимые это Exp, Zeta, Gamma, Netwon, Collatz, Lyapunov
