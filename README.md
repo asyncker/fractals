@@ -38,20 +38,21 @@ Platform support:
 ![](render/pic17.png)
 15. Zsinh
 ![](render/pic18.png)
-16. Zeta mandelbrot
+16. Zeta t = 1/2 mandelbrot
 ![](render/zeta-mandelbrot-zoom.png)
-17. Zsinh mandelbrot
+17. Zsinh t = 1/2 mandelbrot
 ![](render/zsinh-mandelbrot-zoom.png)
-18. Zcosh mandelbrot
+18. Zcosh t = 1/2 mandelbrot
 ![](render/zcosh-mandelbrot-zoom.png)
-19. Ztanh mandelbrot
+19. Ztanh t = 1/2 mandelbrot
 ![](render/ztanh-mandelbrot-zoom.png)
 20. Zeta(z) * Zeta(-z) mandelbrot
 ![](render/zetaz-mul-zeta-z-mandelbrot-zoom.png)
-21. Zeta Burning Ship
-![](render/pic21.png)
-22. Zeta(iz) * Zeta(-iz)
+21. Zeta(iz) * Zeta(-iz)
 ![](render/pic22.png)
+22. Zeta Burning Ship
+![](render/pic21.png)
+
 
 <br />
 Visual similarity of exp and zeta with the same dynamics, comparing all functions, only exp and zeta behaved almost identically:<br />
@@ -74,6 +75,8 @@ Compile to binary:
 ```bash
 g++ main.cpp -O2 -march=native -ffast-math -o output
 ```
+
+![](render/wave.png)
 
 Hotkey:
 1. 'V' - switch fractal
