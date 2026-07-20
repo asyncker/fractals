@@ -36,9 +36,9 @@ Platform support:
 ![](render/pic16.png)
 14. Zeta
 ![](render/pic17.png)
-15. Zsinh
+15. Zsinh t = 1/2
 ![](render/pic18.png)
-16. Zeta t = 1/2 mandelbrot
+16. Zeta mandelbrot
 ![](render/zeta-mandelbrot-zoom.png)
 17. Zsinh t = 1/2 mandelbrot
 ![](render/zsinh-mandelbrot-zoom.png)
