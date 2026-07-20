@@ -36,15 +36,21 @@ Platform support:
 ![](render/pic16.png)
 14. Zeta
 ![](render/pic17.png)
-15. Zsinh (Please note that the image is the same as zsin, it's just flipped, which is not conveyed due to float precision)
+15. Zsinh
 ![](render/pic18.png)
-16. Zsin (Please note that the image is the same as zsin, it's just flipped, which is not conveyed due to float precision)
-![](render/pic19.png)
-17. Ztan
-![](render/pic20.png)
-18. Zeta Burning Ship
+16. Zeta mandelbrot
+![](render/zeta-mandelbrot-zoom.png)
+17. Zsinh mandelbrot
+![](render/zsinh-mandelbrot-zoom.png)
+18. Zcosh mandelbrot
+![](render/zcosh-mandelbrot-zoom.png)
+19. Ztanh mandelbrot
+![](render/ztanh-mandelbrot-zoom.png)
+20. Zeta(z) * Zeta(-z) mandelbrot
+![](render/zetaz-mul-zeta-z-mandelbrot-zoom.png)
+21. Zeta Burning Ship
 ![](render/pic21.png)
-19. Zeta(iz) * Zeta(-iz)
+22. Zeta(iz) * Zeta(-iz)
 ![](render/pic22.png)
 
 <br />
