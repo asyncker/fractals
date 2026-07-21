@@ -52,7 +52,7 @@ Platform support:
 ![](render/pic22.png)
 22. Zeta Burning Ship
 ![](render/pic21.png)
-23. ln(sin(z ^ -1)) + c Burning Ship
+23. ln(sin(z ^ -1)) + c Burning Ship (c ~= -0.4670670970289143 + 0.008310852949376576i)
 ![](render/log_sin_test.png)
 
 
