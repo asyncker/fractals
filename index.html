@@ -243,12 +243,12 @@
             vec2 cmul(vec2 z, vec2 w) { return vec2(z.x * w.x - z.y * w.y, z.x * w.y + z.y * w.x); }
             vec2 cdiv(vec2 z, vec2 w) { return cmul(z, cinv(w)); }
             vec2 cpow(vec2 z, vec2 w) { 
-                if (w.y == 0.0) { 
+                if (w.y == 0.0) {
                     if (w.x == 1.0) return z;
                     if (w.x == 2.0) return cmul(z, z);
                     if (w.x == 3.0) return cmul(cmul(z, z), z);
                     if (w.x == -2.0) return cinv(cmul(z, z));
-                    if (w.x == -1.0) return cinv(z); 
+                    if (w.x == -1.0) return cinv(z);
                     return cexp(w.x * clog(z));
                 } else if (z.y == 0.0 && z.x > 0.0) {
                     return cexp(w * log(z.x));
@@ -459,13 +459,13 @@
                 vec2 w = vec2(power, 0.0);
                 vec2 p = vec2(-0.5, 0.0);
                 vec2 z2 = vec2(0.0, 0.0);
-                vec2 z0 = z, z_tmp = z;
+                vec2 z0 = z, ztmp = z;
                 for (int i = 0; i < maxiter; i++) {
                     if (cabs_sq(z) > range) {
                         n = i;
                         break;
                     }
-                    z_tmp = z;
+                    ztmp = z;
                     if (fractalindex == 2 || isburning == 1) {
                         z.x = abs(z.x);
                         z.y = -abs(z.y);
@@ -489,11 +489,11 @@
                     }
                     else if (fractalindex == 7) {
                         z = z + cmul(z2, p);
-                        z2 = z_tmp;
-                        z_tmp = z;
+                        z2 = ztmp;
+                        ztmp = z;
                     }
                     else if (fractalindex == 8) {
-                        z = cdiv(z, vec2(z_tmp.x * z_tmp.x + 1.0, z_tmp.y * z_tmp.y));
+                        z = cdiv(z, vec2(ztmp.x * ztmp.x + 1.0, ztmp.y * ztmp.y));
                     }
                     else if (fractalindex == 9) {
                         z = ctan(z);
@@ -708,26 +708,20 @@
             float qabs(vec4 q) { return length(q); }
             vec4 qmul(vec4 a, vec4 b) { return vec4(a.x * b.x - dot(a.yzw, b.yzw), a.x * b.yzw + b.x * a.yzw + cross(a.yzw, b.yzw)); }
             vec4 qinv(vec4 q) { return vec4(q.x, -q.yzw) / (dot(q, q) + 1e-20); }
+            vec4 qdiv(vec4 z, vec4 w) { return qmul(z, qinv(w)); }
 
             vec4 qexp(vec4 q) {
                 float v_len = length(q.yzw);
-                float exp_r = exp(q.x);
-                vec4 res;
-                res.x = exp_r * cos(v_len);
-                float sinc = (v_len > 1e-6) ? (sin(v_len) / v_len) : 1.0;
-                res.yzw = exp_r * sinc * q.yzw;
-                return res;
+                float sinc = v_len > 1e-6 ? sin(v_len) / v_len : 1.0;
+                return exp(q.x) * vec4(cos(v_len), sinc * q.yzw);
             }
 
             vec4 qlog(vec4 q) {
                 float v_len = length(q.yzw);
                 float q_len = length(q);
-                vec4 res;
-                res.x = log(q_len);
                 float acos_val = acos(clamp(q.x / q_len, -1.0, 1.0));
-                float coeff = (v_len > 1e-6) ? (acos_val / v_len) : 0.0;
-                res.yzw = coeff * q.yzw;
-                return res;
+                float acosc = v_len > 1e-6 ? acos_val / v_len : 0.0;
+                return vec4(log(q_len), acosc * q.yzw);
             }
 
             vec4 qsin(vec4 q) {
@@ -742,6 +736,49 @@
                 float s = sin(q.x), c = cos(q.x);
                 if (v_len < 1e-6) return vec4(c, -s * q.yzw);
                 return vec4(c * cosh(v_len), (-s * sinh(v_len) / v_len) * q.yzw);
+            }
+            vec4 qtan(vec4 q) { return qdiv(qsin(q), qcos(q)); }
+
+            vec4 qpow(vec4 q, vec4 w) {
+                if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) {
+                    float power = w.x;
+                    float zx = q.x, zy = q.y, zz = q.z, zw = q.w;
+                    float zxpow = zx * zx, zypow = zy * zy, zzpow = zz * zz, zwpow = zw * zw;
+                    vec4 res = vec4(0.0, 0.0, 0.0, 0.0);
+                    if (power == -1.0) {
+                        res = qinv(q);
+                    }
+                    else if (power == 1.0) {
+                        res = q;
+                    }
+                    else if (power == 2.0) {
+                        res = vec4(zxpow - zypow - zzpow - zwpow, 2.0 * zx * q.yzw);
+                    } 
+                    else {
+                        float unorm = zypow + zzpow + zwpow;
+                        float znorm = sqrt(zxpow + unorm);
+                        float logx = 0.0, logy = 0.0, logz = 0.0, logw = 0.0;
+                        if (unorm == 0.0) { 
+                            logx = log(abs(zx)) * power;
+                        }
+                        else {
+                            float mulpower = (acos(zx / znorm) / sqrt(unorm)) * power;
+                            logx = log(znorm) * power;
+                            logy = q.y * mulpower;
+                            logz = q.z * mulpower;
+                            logw = q.w * mulpower;
+                        }
+                        float unorm1 = logy * logy + logz * logz + logw * logw;
+                        res.x = exp(logx);
+                        if (unorm1 != 0.0) {
+                            float zunorm1 = sqrt(unorm1);
+                            float mul = res.x * sin(zunorm1) / zunorm1;
+                            res = vec4(res.x * cos(zunorm1), mul * logy, mul * logz, mul * logw);
+                        }
+                    }
+                    return res;
+                }
+                return qexp(qmul(w, qlog(q)));
             }
 
             vec4 qgamma_right(vec4 z) {
@@ -762,64 +799,34 @@
             vec4 qgamma_left(vec4 z) { return PI * qinv(qmul(qsin(z * PI), qgamma_right(vec4(1.0, 0.0, 0.0, 0.0) - z))); }
             vec4 qgamma(vec4 z) { return z.x < 0.5 ? qgamma_left(z) : qgamma_right(z); }
 
-            vec4 qpow(vec4 q, float power) {
-                float zx = q.x, zy = q.y, zz = q.z, zw = q.w;
-                float zxpow = zx * zx, zypow = zy * zy, zzpow = zz * zz, zwpow = zw * zw;
-                vec4 res = vec4(0.0, 0.0, 0.0, 0.0);
-                if (power == 1.0) {
-                    res = q;
-                }
-                else if (power == 2.0) {
-                    res.x = zxpow - zypow - zzpow - zwpow;
-                    res.y = 2.0 * zx * zy;
-                    res.z = 2.0 * zx * zz;
-                    res.w = 2.0 * zx * zw;
-                } 
-                else {
-                    float unorm = zypow + zzpow + zwpow;
-                    float znorm = sqrt(zxpow + unorm);
-                    float logx = 0.0, logy = 0.0, logz = 0.0, logw = 0.0;
-                    if (unorm == 0.0) { 
-                        logx = log(abs(zx)) * power;
-                    }
-                    else {
-                        float mul = acos(zx / znorm) / sqrt(unorm);
-                        logx = log(znorm) * power;
-                        logy = mul * zy * power;
-                        logz = mul * zz * power;
-                        logw = mul * zw * power;
-                    }
-                    float unorm1 = logy * logy + logz * logz + logw * logw;
-                    res.x = exp(logx);
-                    if (unorm1 != 0.0) {
-                        float zunorm1 = sqrt(unorm1);
-                        float mul = res.x * sin(zunorm1) / zunorm1;
-                        res.x = res.x * cos(zunorm1);
-                        res.y = mul * logy;
-                        res.z = mul * logz;
-                        res.w = mul * logw;
-                    }
-                }
-                return res;
-            }
-
             float biabs_sq(vec4 z) { return z.x * z.x + z.y * z.y + z.z * z.z + z.w * z.w; }
             float biabs(vec4 z) { return length(z); }
-            vec4 bimul(vec4 z, vec4 w) { return vec4(cmul(z.xy, w.xy) + cmul(z.zw, w.zw), cmul(z.xy, w.zw) + cmul(z.zw, w.xy)); }
+            vec2 bidabs_sq(vec4 z) { return cmul(z.xy, z.xy) + cmul(z.zw, z.zw); }
+            vec4 biinv(vec4 z) {
+                vec2 len = bidabs_sq(z);
+                vec2 invlen = conj(len) * cabs_invsq(len);
+                return vec4(cmul(z.xy, invlen), cmul(-z.zw, invlen));
+            }
+            vec4 bimul(vec4 z, vec4 w) { return vec4(cmul(z.xy, w.xy) - cmul(z.zw, w.zw), cmul(z.xy, w.zw) + cmul(z.zw, w.xy)); }
+            vec4 bidiv(vec4 z, vec4 w) { return bimul(z, biinv(w)); }
             vec4 biexp(vec4 z) { vec2 r = cexp(z.xy); return vec4(cmul(r, ccos(z.zw)), cmul(r, csin(z.zw))); }
             vec4 bilog(vec4 z) { vec2 log_p1 = clog(z.xy + cmul_i(z.zw)); vec2 log_p2 = clog(z.xy - cmul_i(z.zw)); return vec4(0.5 * (log_p1 + log_p2), -0.5 * cmul_i(log_p1 - log_p2)); }
             vec4 bicos(vec4 z) { vec2 r1 = cexp(z.zw); vec2 r2 = cexp(-z.zw); return vec4(cmul(ccos(z.xy), 0.5 * (r1 + r2)),-cmul(csin(z.xy), 0.5 * (r1 - r2))); }
             vec4 bisin(vec4 z) { vec2 r1 = cexp(z.zw); vec2 r2 = cexp(-z.zw); return vec4(cmul(csin(z.xy), 0.5 * (r1 + r2)), cmul(ccos(z.xy), 0.5 * (r1 - r2))); }
+            vec4 bitan(vec4 z) { return bidiv(bisin(z), bicos(z)); }
 
             vec4 bipow(vec4 z, vec4 w) {
                 if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) {
                     float zx = z.x, zy = z.y, zz = z.z, zw = z.w, power = w.x;
                     float zxpow = zx * zx, zypow = zy * zy, zzpow = zz * zz, zwpow = zw * zw;
                     vec4 res = vec4(0.0, 0.0, 0.0, 0.0);
-                    if (power == 1.0) {
+                    if (power == -1.0) {
+                        res = biinv(z);
+                    }
+                    else if (power == 1.0) {
                         res = z;
                     }
-                    if (power == 2.0) {
+                    else if (power == 2.0) {
                         res.x = zxpow - zypow - zzpow + zwpow;
                         res.y = 2.0 * (zx * zy - zz * zw);
                         res.z = 2.0 * (zx * zz - zy * zw);
@@ -853,16 +860,18 @@
                 int n = 0;
                 float dr = 1.0, znorm = 0.0;
                 vec4 q = vec4(zx, zy, zz, zw);
+                vec4 w = vec4(power, 0.0, 0.0, 0.0);
                 vec4 c = vec4(cx, cy, cz, cw);
                 vec4 q0 = q;
                 vec4 qtmp = q;
                 vec4 p = vec4(-0.5, 0.0, 0.0, 0.0);
                 vec4 q2 = vec4(0.0, 0.0, 0.0, 0.0);
                 for (int i = 0; i < 26; i++) {
-                    qtmp = q;
-                    znorm = qabs(q);
                     n = i;
+                    znorm = qabs(q);
                     if (znorm > range) { break; }
+                    qtmp = q;
+                    q = qpow(q, w);
                     if (fractalindex == 2 || isburning == 1) {
                         q.x = abs(q.x);
                         q.y = -abs(q.y);
@@ -877,7 +886,10 @@
                         q = ((7.0 * q + vec4(2.0, 0.0, 0.0, 0.0)) - qmul(qcos(q * PI), (5.0 * q + vec4(2.0, 0.0, 0.0, 0.0)))) * 0.25;
                     }
                     else if (fractalindex == 4) {
-                        q = ((7.0 * q + vec4(2.0, 0.0, 0.0, 0.0)) - qmul(qexp(q * PI), (5.0 * q + vec4(2.0, 0.0, 0.0, 0.0)))) * 0.25;
+                        q = ((7.0 * q + vec4(2.0, 0.0, 0.0, 0.0)) - qmul(qexp(q), (5.0 * q + vec4(2.0, 0.0, 0.0, 0.0)))) * 0.25;
+                    }
+                    else if (fractalindex == 5) {
+                        q = ((7.0 * q + vec4(2.0, 0.0, 0.0, 0.0)) - qmul(qexp(PI * qmul(q, vec4(0.0, 1.0, 0.0, 0.0))), (5.0 * q + vec4(2.0, 0.0, 0.0, 0.0)))) * 0.25;
                     }
                     else if (fractalindex == 6) {
                         q = qexp(q);
@@ -887,14 +899,20 @@
                         q2 = qtmp;
                         qtmp = q;
                     }
+                    else if (fractalindex == 8) {
+                        q = qdiv(q, vec4(qtmp.xy * qtmp.xy + vec2(1.0, 0.0), qtmp.zw * qtmp.zw));
+                    }
+                    else if (fractalindex == 9) {
+                        q = qtan(q);
+                    }
                     else if (fractalindex == 10) {
                         q = qgamma(q);
                     }
                     else if (fractalindex == 11) {
                         q = qsin(q);
                     }
+                    q += c;
                     dr = power * fast_pow(znorm, power - 1.0) * dr + 1.0;
-                    q = qpow(q, power) + c;
                 }
                 return vec2(0.5 * log(znorm) * znorm / dr, n);
             }
@@ -910,11 +928,11 @@
                 vec4 p = vec4(-0.5, 0.0, 0.0, 0.0);
                 vec4 z2 = vec4(0.0, 0.0, 0.0, 0.0);
                 for (int i = 0; i < 25; i++) {
+                    n = i;
                     ztmp = z;
                     znorm = biabs(z);
-                    n = i;
                     if (znorm > range) { break; }
-                    z = bipow(z, w) + c;
+                    z = bipow(z, w);
                     if (fractalindex == 2 || isburning == 1) {
                         z.x = abs(z.x);
                         z.y = -abs(z.y);
@@ -931,6 +949,9 @@
                     else if (fractalindex == 4) {
                         z = ((7.0 * z + vec4(2.0, 0.0, 0.0, 0.0)) - bimul(biexp(z * PI), (5.0 * z + vec4(2.0, 0.0, 0.0, 0.0)))) * 0.25;
                     }
+                    else if (fractalindex == 5) {
+                        z = ((7.0 * z + vec4(2.0, 0.0, 0.0, 0.0)) - bimul(qexp(PI * bimul(z, vec4(0.0, 1.0, 0.0, 0.0))), (5.0 * z + vec4(2.0, 0.0, 0.0, 0.0)))) * 0.25;
+                    }
                     else if (fractalindex == 6) {
                         z = biexp(z);
                     }
@@ -939,9 +960,16 @@
                         z2 = ztmp;
                         ztmp = z;
                     }
+                    else if (fractalindex == 8) {
+                        z = bidiv(z, vec4(ztmp.xy * ztmp.xy + vec2(1.0, 0.0), ztmp.zw * ztmp.zw));
+                    }
+                    else if (fractalindex == 9) {
+                        z = bitan(z);
+                    }
                     else if (fractalindex == 11) { // sin
                         z = bisin(z);
                     }
+                    z += c;
                     dr = power * fast_pow(znorm, power - 1.0) * dr + 1.0;
                 }
                 return vec2(0.5 * log(znorm) * znorm / dr, n);
@@ -1002,7 +1030,8 @@
             vec2 mandelbox(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
                 float scale = -2.0, fixedRadius = 1.0, minRadius = 0.5, foldingLimit = 1.0, dr = 1.0;
                 vec3 z = vec3(zx, zy, zz);
-                vec3 offset = vec3(zx, zy, zz);
+                vec3 z0 = vec3(zx, zy, zz);
+                vec3 c = vec3(cx, cy, cz);
                 int n = 0;
                 for (int i = 0; i < 20; i++) {
                     n = i;
@@ -1017,7 +1046,7 @@
                         z *= temp;
                         dr *= temp;
                     }
-                    z = z * scale + offset;
+                    z = z * scale + c;
                     dr = dr * abs(scale) + 1.0;
                     if (dot(z, z) > range * 140.0) {
                         break;
@@ -1040,10 +1069,10 @@
                 vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
                 vec3 ro = vec3(ismandel == 1 ? cxval : zxval, ismandel == 1 ? cyval : zyval, ismandel == 1 ? -zoommandel : -zoomjulia);
                 vec3 rd = normalize(vec3(uv.x, uv.y, 1.0));
-                float czz = cosrotx * ro.z - sinrotx * ro.y;
+                float rozy = cosrotx * ro.z - sinrotx * ro.y;
                 float cy = cosrotx * ro.y + sinrotx * ro.z;
-                float cx = cosrotz * ro.x + sinrotz * czz;
-                float cz = cosrotz * czz - sinrotz * ro.x;
+                float cx = cosrotz * ro.x + sinrotz * rozy;
+                float cz = cosrotz * rozy - sinrotz * ro.x;
                 float cw = 0.0;
                 if (inverse != 0.0) {
                     float cnorminv = 1.0 / (cx * cx + cy * cy + cz * cz + cw * cw) * inverse;
@@ -1056,7 +1085,7 @@
                 float zy = ismandel == 1 ? cy : cyval;
                 float zz = ismandel == 1 ? cz : zoommandel;
                 float zw = ismandel == 1 ? cw : 0.0;
-                float surDist = 0.1, col = 0.0, dO = 0.0, maxDist = 100.0;
+                float surDist = 0.1, val = 0.0, dO = 0.0, maxDist = 100.0;
                 const int raymarch_iterations = 100;
                 int ot = raymarch_iterations - 1;
                 if (hypercomplexindex == 1 || hypercomplexindex == 2) { surDist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001; }
@@ -1088,15 +1117,24 @@
                     if (hypercomplexindex == 4) { dist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw); }
                     if (hypercomplexindex == 5) { dist = mandel_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw); }
                     dO += dist.x;
-                    if (dist.x < surDist) { ot = i; col = dist.y; break;}
+                    if (dist.x < surDist) { ot = i; val = dist.y; break;}
                     if (dO > maxDist) { ot = 0; break; }
                 }
-                vec3 col1 = vec3(0, 0, 0);
-                if (ot != 0) {
-                    float bright = 1.0 - 1.5 * float(ot) / float(raymarch_iterations);
-                    col1 = hue(1.0 + clamp(col, 3.0, 20.0) * 80.0) * bright * multlight;
+                if (colorschemeindex == 0) {
+                    vec3 col = vec3(0.0, 0.0, 0.0);
+                    if (ot != 0) {
+                        float bright = 1.0 - 1.5 * float(ot) / float(raymarch_iterations);
+                        col = hue(1.0 + clamp(val, 3.0, 20.0) * 80.0) * bright * multlight;
+                    }
+                    gl_FragColor = vec4(col.x, col.y, col.z, 1.0);
+                } else if (colorschemeindex == 1) {
+                    vec3 col = mix(vec3(0.05, 0.1, 0.2), vec3(0.9, 0.5, 0.2), clamp(val / 25.0, 0.0, 1.0));
+                    float depthRatio = float(ot) / float(raymarch_iterations);
+                    float fog = exp(-depthRatio * 2.5);
+                    col *= fog;
+                    col += vec3(0.1, 0.2, 0.4) * (1.0 - fog) * 0.3;
+                    gl_FragColor = vec4(col, 1.0);
                 }
-                gl_FragColor = vec4(col1.x, col1.y, col1.z, 1.0);
             }
 
             void main() {
