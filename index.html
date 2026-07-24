@@ -85,9 +85,9 @@
             <div class="control-buttons">
                 <button class="control-btn" onclick="fractalindex = 20; updateControls(true);">Zsinh</button>
                 <button class="control-btn" onclick="fractalindex = 21; updateControls(true);">Zcosh</button>
+                <button class="control-btn" onclick="fractalindex = 22; updateControls(true);">Ztanh</button>
             </div>
             <div class="control-buttons">
-                <button class="control-btn" onclick="fractalindex = 22; updateControls(true);">Ztanh</button>
                 <button class="control-btn" onclick="fractalindex = 23; updateControls(true);">Zeta(z)*Zeta(-z)</button>
             </div>
         </div>
@@ -131,8 +131,9 @@
                 <button class="control-btn" onclick="iteration = 2; updateControls(true);">2</button>
                 <button class="control-btn" onclick="iteration = 10; updateControls(true);">10</button>
                 <button class="control-btn" onclick="iteration = 30; updateControls(true);">30</button>
+                <button class="control-btn" onclick="iteration = 60; updateControls(true);">60</button>
                 <button class="control-btn" onclick="iteration = 100; updateControls(true);">100</button>
-                <button class="control-btn" onclick="iteration = 220; updateControls(true);">220</button>
+                <button class="control-btn" onclick="iteration = 180; updateControls(true);">180</button>
             </div>
         </div>
         <div class="shortcuts">
@@ -229,7 +230,7 @@
                 return 1.0 / pow(x, -y);
             }
 
-            float cabs_sq(vec2 z) { return z.x * z.x + z.y * z.y; }
+            float cabs_sq(vec2 z) { return dot(z, z); }
             float cabs(vec2 z) { return sqrt(z.x * z.x + z.y * z.y); }
             float cabs_invsq(vec2 z) { return 1.0 / (z.x * z.x + z.y * z.y); }
             float carg(vec2 z) { return atan(z.y, z.x); }
@@ -544,15 +545,14 @@
 
             void mandelbrot_calc() {
                 vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
-                vec2 offset = ismandel == 1 ? vec2(cxval, cyval) : vec2(zxval, zyval);
-                float zoom = ismandel == 1 ? zoommandel : zoomjulia;
-                uv = uv * zoom + offset;
+                uv = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : uv * zoomjulia + vec2(zxval, zyval);
                 vec2 c = vec2(ismandel == 1 ? uv.x : cxval, ismandel == 1 ? uv.y : cyval);
                 if (inverse != 0.0) { c = cinvmix(c, inverse); }
                 vec2 z = vec2(ismandel == 1 ? c.x : uv.x, ismandel == 1 ? c.y : uv.y);
-                const int maxiter = 220;
+                const int maxiter = 180;
+                int iter = maxiter > iteration ? iteration : maxiter;
                 float znorm = 0.0;
-                int n = 0, maxn = (fractalindex >= 18 || fractalindex == 15) && iteration >= 110 ? 110 : iteration;
+                int n = 0, maxn = (fractalindex >= 18 || fractalindex == 15) && iter >= 100 ? 100 : iter;
                 vec2 w = vec2(power, 0.0);
                 vec2 p = vec2(-0.5, 0.0);
                 vec2 z2 = vec2(0.0, 0.0);
@@ -582,14 +582,14 @@
                     else if (fractalindex == 18) { z = cgamma(z); }
                     else if (fractalindex == 19) { z = czeta(z); }
                     else if (fractalindex == 20) { z = czsinh(z, vec2(0.5, scaleval)); }
-                    //else if (fractalindex == 21) { z = czcosh(z, vec2(0.5, scaleval)); }
-                    //else if (fractalindex == 22) { z = cdiv(z, czcosh(z, vec2(0.5, scaleval))); }
+                    else if (fractalindex == 21) { z = czcosh(z, vec2(0.5, scaleval)); }
+                    //else if (fractalindex == 22) { z = cdiv(czsinh(z, vec2(0.5, scaleval)), czcosh(z, vec2(0.5, scaleval))); }
                     //else if (fractalindex == 23) { z = cmul(czeta(z), czeta(-z)); }
                     //if (isln == 1) { z = clog(z); }
                     z = z + c;
                     n += 1;
                     if (n >= maxn) {
-                        n = iteration;
+                        n = iter;
                         break;
                     }
                 }
@@ -603,11 +603,11 @@
                     gl_FragColor = vec4(color1, 1.0);
                 } else if (colorschemeindex == 1) {
                     float color = 0.0;
-                    if (n != 0 && n != iteration) {
+                    if (n != 0 && n != iter) {
                         float nu = log(log(znorm) * logval * 0.5) * logval;
                         if (nu < float(n)) { color = float(n) - nu; }
                     } else {
-                        color = n == iteration ? 0.0 : float(n);
+                        color = n == iter ? 0.0 : float(n);
                     }
                     color *= 0.0078431372549 * multlight;
                     float r = bounce(color, 0.0, 1.0);
@@ -619,9 +619,7 @@
 
             void newton_calc() {
                 vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
-                vec2 offset = ismandel == 1 ? vec2(cxval, cyval) : vec2(zxval, zyval);
-                float zoom = ismandel == 1 ? zoommandel : zoomjulia;
-                uv = uv * zoom + offset;
+                uv = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : uv * zoomjulia + vec2(zxval, zyval);
                 vec2 c = vec2(ismandel == 1 ? uv.x : cxval, ismandel == 1 ? uv.y : cyval);
                 if (inverse != 0.0) { c = cinvmix(c, inverse); }
                 vec2 z = vec2(ismandel == 1 ? c.x : uv.x, ismandel == 1 ? c.y : uv.y);
@@ -638,69 +636,31 @@
                     z_prev = z;
                     vec2 z_func = cpow(z, w);
                     vec2 z_derv = power * cpow(z, w - vec2(1.0, 0.0));
-                    if (fractalindex <= 3) {
-                        func = z_func;
-                        derv = z_derv;
-                    }
-                    else if (fractalindex == 4) {
-                        func = cexp(z_func);
-                        derv = cmul(cexp(z_func), z_derv);
-                    }
-                    else if (fractalindex == 5) {
-                        func = csinh(z_func);
-                        derv = cmul(ccosh(z_func), z_derv);
-                    }
-                    else if (fractalindex == 6) {
-                        func = ccosh(z_func);
-                        derv = cmul(csinh(z_func), z_derv);
-                    }
-                    else if (fractalindex == 7) {
-                        func = cdiv(csinh(z_func), ccosh(z_func));
-                        derv = cmul(vec2(1.0, 0.0) - cpow(func, vec2(2.0, 0.0)), z_derv);
-                    }
-                    else if (fractalindex == 8) {
-                        //func = cmul(z, cinv(cpow(z, power) + vec2(1.0, 0.0)));
-                        //vec2 z_pow = cpow(z, power);
-                        //derv = cmul(vec2(1.0, 0.0) - cmul(vec2(power - 1.0, 0.0), z_pow), cinv(cpow(z_pow + vec2(1.0, 0.0), 2.0)));
-                        func = z_func;
-                        derv = z_derv;
-                    }
+                    if (fractalindex <= 3) { func = z_func; derv = z_derv; }
+                    else if (fractalindex == 4) { func = cexp(z_func); derv = func; }
+                    else if (fractalindex == 5) { func = csinh(z_func); derv = ccosh(z_func); }
+                    else if (fractalindex == 6) { func = ccosh(z_func); derv = csinh(z_func); }
+                    else if (fractalindex == 7) { func = cdiv(csinh(z_func), ccosh(z_func)); derv = vec2(1.0, 0.0) - cpow(func, vec2(2.0, 0.0)); }
+                    else if (fractalindex == 8) { func = z_func; derv = z_derv; }
                     else if (fractalindex == 12) {
                         func = ((7.0 * z_func + vec2(2.0, 0.0)) - cmul(ccos(PI * z_func), (5.0 * z_func + vec2(2.0, 0.0)))) * 0.25;
-                        derv = cmul(0.25 * (vec2(7.0, 0.0) + PI * cmul(csin(PI * z_func), (5.0 * z_func + vec2(2.0, 0.0))) - 5.0 * ccos(PI * z_func)), z_derv);
+                        derv = 0.25 * (vec2(7.0, 0.0) + PI * cmul(csin(PI * z_func), (5.0 * z_func + vec2(2.0, 0.0))) - 5.0 * ccos(PI * z_func));
                     }
                     else if (fractalindex == 13) {
                         func = ((7.0 * z_func + vec2(2.0, 0.0)) - cmul(cexp(z_func), (5.0 * z_func + vec2(2.0, 0.0)))) * 0.25;
-                        derv = cmul(0.25 * (vec2(7.0, 0.0) - cmul(cexp(z_func), 5.0 * z_func + vec2(7.0, 0.0))), z_derv);
+                        derv = 0.25 * (vec2(7.0, 0.0) - cmul(cexp(z_func), 5.0 * z_func + vec2(7.0, 0.0)));
                     }
                     else if (fractalindex == 14) {
                         func = ((7.0 * z_func + vec2(2.0, 0.0)) - cmul(cexp(cmul(z_func, vec2(0.0, PI))), (5.0 * z_func + vec2(2.0, 0.0)))) * 0.25;
-                        derv = cmul((vec2(7.0, 0.0) - cmul(cexp(cmul(z_func, vec2(0.0, PI))), vec2(5.0, 0.0) + cmul(vec2(0.0, PI), 5.0 * z_func + vec2(2.0, 0.0)))) * 0.25, z_derv);
+                        derv = (vec2(7.0, 0.0) - cmul(cexp(cmul(z_func, vec2(0.0, PI))), vec2(5.0, 0.0) + cmul(vec2(0.0, PI), 5.0 * z_func + vec2(2.0, 0.0)))) * 0.25;
                     }
-                    else if (fractalindex == 15) {
-                        func = ctan(z_func);
-                        derv = cmul(vec2(1.0, 0.0) + cpow(ccot(z_func), vec2(2.0, 0.0)), z_derv);
-                    }
-                    else if (fractalindex == 16) {
-                        func = ccos(z_func);
-                        derv = cmul(-csin(z_func), z_derv);
-                    }
-                    else if (fractalindex == 17) {
-                        func = csin(z_func);
-                        derv = cmul(ccos(z_func), z_derv);
-                    }
-                    else if (fractalindex == 18) {
-                        func = cgamma(z_func);
-                        derv = cmul(cdigamma(z_func), cmul(func, z_derv));
-                    }
-                    else if (fractalindex == 19) {
-                        func = czeta(z_func); //func = czeta(z);
-                        derv = cmul(cdzeta(z_func), z_derv); //derv = cdzeta(z);
-                    }
-                    else if (fractalindex == 20) { // zsinh
-                        func = cdzsinh(z_func, vec2(0.5, scaleval));
-                        derv = cmul(cdzsinh(z_func, vec2(0.5, scaleval)), z_derv);
-                    }
+                    else if (fractalindex == 15) { func = ctan(z_func); derv = vec2(1.0, 0.0) + cpow(cinv(func), vec2(2.0, 0.0)); }
+                    else if (fractalindex == 16) { func = ccos(z_func); derv = -csin(z_func); }
+                    else if (fractalindex == 17) { func = csin(z_func); derv = ccos(z_func); }
+                    else if (fractalindex == 18) { func = cgamma(z_func); derv = cdigamma(z_func); }
+                    else if (fractalindex == 19) { func = czeta(z_func); derv = cdzeta(z_func); }
+                    //else if (fractalindex == 21) { func = cdzcosh(z_func, vec2(0.5, scaleval)); derv = cdzcosh(z_func, vec2(0.5, scaleval)); }
+                    if (fractalindex > 3) { derv = cmul(derv, z_derv); }
                     z = z_prev - cmul(func - subst, cinv(derv));
                     n += 1;
                     z += c;
@@ -732,13 +692,11 @@
 
             void lyapunov_calc() {
                 vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
-                vec2 offset = ismandel == 1 ? vec2(cxval, cyval) : vec2(zxval, zyval);
-                float zoom = ismandel == 1 ? zoommandel : zoomjulia;
-                uv = uv * zoom + offset;
+                uv = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : uv * zoomjulia + vec2(zxval, zyval);
                 vec2 c = vec2(ismandel == 1 ? uv.x : cxval, ismandel == 1 ? uv.y : cyval);
                 if (inverse != 0.0) { c = cinvmix(c, inverse); }
                 vec2 z = vec2(ismandel == 1 ? c.x : uv.x, ismandel == 1 ? c.y : uv.y);
-                const int maxiter = 220;
+                const int maxiter = 180;
                 float lambda = 0.0, maxlambda = 120000.0, xn = 0.5, rx = 0.0, ri = 0.0, invmaxiter = 1.0 / float(maxiter);
                 int modval = 0, n0 = iteration / 10; // n0 > 1
                 for (int i = 1; i < maxiter; i++) {
@@ -1034,15 +992,13 @@
         initGL(minify(shaderCode));
 
         function startRecording() {
+            if (typeof MediaRecorder === 'undefined' || typeof canvas.captureStream !== 'function') {
+                console.error('canvas.captureStream is not supported'); return;
+            }
             const stream = canvas.captureStream(30);
             const options = { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 65000000 };
-            try {
-                mediaRecorder = new MediaRecorder(stream, options);
-            } catch (e) {
-                console.warn('MediaRecorder creation warn:', e);
-                mediaRecorder = new MediaRecorder(stream);
-            }
             recordedChunks = [];
+            mediaRecorder = new MediaRecorder(stream, options);
             mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) { recordedChunks.push(event.data); } };
             mediaRecorder.onstop = () => {
                 const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
