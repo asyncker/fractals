@@ -213,6 +213,7 @@
             uniform int colorschemeindex;
             uniform int iteration;
             #define PI 3.14159265359
+            #define EULER_GAMMA 0.5772156649015329
 
             float sinh(float x) { return (exp(x) - exp(-x)) * 0.5; }
             float cosh(float x) { return (exp(x) + exp(-x)) * 0.5; }
@@ -293,6 +294,13 @@
             }
             vec2 cgamma_left(vec2 z) { return PI * cinv(cmul(csin(z * PI), cgamma_right(vec2(1.0, 0.0) - z))); }
             vec2 cgamma(vec2 z) { return z.x < 0.5 ? cgamma_left(z) : cgamma_right(z); }
+            vec2 cinvgamma(vec2 z) {
+                vec2 result = cmul(z, cexp(EULER_GAMMA * z));
+                for (int n = 1; n <= 32; n++) {
+                    result = cmul(result, cmul(vec2(1.0, 0.0) + z / float(n), cexp(-z / float(n))));
+                }
+                return result;
+            }
             vec2 cbeta(vec2 z, vec2 w) { return cmul(cmul(cgamma(z), cgamma(w)), cinv(cgamma(z + w))); }
             vec2 cdigamma(vec2 z) {
                 vec2 s = vec2(0.0, 0.0);
