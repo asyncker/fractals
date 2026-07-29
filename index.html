@@ -491,6 +491,9 @@
             float biabs_sq(vec4 z) { return z.x * z.x + z.y * z.y + z.z * z.z + z.w * z.w; }
             float biabs(vec4 z) { return length(z); }
             vec2 bidabs_sq(vec4 z) { return cmul(z.xy, z.xy) + cmul(z.zw, z.zw); }
+            vec2 bitoidempotent_left(vec4 z) { return vec2(z.x - z.w, z.y + z.z); }
+            vec2 bitoidempotent_right(vec4 z) { return vec2(z.x + z.w, z.y - z.z); }
+            vec4 bifromidempotent(vec2 z, vec2 w) { return 0.5 * vec4(w.x + z.x, z.y + w.y, z.y - w.y, w.x - z.x); }
             vec4 bimul(vec4 z, vec4 w) { return vec4(cmul(z.xy, w.xy) - cmul(z.zw, w.zw), cmul(z.xy, w.zw) + cmul(z.zw, w.xy)); }
             vec4 biinv(vec4 z) { vec2 len = bidabs_sq(z); vec2 invlen = conj(len) * cabs_invsq(len); return vec4(cmul(z.xy, invlen), cmul(-z.zw, invlen)); }
             vec4 bidiv(vec4 z, vec4 w) { return bimul(z, biinv(w)); }
@@ -510,6 +513,25 @@
                 }
                 return biexp(bimul(w, bilog(z)));
             }
+            vec4 bigamma_right(vec4 z) {
+                vec4 w = z - vec4(1.0, 0.0, 0.0, 0.0);
+                vec4 t = w + vec4(7.5, 0.0, 0.0, 0.0);
+                vec4 x = vec4(0.99999999999980993, 0.0, 0.0, 0.0);
+                x += 676.5203681218851 * biinv(w + vec4(1.0, 0.0, 0.0, 0.0));
+                x -= 1259.1392167224028 * biinv(w + vec4(2.0, 0.0, 0.0, 0.0));
+                x += 771.32342877765313 * biinv(w + vec4(3.0, 0.0, 0.0, 0.0));
+                x -= 176.61502916214059 * biinv(w + vec4(4.0, 0.0, 0.0, 0.0));
+                x += 12.507343278686905 * biinv(w + vec4(5.0, 0.0, 0.0, 0.0));
+                x -= 0.13857109526572012 * biinv(w + vec4(6.0, 0.0, 0.0, 0.0));
+                x += 9.9843695780195716e-6 * biinv(w + vec4(7.0, 0.0, 0.0, 0.0));
+                x += 1.5056327351493116e-7 * biinv(w + vec4(8.0, 0.0, 0.0, 0.0));
+                vec4 logterm = bimul(bilog(t), w + vec4(0.5, 0.0, 0.0, 0.0)) - t;
+                return 2.50662827463 * bimul(x, biexp(logterm));
+            }
+            vec4 bigamma_left(vec4 z) { return PI * biinv(bimul(bisin(z * PI), bigamma_right(vec4(1.0, 0.0, 0.0, 0.0) - z))); }
+            vec4 bigamma1(vec4 z) { return z.x < 0.5 ? bigamma_left(z) : bigamma_right(z); }
+            vec4 bigamma(vec4 z) { return bifromidempotent(cgamma(bitoidempotent_left(z)), cgamma(bitoidempotent_right(z))); }
+            vec4 bizeta(vec4 z) { return bifromidempotent(czeta(bitoidempotent_left(z)), czeta(bitoidempotent_right(z))); }
 
             vec3 texp(vec3 z) { float cosphi = cos(z.z); return exp(z.x) * vec3(cosphi * cos(z.y), cosphi * sin(z.y), sin(z.z)); }
             vec3 tlog(vec3 z) { float r = length(z); if (r < 1e-8) { return vec3(-18.42, 0.0, 0.0); } float phi = asin(clamp(z.z / r, -1.0, 1.0)); return vec3(log(r), atan(z.y, z.x), phi); }
