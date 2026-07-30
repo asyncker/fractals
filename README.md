@@ -55,7 +55,7 @@ Platform support:
 23. ln(sin(z ^ -1)) + c Burning Ship (c ~= -0.4670670970289143 + 0.008333333333333333i)
 ![](render/log_sin_test.png)
 24. Zeta Inv + Conj + Burning Ship (c ~= 0.724775731 + 0.0i)
-![](render/zeta%20inv%20and%20conj%20burning%20ship%20-0.724775731.png)
+![](render/zeta-inv-conj-burning-ship-0.724775731.png)
 
 
 <br />
