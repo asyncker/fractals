@@ -486,6 +486,7 @@
             }
             vec4 qgamma_left(vec4 z) { return PI * qinv(qmul(qsin(z * PI), qgamma_right(vec4(1.0, 0.0, 0.0, 0.0) - z))); }
             vec4 qgamma(vec4 z) { return z.x < 0.5 ? qgamma_left(z) : qgamma_right(z); }
+            vec4 v4invmix(vec4 z, float s) { return z * (s / dot(z, z)) + (1.0 - s) * z; }
 
             float biabs_sq(vec4 z) { return dot(z, z); }
             float biabs(vec4 z) { return length(z); }
@@ -880,31 +881,29 @@
 
             vec2 mandelbox(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
                 float scale = -2.0, fixedRadius = 1.0, minRadius = 0.5, foldingLimit = 1.0, dr = 1.0;
+                float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
                 vec3 z = vec3(zx, zy, zz);
-                vec3 z0 = vec3(zx, zy, zz);
+                vec3 z0 = z;
                 vec3 c = vec3(cx, cy, cz);
                 int n = 0;
                 for (int i = 0; i < 20; i++) {
                     n = i;
-                    z = clamp(z, -foldingLimit, foldingLimit) * 2.0 - z;
-                    //z = clamp(z, -foldingLimit, foldingLimit); z = z * 2.0 - z;
+                    z = clamp(z, -foldingLimit, foldingLimit) * 2.0 - z; //z = clamp(z, -foldingLimit, foldingLimit); z = z * 2.0 - z;
                     float r2 = dot(z, z);
-                    if (r2 < minRadius) {
-                        float temp = (fixedRadius * fixedRadius) / (minRadius * minRadius); // float temp = (fixedRadius * fixedRadius) / minRadius
+                    if (r2 < minRadius2) {
+                        float temp = fixedRadius2 / minRadius2; // float temp = fixedRadius2 / minRadius
                         z *= temp;
                         dr *= temp;
-                    } else if (r2 < fixedRadius) {
-                        float temp = (fixedRadius * fixedRadius) / r2;
+                    } else if (r2 < fixedRadius2) {
+                        float temp = fixedRadius2 / r2;
                         z *= temp;
                         dr *= temp;
                     }
                     z = z * scale + c;
                     dr = dr * abs(scale) + 1.0;
-                    if (dot(z, z) > range * 140.0) {
-                        break;
-                    }
+                    if (dot(z, z) > range * 140.0) { break; }
                 }
-                return vec2(length(z) / abs(dr), float(n));
+                return vec2(length(z) / abs(dr) * 0.25, float(n));
             }
 
             void mandel3d_calc() {
@@ -915,7 +914,7 @@
                 float cy = cosrotx * ro.y + sinrotx * ro.z;
                 float cx = cosrotz * ro.x + sinrotz * rozy;
                 float cz = cosrotz * rozy - sinrotz * ro.x;
-                float cw = 0.0;
+                float cw = zwval;
                 if (inverse != 0.0) {
                     float cnorminv = 1.0 / (cx * cx + cy * cy + cz * cz + cw * cw) * inverse;
                     cx = cx * cnorminv + (1.0 - inverse) * cx;
@@ -927,7 +926,7 @@
                 float zy = ismandel == 1 ? cy : cyval;
                 float zz = ismandel == 1 ? cz : zoommandel;
                 float zw = ismandel == 1 ? cw : cwval;
-                float surDist = 0.1, val = 0.0, dO = 0.0, maxDist = 100.0;
+                float surDist = 0.1, val = 0.0, dO = 0.0, maxDist = 100.0, cpreinv = 0.0;
                 const int raymarch_iterations = 100;
                 int ot = raymarch_iterations - 1;
                 if (hypercomplexindex == 1 || hypercomplexindex == 2) { surDist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001; }
@@ -944,7 +943,7 @@
                     zx = cosrotz * px + sinrotz * zz;
                     zz = cosrotz * zz - sinrotz * px;
                     if (inverse != 0.0) {
-                        float cnorminv = 1.0 / (zx * zx + zy * zy + zz * zz + zw * zw) * inverse;
+                        cpreinv = zx * zx + zy * zy + zz * zz + zw * zw; float cnorminv = inverse / cpreinv;
                         zx = zx * cnorminv + (1.0 - inverse) * zx;
                         zy = zy * cnorminv + (1.0 - inverse) * zy;
                         zz = zz * cnorminv + (1.0 - inverse) * zz;
@@ -958,6 +957,7 @@
                     if (hypercomplexindex == 3) { dist = mandelbox(zx, zy, zz, zw, cx, cy, cz, cw); }
                     if (hypercomplexindex == 4) { dist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw); }
                     if (hypercomplexindex == 5) { dist = mandel_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw); }
+                    if (inverse != 0.0) { dist.x *= mix(1.0, cpreinv, inverse); }
                     dO += dist.x;
                     if (dist.x < surDist) { ot = i; val = dist.y; break;}
                     if (dO > maxDist) { ot = 0; break; }
