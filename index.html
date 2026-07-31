@@ -238,7 +238,7 @@
             float carg(vec2 z) { return atan(z.y, z.x); }
             vec2 cmul_i(vec2 z) { return vec2(-z.y, z.x); }
             vec2 conj(vec2 z) { return vec2(z.x, -z.y); }
-            vec2 cinv(vec2 z) { return cabs_invsq(z) * vec2(z.x, -z.y); }
+            vec2 cinv(vec2 z) { return vec2(z.x, -z.y) / dot(z, z); }
             vec2 cinvmix(vec2 z, float s) { return mix(z, cinv(z), s); } // return cinv(z) * s + z * (1.0 - s);
             vec2 cexp(vec2 z) { return exp(z.x) * vec2(cos(z.y), sin(z.y)); }
             vec2 clog(vec2 z) { return vec2(log(length(z)), carg(z)); }
