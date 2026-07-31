@@ -781,12 +781,7 @@
                     n = i;
                     if (znorm > range) { break; }
                     z = qpow(z, w);
-                    if (fractalindex == 2 || isburning == 1) {
-                        z.x = abs(z.x);
-                        z.y = -abs(z.y);
-                        z.z = -abs(z.z);
-                        z.w = abs(z.w);
-                    }
+                    if (fractalindex == 2 || isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); z.w = abs(z.w); }
                     if (fractalindex == 1) { z.y = -z.y; z.z = -z.z; }
                     else if (fractalindex == 3) { z = z + qmul(z2, p); z2 = ztmp; ztmp = z; }
                     else if (fractalindex == 4) { z = qexp(z); }
@@ -824,12 +819,7 @@
                     n = i;
                     if (znorm > range) { break; }
                     z = bipow(z, w);
-                    if (fractalindex == 2 || isburning == 1) {
-                        z.x = abs(z.x);
-                        z.y = -abs(z.y);
-                        z.z = -abs(z.z);
-                        z.w = abs(z.w);
-                    }
+                    if (fractalindex == 2 || isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); z.w = abs(z.w); }
                     if (fractalindex == 1) { z.y = -z.y; z.z = -z.z; }
                     else if (fractalindex == 3) { z = z + bimul(z2, p); z2 = ztmp; ztmp = z; }
                     else if (fractalindex == 4) { z = biexp(z); }
@@ -865,14 +855,8 @@
                     znorm = length(z);
                     n = i;
                     if (znorm > range) { break; }
-                    if (fractalindex == 2 || isburning == 1) {
-                        z.x = abs(z.x);
-                        z.y = -abs(z.y);
-                        z.z = -abs(z.z);
-                    }
-                    if (fractalindex == 1) {
-                        z.y = -z.y;
-                    }
+                    if (fractalindex == 2 || isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); }
+                    if (fractalindex == 1) { z.y = -z.y; }
                     if (hypercomplexindex == 1)  {
                         z = tpow(z, w);
                         if (fractalindex == 3) { z = z + z2 * p; z2 = ztmp; ztmp = z; }
