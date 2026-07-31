@@ -215,8 +215,8 @@
             #define PI 3.14159265359
             #define EULER_GAMMA 0.5772156649015329
 
-            float sinh(float x) { return (exp(x) - exp(-x)) * 0.5; }
-            float cosh(float x) { return (exp(x) + exp(-x)) * 0.5; }
+            float sinh(float x) { float ex = exp(x); return (ex - 1.0 / ex) * 0.5; }
+            float cosh(float x) { float ex = exp(x); return (ex + 1.0 / ex) * 0.5; }
             float fast_pow(float x, float y) {
                 if (y > 0.0) {
                     if (y == 1.0) return x;
@@ -233,8 +233,8 @@
             }
 
             float cabs_sq(vec2 z) { return dot(z, z); }
-            float cabs(vec2 z) { return sqrt(z.x * z.x + z.y * z.y); }
-            float cabs_invsq(vec2 z) { return 1.0 / (z.x * z.x + z.y * z.y); }
+            float cabs(vec2 z) { return sqrt(dot(z, z)); }
+            float cabs_invsq(vec2 z) { return 1.0 / dot(z, z); }
             float carg(vec2 z) { return atan(z.y, z.x); }
             vec2 cmul_i(vec2 z) { return vec2(-z.y, z.x); }
             vec2 conj(vec2 z) { return vec2(z.x, -z.y); }
@@ -254,9 +254,7 @@
                     if (w.x == -2.0) return cinv(cmul(z, z));
                     if (w.x == -1.0) return cinv(z);
                     return cexp(w.x * clog(z));
-                } else if (z.y == 0.0 && z.x > 0.0) {
-                    return cexp(w * log(z.x));
-                }
+                } else if (z.y == 0.0 && z.x > 0.0) { return cexp(w * log(z.x)); }
                 return cexp(cmul(w, clog(z)));
             }
             vec2 croot(vec2 z, vec2 w) { return cpow(z, cinv(w)); }
@@ -264,7 +262,7 @@
             vec2 csqrt(vec2 z) { float phi = carg(z) * 0.5; return sqrt(cabs(z)) * vec2(cos(phi), sin(phi)); }
             vec2 cre(vec2 z) { return cdiv(z + conj(z), vec2(2.0, 0.0)); }
             vec2 cim(vec2 z) { return cdiv(z - conj(z), vec2(2.0, 0.0)); }
-            vec2 ccomp_identity(vec2 z) { return cadd(cre(z), cim(z)); }
+            vec2 ccomp_identity(vec2 z) { return cre(z) + cim(z); }
             vec2 ccomp_abs(vec2 z) { return vec2(cabs(cre(z)), cabs(cim(z))); } // return vec2(abs(z.x), abs(z.y));
             vec2 ccomp_abssq(vec2 z) { return vec2(z.x * z.x, z.y * z.y); }
             vec2 ccomp_invsq(vec2 z) { return vec2(1.0 / (z.x * z.x), 1.0 / (z.y * z.y)); }
@@ -307,7 +305,7 @@
             vec2 cdigamma(vec2 z) {
                 vec2 s = vec2(0.0, 0.0);
                 for (int k = 0; k < 32; ++k) {
-                    s = csub(s, cinv(z));
+                    s -= cinv(z);
                     z += vec2(1.0, 0.0);
                 }
                 vec2 inv  = cinv(z);
@@ -319,15 +317,15 @@
                 vec2 inv12 = cmul(inv10, inv2);
                 vec2 inv14 = cmul(inv12, inv2);
                 vec2 result = clog(z);
-                result = csub(result, cmul(inv, vec2(1.0 / 2.0, 0.0)));
-                result = csub(result, cmul(inv2, vec2(1.0 / 12.0, 0.0)));
-                result = cadd(result, cmul(inv4, vec2(1.0 / 120.0, 0.0)));
-                result = csub(result, cmul(inv6, vec2(1.0 / 252.0, 0.0)));
-                result = cadd(result, cmul(inv8, vec2(1.0 / 240.0, 0.0)));
-                result = csub(result, cmul(inv10, vec2(5.0 / 660.0, 0.0)));
-                result = cadd(result, cmul(inv12, vec2(691.0 / 32760.0, 0.0)));
-                result = csub(result, cmul(inv14, vec2(1.0 / 12.0,0.0)));
-                return cadd(result, s);
+                result -= cmul(inv, vec2(1.0 / 2.0, 0.0));
+                result -= cmul(inv2, vec2(1.0 / 12.0, 0.0));
+                result += cmul(inv4, vec2(1.0 / 120.0, 0.0));
+                result -= cmul(inv6, vec2(1.0 / 252.0, 0.0));
+                result += cmul(inv8, vec2(1.0 / 240.0, 0.0));
+                result -= cmul(inv10, vec2(5.0 / 660.0, 0.0));
+                result += cmul(inv12, vec2(691.0 / 32760.0, 0.0));
+                result -= cmul(inv14, vec2(1.0 / 12.0,0.0));
+                return result + s;
             }
 
             vec4 czeta_helper(vec2 z, mat4 ns, mat4 bases) {
@@ -450,7 +448,7 @@
             vec2 cdzsinh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czsinh(z + dz, t) - czsinh(z - dz, t), cinv(2.0 * dz)); }
             vec2 cdzcosh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czcosh(z + dz, t) - czcosh(z - dz, t), cinv(2.0 * dz)); }
 
-            float qabs_sq(vec4 z) { return z.x * z.x + z.y * z.y + z.z * z.z + z.w * z.w; }
+            float qabs_sq(vec4 z) { return dot(z, z); }
             float qabs(vec4 z) { return length(z); }
             vec4 qmul(vec4 z, vec4 w) { return vec4(z.x * w.x - dot(z.yzw, w.yzw), z.x * w.yzw + w.x * z.yzw + cross(z.yzw, w.yzw)); }
             vec4 qinv(vec4 z) { float vlen = dot(z, z); if (vlen < 1e-19) vlen = 1e-19; return vec4(z.x, -z.yzw) / vlen; }
@@ -489,7 +487,7 @@
             vec4 qgamma_left(vec4 z) { return PI * qinv(qmul(qsin(z * PI), qgamma_right(vec4(1.0, 0.0, 0.0, 0.0) - z))); }
             vec4 qgamma(vec4 z) { return z.x < 0.5 ? qgamma_left(z) : qgamma_right(z); }
 
-            float biabs_sq(vec4 z) { return z.x * z.x + z.y * z.y + z.z * z.z + z.w * z.w; }
+            float biabs_sq(vec4 z) { return dot(z, z); }
             float biabs(vec4 z) { return length(z); }
             vec2 bidabs_sq(vec4 z) { return cmul(z.xy, z.xy) + cmul(z.zw, z.zw); }
             vec2 bitoidempotent_left(vec4 z) { return vec2(z.x - z.w, z.y + z.z); }
@@ -928,7 +926,7 @@
                 float zx = ismandel == 1 ? cx : cxval;
                 float zy = ismandel == 1 ? cy : cyval;
                 float zz = ismandel == 1 ? cz : zoommandel;
-                float zw = ismandel == 1 ? cw : 0.0;
+                float zw = ismandel == 1 ? cw : cwval;
                 float surDist = 0.1, val = 0.0, dO = 0.0, maxDist = 100.0;
                 const int raymarch_iterations = 100;
                 int ot = raymarch_iterations - 1;
@@ -955,7 +953,7 @@
                     cx = ismandel == 1 ? zx : cxval;
                     cy = ismandel == 1 ? zy : cyval;
                     cz = ismandel == 1 ? zz : zoommandel;
-                    cw = ismandel == 1 ? zw : 0.0;
+                    cw = ismandel == 1 ? zw : cwval;
                     if (hypercomplexindex == 1 || hypercomplexindex == 2) { dist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw); }
                     if (hypercomplexindex == 3) { dist = mandelbox(zx, zy, zz, zw, cx, cy, cz, cw); }
                     if (hypercomplexindex == 4) { dist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw); }
