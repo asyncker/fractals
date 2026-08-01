@@ -50,11 +50,11 @@ Platform support:
 ![](render/zetaz-mul-zeta-z-mandelbrot-zoom.png)
 21. Zeta(iz) * Zeta(-iz)
 ![](render/pic22.png)
-22. Zeta Burning Ship
+22. Zeta(|Re(z)| + |Im(z)| * i)
 ![](render/pic21.png)
-23. ln(sin(z ^ -1)) + c Burning Ship (c ~= -0.4670670970289143 + 0.008333333333333333i)
+23. ln(sin((|Re(z)| + |Im(z)| * i) ^ -1)) + c (c ~= -0.4670670970289143 + 0.008333333333333333i)
 ![](render/log_sin_test.png)
-24. Zeta Inv + Conj + Burning Ship (c ~= 0.724775731 + 0.0i)
+24. Zeta(|Re(z)| + |Im(z)| * i) + c (c = -1.37973714796 + 0.0i)
 ![](render/zeta-inv-conj-burning-ship-0.724775731.png)
 
 
