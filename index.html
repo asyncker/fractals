@@ -235,6 +235,8 @@
             float cabs_sq(vec2 z) { return dot(z, z); }
             float cabs(vec2 z) { return sqrt(dot(z, z)); }
             float cabs_invsq(vec2 z) { return 1.0 / dot(z, z); }
+            float cabs_logsq(vec2 z) { return log(dot(z, z)); }
+            float cabs_log(vec2 z) { return cabs_logsq(z) * 0.5; }
             float carg(vec2 z) { return atan(z.y, z.x); }
             vec2 cmul_i(vec2 z) { return vec2(-z.y, z.x); }
             vec2 conj(vec2 z) { return vec2(z.x, -z.y); }
@@ -266,6 +268,7 @@
             vec2 ccomp_abs(vec2 z) { return vec2(cabs(cre(z)), cabs(cim(z))); } // return vec2(abs(z.x), abs(z.y));
             vec2 ccomp_abssq(vec2 z) { return vec2(z.x * z.x, z.y * z.y); }
             vec2 ccomp_invsq(vec2 z) { return vec2(1.0 / (z.x * z.x), 1.0 / (z.y * z.y)); }
+            vec2 csin_fast(vec2 z) { float ey = exp(z.y); float ey_inv = 1.0 / ey; return vec2(sin(z.x) * (ey + ey_inv) * 0.5, cos(z.x) * (ey - ey_inv) * 0.5); }
             vec2 csin(vec2 z) { return vec2(sin(z.x) * cosh(z.y), cos(z.x) * sinh(z.y)); }
             vec2 ccos(vec2 z) { return vec2(cos(z.x) * cosh(z.y), -sin(z.x) * sinh(z.y)); }
             vec2 csinh(vec2 z) { return vec2(sinh(z.x) * cos(z.y), cosh(z.x) * sin(z.y)); }
@@ -292,7 +295,7 @@
                 x += 1.5056327351493116e-7 * cinv(w + vec2(8.0, 0.0));
                 return 2.50662827463 * cmul(x, cexp(cmul(clog(t), w + vec2(0.5, 0.0)) - t));
             }
-            vec2 cgamma_left(vec2 z) { return PI * cinv(cmul(csin(z * PI), cgamma_right(vec2(1.0, 0.0) - z))); }
+            vec2 cgamma_left(vec2 z) { return PI * cinv(cmul(csin_fast(z * PI), cgamma_right(vec2(1.0, 0.0) - z))); }
             vec2 cgamma(vec2 z) { return z.x < 0.5 ? cgamma_left(z) : cgamma_right(z); }
             vec2 cinvgamma(vec2 z) {
                 vec2 result = cmul(z, cexp(EULER_GAMMA * z));
@@ -404,7 +407,7 @@
                     float theta = atan(z.y, z.x);
                     component_a = SQ2PI2 * cmul_i(cexp((theta - 1.57079632679) * cmul_i(z) + (log_r - 1.0) * z - 0.5 * vec2(log_r, theta)));
                 } else {
-                    component_a = cmul(cgamma(z), csin(z * 1.57079632679));
+                    component_a = cmul(cgamma(z), csin_fast(z * 1.57079632679));
                 }
                 vec2 zadd1 = z + vec2(1.0, 0.0);
                 vec2 component_b = cmul(z, ceta_right(zadd1));
