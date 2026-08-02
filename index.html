@@ -260,7 +260,7 @@
             }
             vec2 croot(vec2 z, vec2 w) { return cpow(z, cinv(w)); }
             vec2 mpow(vec2 z, vec2 w) { return cmul(cexp(log(length(z)) * w), cexp(cmul(vec2(0.0, carg(z)), (vec2(1.0, 0.0) - cexp(PI * vec2(-w.y, w.x))) * 0.5))); }
-            vec2 csqrt(vec2 z) { float phi = carg(z) * 0.5; return sqrt(cabs(z)) * vec2(cos(phi), sin(phi)); }
+            vec2 csqrt(vec2 z) { float phi = carg(z) * 0.5; return sqrt(length(z)) * vec2(cos(phi), sin(phi)); }
             vec2 cre(vec2 z) { return cdiv(z + conj(z), vec2(2.0, 0.0)); }
             vec2 cim(vec2 z) { return cdiv(z - conj(z), vec2(2.0, 0.0)); }
             
