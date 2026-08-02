@@ -267,8 +267,10 @@
             vec2 ccomp_dot(vec2 z, vec2 w) { return cre(z) * cre(w) + cim(z) * cim(w); }
             vec2 ccomp_abs(vec2 z) { return vec2(cabs(cre(z)), cabs(cim(z))); } // return vec2(abs(z.x), abs(z.y));
             vec2 ccomp_pow(vec2 z, float k) { return vec2(fast_pow(z.x, k), fast_pow(z.y, k)); }
-            vec2 cdl(vec2 z, vec2 w, vec2 k) { return cmul(clog(vec2(dot(z, w), 0.0)), k); } // if use 4d, 8d, 16d... parameter k it's real number for simplicity or define mul
-            vec2 cdp(vec2 z, vec2 w, vec2 k) { return cexp(cmul(clog(vec2(dot(z, w), 0.0)), k)); }
+            vec2 cdl(vec2 z, vec2 k) { return cmul(clog(vec2(dot(z, z), 0.0)), k); }
+            vec2 cdp(vec2 z, vec2 k) { return cpow(vec2(dot(z, z), 0.0), k); }
+            vec2 cdtl(vec2 z, vec2 w, vec2 k) { return cmul(clog(vec2(dot(z, w), 0.0)), k); }
+            vec2 cdtp(vec2 z, vec2 w, vec2 k) { return cpow(vec2(dot(z, w), 0.0), k); }
             vec2 csin_fast(vec2 z) { float ey = exp(z.y); float ey_inv = 1.0 / ey; return vec2(sin(z.x) * (ey + ey_inv) * 0.5, cos(z.x) * (ey - ey_inv) * 0.5); }
             vec2 csin(vec2 z) { return vec2(sin(z.x) * cosh(z.y), cos(z.x) * sinh(z.y)); }
             vec2 ccos(vec2 z) { return vec2(cos(z.x) * cosh(z.y), -sin(z.x) * sinh(z.y)); }
