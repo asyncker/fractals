@@ -264,10 +264,11 @@
             vec2 csqrt(vec2 z) { float phi = carg(z) * 0.5; return sqrt(cabs(z)) * vec2(cos(phi), sin(phi)); }
             vec2 cre(vec2 z) { return cdiv(z + conj(z), vec2(2.0, 0.0)); }
             vec2 cim(vec2 z) { return cdiv(z - conj(z), vec2(2.0, 0.0)); }
+            
             vec2 ccomp_identity(vec2 z) { return cre(z) + cim(z); }
+            vec2 ccomp_dot(vec2 z, vec2 w) { return cre(z) * cre(w) + cim(z) * cim(w); }
             vec2 ccomp_abs(vec2 z) { return vec2(cabs(cre(z)), cabs(cim(z))); } // return vec2(abs(z.x), abs(z.y));
-            vec2 ccomp_abssq(vec2 z) { return vec2(z.x * z.x, z.y * z.y); }
-            vec2 ccomp_invsq(vec2 z) { return vec2(1.0 / (z.x * z.x), 1.0 / (z.y * z.y)); }
+            vec2 ccomp_pow(vec2 z, float k) { return vec2(fast_pow(z.x, k), fast_pow(z.y, k)); }
             vec2 csin_fast(vec2 z) { float ey = exp(z.y); float ey_inv = 1.0 / ey; return vec2(sin(z.x) * (ey + ey_inv) * 0.5, cos(z.x) * (ey - ey_inv) * 0.5); }
             vec2 csin(vec2 z) { return vec2(sin(z.x) * cosh(z.y), cos(z.x) * sinh(z.y)); }
             vec2 ccos(vec2 z) { return vec2(cos(z.x) * cosh(z.y), -sin(z.x) * sinh(z.y)); }
