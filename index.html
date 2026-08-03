@@ -264,13 +264,15 @@
             vec2 cre(vec2 z) { return cdiv(z + conj(z), vec2(2.0, 0.0)); }
             vec2 cim(vec2 z) { return cdiv(z - conj(z), vec2(2.0, 0.0)); }
             vec2 ccomp_identity(vec2 z) { return cre(z) + cim(z); }
-            vec2 ccomp_dot(vec2 z, vec2 w) { return cre(z) * cre(w) + cim(z) * cim(w); }
+            vec2 ccomp_dotre(vec2 z, vec2 w) { return cre(z) * cre(w) + cim(z) * cim(w); }
+            vec2 ccomp_dotim(vec2 z, vec2 w) { return cre(w) * cim(z) - cim(w) * cre(z); }
+            // vec2 ccomp_dim(vec2 z, vec2 w) { return cre(z) * cim(w) - cim(w) * cre(z); }
             vec2 ccomp_abs(vec2 z) { return vec2(cabs(cre(z)), cabs(cim(z))); } // return vec2(abs(z.x), abs(z.y));
             vec2 ccomp_pow(vec2 z, float k) { return vec2(fast_pow(z.x, k), fast_pow(z.y, k)); }
-            vec2 cdl(vec2 z, vec2 k) { return cmul(clog(vec2(dot(z, z), 0.0)), k); }
-            vec2 cdp(vec2 z, vec2 k) { return cpow(vec2(dot(z, z), 0.0), k); }
-            vec2 cdtl(vec2 z, vec2 w, vec2 k) { return cmul(clog(vec2(dot(z, w), 0.0)), k); }
-            vec2 cdtp(vec2 z, vec2 w, vec2 k) { return cpow(vec2(dot(z, w), 0.0), k); }
+            vec2 csop(vec2 z, vec2 w) { return vec2(z.x * w.x + z.y * w.y, w.x * z.y + w.y * z.x); }
+            vec2 cdot(vec2 z, vec2 w) { return vec2(z.x * w.x + z.y * w.y, w.x * z.y - w.y * z.x); }
+            vec2 cdtl(vec2 z, vec2 w, vec2 k) { return cmul(clog(cdot(z, w)), k); }
+            vec2 cdtp(vec2 z, vec2 w, vec2 k) { return cpow(cdot(z, w), k); }
             vec2 csin_fast(vec2 z) { float ey = exp(z.y); float ey_inv = 1.0 / ey; return vec2(sin(z.x) * (ey + ey_inv) * 0.5, cos(z.x) * (ey - ey_inv) * 0.5); }
             vec2 csin(vec2 z) { return vec2(sin(z.x) * cosh(z.y), cos(z.x) * sinh(z.y)); }
             vec2 ccos(vec2 z) { return vec2(cos(z.x) * cosh(z.y), -sin(z.x) * sinh(z.y)); }
@@ -600,7 +602,15 @@
                     if (znorm > range) { n = i; break; }
                     ztmp = z;
                     //z = cinv(z);
-                    if (fractalindex == 2 || isburning == 1) { z.x = abs(z.x); z.y = abs(z.y); z = conj(z); }
+                    if (fractalindex == 2 || isburning == 1) {
+                        z.x = abs(z.x);
+                        z.y = abs(z.y);
+                        //z.x = cdtp(conj(z), z, vec2(0.5, 0.0)).x;
+                        //z.y = cdtp(-z, conj(z), vec2(0.5, 0.0)).x;
+                        //z.y = cdtp(z, conj(z), vec2(0.5, 0.0)).y;
+                        //z = cdtp(conj(z), (z), vec2(0.5, 0.0));
+                        //z = cdtp((z), (z), vec2(-0.5, 0.0));
+                        z = conj(z); }
                     z = cpow(z, w);
                     if (fractalindex == 1) { z = conj(z); }
                     else if (fractalindex == 3) { z = z + cmul(z2, p); z2 = ztmp; ztmp = z; }
@@ -745,10 +755,9 @@
                     if (i >= n0) {
                         lambda += log(abs(rx * (1.0 - 2.0 * xn))) * invmaxiter;
                     }
-                    if (abs(lambda) > maxlambda) {
+                    if (abs(lambda) > maxlambda || i - 2 == iteration) {
                         break;
                     }
-                    if (i - 2 == iteration) break;
                 }
                 if (lambda > 0.0) {
                     ri = exp(-3.3 * lambda) * 25.5;
@@ -995,14 +1004,14 @@
                         lyapunov_calc();
                     } else {
                         if (isnewton == 1) {
-                            newton_calc();
+                            //newton_calc();
                         } else {
                             mandelbrot_calc();
                         }
                     }
                 }
                 else if (hypercomplexindex > 0) {
-                    mandel3d_calc();
+                    //mandel3d_calc();
                 }
             }
         `;
