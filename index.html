@@ -498,8 +498,10 @@
             vec2 theta11f(vec2 z, vec2 w) { return cmul(cexp(PI * 0.25 * cmul_i(w + 4.0 * z + 2.0 * vec2(1.0, 0.0))), theta00f(z + 0.5 * (w + vec2(1.0, 0.0)), w)); }
             vec2 raw_sn(vec2 z, vec2 w) { return -cdiv(cmul(theta000(w), theta11f(z, w)), cmul(theta10f(vec2(0.0, 0.0), w), theta01f(z, w))); }
             vec2 raw_cn(vec2 z, vec2 w) { return cdiv(cmul(theta01f(vec2(0.0, 0.0), w), theta10f(z, w)), cmul(theta10f(vec2(0.0, 0.0), w), theta01f(z, w))); }
+            vec2 raw_dn(vec2 z, vec2 w) { return cdiv(cmul(theta01f(vec2(0.0, 0.0), w), theta00f(z, w)), cmul(theta000(w), theta01f(z, w))); }
             vec2 sn(vec2 z, vec2 k) { vec2 tau = invert_tau(k); return raw_sn(jacobi_reduce(z, tau), tau); }
             vec2 cn(vec2 z, vec2 k) { vec2 tau = invert_tau(k); return raw_cn(jacobi_reduce(z, tau), tau); }
+            vec2 dn(vec2 z, vec2 k) { vec2 tau = invert_tau(k); return raw_dn(jacobi_reduce(z, tau), tau); }
 
             float qabs_sq(vec4 z) { return dot(z, z); }
             float qabs(vec4 z) { return length(z); }
