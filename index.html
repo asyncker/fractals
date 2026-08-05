@@ -271,6 +271,7 @@
             vec2 cre(vec2 z) { return cdiv(z + conj(z), vec2(2.0, 0.0)); }
             vec2 cim(vec2 z) { return cdiv(z - conj(z), vec2(2.0, 0.0)); }
             vec2 ccomp_identity(vec2 z) { return cre(z) + cim(z); }
+            vec2 csign(vec2 z) { return z / length(z); }
             vec2 ccomp_dotre(vec2 z, vec2 w) { return cre(z) * cre(w) + cim(z) * cim(w); }
             vec2 ccomp_dotim(vec2 z, vec2 w) { return cre(w) * cim(z) - cim(w) * cre(z); }
             // vec2 ccomp_dim(vec2 z, vec2 w) { return cre(z) * cim(w) - cim(w) * cre(z); }
