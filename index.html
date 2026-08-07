@@ -551,7 +551,7 @@
             vec2 bitoidempotent_right(vec4 z) { return vec2(z.x + z.w, z.y - z.z); }
             vec4 bifromidempotent(vec2 z, vec2 w) { return 0.5 * vec4(w.x + z.x, z.y + w.y, z.y - w.y, w.x - z.x); }
             vec4 bimul(vec4 z, vec4 w) { return vec4(cmul(z.xy, w.xy) - cmul(z.zw, w.zw), cmul(z.xy, w.zw) + cmul(z.zw, w.xy)); }
-            vec4 biinv(vec4 z) { vec2 len = bidabs_sq(z); vec2 invlen = conj(len) * (1.0 / dot(len, len)); return vec4(cmul(z.xy, invlen), cmul(-z.zw, invlen)); }
+            vec4 biinv(vec4 z) { vec2 len = bidabs_sq(z); vec2 invlen = conj(len) / dot(len, len); return vec4(cmul(z.xy, invlen), cmul(-z.zw, invlen)); }
             vec4 bidiv(vec4 z, vec4 w) { return bimul(z, biinv(w)); }
             vec4 biexp(vec4 z) { vec2 r = cexp(z.xy); return vec4(cmul(r, ccos(z.zw)), cmul(r, csin(z.zw))); }
             vec4 bilog(vec4 z) { vec2 logz = clog(z.xy + cmul_i(z.zw)); vec2 logw = clog(z.xy - cmul_i(z.zw)); return vec4(0.5 * (logz + logw), -0.5 * cmul_i(logz - logw)); }
@@ -621,13 +621,14 @@
                 return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
             }
 
-            vec3 hue(float H) {
-                float W = sin(H * 0.0174532925199);
-                float U = cos(H * 0.0174532925199);
+            vec3 hue(float h) {
+                float angle = h * 0.0174532925199;
+                float w = sin(angle);
+                float u = cos(angle);
                 vec3 ret;
-                ret.x = 0.587 - 0.587 * U + 0.330 * W;
-                ret.z = 0.587 - 0.587 * U - 1.050 * W;
-                ret.y = 0.587 + 0.413 * U + 0.035 * W;
+                ret.x = 0.587 - 0.587 * u + 0.330 * w;
+                ret.z = 0.587 - 0.587 * u - 1.050 * w;
+                ret.y = 0.587 + 0.413 * u + 0.035 * w;
                 return ret;
             }
 
