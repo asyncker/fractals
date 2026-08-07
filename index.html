@@ -507,7 +507,7 @@
             float qabs_sq(vec4 z) { return dot(z, z); }
             float qabs(vec4 z) { return length(z); }
             vec4 qmul(vec4 z, vec4 w) { return vec4(z.x * w.x - dot(z.yzw, w.yzw), z.x * w.yzw + w.x * z.yzw + cross(z.yzw, w.yzw)); }
-            vec4 qinv(vec4 z) { float vlen = dot(z, z); if (vlen < 1e-19) vlen = 1e-19; return vec4(z.x, -z.yzw) / vlen; }
+            vec4 qinv(vec4 z) { return vec4(z.x, -z.yzw) / dot(z, z); }
             vec4 qdiv(vec4 z, vec4 w) { return qmul(z, qinv(w)); }
             vec4 qexp(vec4 z) { float vlen = length(z.yzw), expv = exp(z.x); if (vlen < 1e-6) return vec4(expv, z.yzw); return expv * vec4(cos(vlen), sin(vlen) / vlen * z.yzw); }
             vec4 qlog(vec4 z) { float vlen = length(z.yzw), qlen = length(z); float logv = log(qlen); if (vlen < 1e-6) return vec4(logv, 0.0, 0.0, 0.0); return vec4(logv, acos(clamp(z.x / qlen, -1.0, 1.0)) / vlen * z.yzw); }
