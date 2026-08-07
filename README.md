@@ -56,7 +56,10 @@ Platform support:
 ![](render/log_sin_test.png)
 24. Zeta(|Re(z)| + |Im(z)| * i) + c (c = -1.37973714796 + 0.0i)
 ![](render/zeta-inv-conj-burning-ship-0.724775731.png)
-
+25. Zeta((z^2) ^ (1/2)) + c (c = -2 * ln(2))
+![](render/zeta_abs.png)
+26. Zeta((z^2) ^ (1/2)) + c (c ~= -2 * ln(2) - 0.128i)
+![](render/zeta_abs_zoom.png)
 
 <br />
 Visual similarity of exp and zeta with the same dynamics, comparing all functions, only exp and zeta behaved almost identically:<br />
