@@ -787,6 +787,9 @@
                 }
             }
 
+            float logmap(float r, float x) { return r * x * (1.0 - x); }
+            float logmapderv(float r, float x) { return r * (1.0 - x - x); }
+
             void lyapunov_calc() {
                 vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
                 uv = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : uv * zoomjulia + vec2(zxval, zyval);
@@ -794,15 +797,15 @@
                 if (inverse != 0.0) { c = cinvmix(c, inverse); }
                 vec2 z = vec2(ismandel == 1 ? c.x : uv.x, ismandel == 1 ? c.y : uv.y);
                 const int maxiter = 180;
-                float lambda = 0.0, maxlambda = 120000.0, xn = 0.5, rx = 0.0, ri = 0.0, invmaxiter = 1.0 / float(maxiter);
+                float lambda = 0.0, maxlambda = 120000.0, xn = 0.5, rx = 0.0, ri = 0.0, invn = 1.0 / float(maxiter);
                 int modval = 0, n0 = iteration / 10; // n0 > 1
                 for (int i = 1; i < maxiter; i++) {
                     modval = i - (i / 2) * 2;
-                    if (modval == 1) { rx = z.x; }
-                    else if (modval == 0) { rx = z.y; }
-                    xn = xn * rx * (1.0 - xn);
+                    if (modval == 1) { rx = z.x; } // re 
+                    else if (modval == 0) { rx = z.y; } // im
+                    xn = logmap(rx, xn);
                     if (i >= n0) {
-                        lambda += log(abs(rx * (1.0 - 2.0 * xn))) * invmaxiter;
+                        lambda += log(abs(logmapderv(rx, xn))) * invn;
                     }
                     if (abs(lambda) > maxlambda || i - 2 == iteration) {
                         break;
@@ -821,7 +824,7 @@
                     vec3 color1 = hsv2rgb(vec3(hue, 0.8, clamp(value1, 0.0, 1.0)));
                     gl_FragColor = vec4(color1, 1.0);
                 } else if (colorschemeindex == 1) {
-                    float color = float(ri) * multlight * 0.00392156862745 * 2.5;
+                    float color = ri * multlight * 0.00392156862745 * 2.5;
                     float r = bounce(color, 0.0, 1.0);
                     float g = bounce(color * 2.0, 0.0, 1.0);
                     float b = bounce(color * 3.0, 0.0, 1.0);
