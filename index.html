@@ -244,6 +244,7 @@
             float cabs_pow(vec2 z, float k) { return fast_pow(dot(z, z), k); }
             float cabs_log(vec2 z, float k) { return log(dot(z, z)) * k; }
             float carg(vec2 z) { return atan(z.y, z.x); }
+            vec2 cswap(vec2 z) { return vec2(z.y, z.x); }
             vec2 cmul_i(vec2 z) { return vec2(-z.y, z.x); }
             vec2 conj(vec2 z) { return vec2(z.x, -z.y); }
             vec2 cinv(vec2 z) { return vec2(z.x, -z.y) / dot(z, z); }
