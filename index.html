@@ -737,7 +737,10 @@
                     z_prev = z;
                     vec2 z_func = cpow(z, w);
                     vec2 z_derv = power * cpow(z, w - vec2(1.0, 0.0));
-                    if (fractalindex <= 3) { func = z_func; derv = z_derv; }
+                    if (fractalindex == 0) { func = z_func; derv = z_derv; }
+                    else if (fractalindex == 1) { func = z_func; derv = z_derv; }
+                    else if (fractalindex == 2) { func = z_func; derv = z_derv; }
+                    else if (fractalindex == 3) { func = z_func; derv = z_derv; }
                     else if (fractalindex == 4) { func = cexp(z_func); derv = func; }
                     else if (fractalindex == 5) { func = csinh(z_func); derv = ccosh(z_func); }
                     else if (fractalindex == 6) { func = ccosh(z_func); derv = csinh(z_func); }
@@ -765,13 +768,8 @@
                     z = z_prev - cmul(func - subst, cinv(derv));
                     n += 1;
                     z += c;
-                    znorm = (z.x - z_prev.x) * (z.x - z_prev.x) + (z.y - z_prev.y) * (z.y - z_prev.y);
-                    if (znorm < rangeval || n >= maxn) {
-                        z.x = z_prev.x;
-                        z.y = z_prev.y;
-                        n = n >= maxn ? maxiter : i;
-                        break;
-                    }
+                    znorm = dot(z - z_prev, z - z_prev);
+                    if (znorm < rangeval || n >= maxn) { z = z_prev; n = n >= maxn ? maxiter : i; break; }
                 }
                 if (colorschemeindex == 0) {
                     float hue = (atan(z.y, z.x) * 0.159154943092 + 0.5);
