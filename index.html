@@ -459,6 +459,8 @@
             vec2 cdzeta(vec2 z) { vec2 dz = vec2(0.0, 0.001); return cmul(czeta(z + dz) - czeta(z - dz), cinv(2.0 * dz)); }
             vec2 cdzsinh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czsinh(z + dz, t) - czsinh(z - dz, t), cinv(2.0 * dz)); }
             vec2 cdzcosh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czcosh(z + dz, t) - czcosh(z - dz, t), cinv(2.0 * dz)); }
+            vec2 cdlogzeta(vec2 z) { return cdiv(czeta(z), cdzeta(z)); }
+            //vec2 cdloggamma(vec2 z) { return cdiv(cgamma(z), cdgamma(z)); }
 
             vec2 invert_tau(vec2 z) {
                 vec2 rt_k = csqrt(csqrt(vec2(1.0, 0.0) - cmul(z, z)));
