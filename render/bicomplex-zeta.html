@@ -101,12 +101,8 @@
             }
             vec2 mpow(vec2 z, vec2 w) { return cmul(cexp(log(length(z)) * w), cexp(cmul(vec2(0.0, carg(z)), (vec2(1.0, 0.0) - cexp(PI * vec2(-w.y, w.x))) * 0.5))); }
             vec2 ccomp_abs(vec2 z) { return vec2(abs(z.x), abs(z.y)); } 
-            vec2 ccomp_abssq(vec2 z) { return vec2(z.x * z.x, z.y * z.y); }
-            vec2 ccomp_invsq(vec2 z) { return vec2(1.0 / (z.x * z.x), 1.0 / (z.y * z.y)); }
             vec2 csin(vec2 z) { return vec2(sin(z.x) * cosh(z.y), cos(z.x) * sinh(z.y)); }
             vec2 ccos(vec2 z) { return vec2(cos(z.x) * cosh(z.y), -sin(z.x) * sinh(z.y)); }
-            vec2 cfib(vec2 z) { return (cpow(vec2(1.61803398875, 0.0), z) - cpow(vec2(-0.61803398875, 0.0), z)) * 0.4472135955; }
-            vec2 cdiv(vec2 a, vec2 b) { float d = dot(b, b); return vec2(dot(a, b), a.y * b.x - a.x * b.y) / max(d, 1e-8); }
             vec2 cgamma_right(vec2 z) {
                 vec2 w = z - vec2(1.0, 0.0);
                 vec2 t = w + vec2(7.5, 0.0);
@@ -140,7 +136,7 @@
                 return res;
             }
 
-            vec2 zeta_character(vec2 z) { vec2 zconj = vec2(1.0, 0.0) - 2.0 * z; return cexp(cmul(z, vec2(-2.38629436112, 1.57079632679) + clog(zconj)) + 0.5 * (vec2(1.69314718056, 0) - clog(z)) + 0.572364942925 * zconj); }
+            vec2 cgammaphi(vec2 z) { return cexp(cmul(z, vec2(-3.53102424697, 1.57079632679) + clog(vec2(1.0, 0.0) - 2.0 * z)) - 0.5 * clog(z) + vec2(1.4189385332, 0.0)); }
 
             vec2 czeta_strip(vec2 z) {
                 vec4 zeta_est = vec4(1.0, 0, 1.0, 0);
@@ -152,7 +148,7 @@
                 mat4(-2.890371757896,-2.944438979166,-2.995732273554,-3.044522437723,-3.091042453358,-3.135494215929,-3.178053830348,-3.218875824868,-3.258096538021,-3.295836866004,-3.332204510175,-3.367295829986,-3.401197381662,-3.433987204485,-3.465735902800,-3.496507561466));
                 vec2 zetaA = zeta_est.xy;
                 vec2 zetaB = zeta_est.zw;
-                zetaB = cmul(zetaB, conj(zeta_character(vec2(1.0, 0.0) - conj(z))));
+                zetaB = cmul(zetaB, conj(cgammaphi(vec2(1.0, 0.0) - conj(z))));
                 if (z.y < 120.0) {
                     float t = 1.0 - min(z.x, 1.0);
                     float alpha = t * t * (3.0 - 2.0 * t);
@@ -211,9 +207,9 @@
                 if (z.y < 0.0) { z.y = -z.y; conjugate_mask.y = -1.0; }
                 return (z.x < 0.0 ? ceta_left(z) : ceta_right(z)) * conjugate_mask;
             }
-            //vec4 bigamma(vec4 z) { return bifromidempotent(cgamma(bitoidempotent_left(z)), cgamma(bitoidempotent_right(z))); }
-            float biabs(vec4 z) { return length(z); }
             vec2 bidabs_sq(vec4 z) { return cmul(z.xy, z.xy) + cmul(z.zw, z.zw); }
+            vec2 bitoidempotent_left(vec4 z) { return vec2(z.x - z.w, z.y + z.z); }
+            vec2 bitoidempotent_right(vec4 z) { return vec2(z.x + z.w, z.y - z.z); }
             vec4 bifromidempotent(vec2 z, vec2 w) { return 0.5 * vec4(w.x + z.x, z.y + w.y, z.y - w.y, w.x - z.x); }
             vec4 bimul(vec4 z, vec4 w) { return vec4(cmul(z.xy, w.xy) - cmul(z.zw, w.zw), cmul(z.xy, w.zw) + cmul(z.zw, w.xy)); }
             vec4 biinv(vec4 z) { vec2 len = bidabs_sq(z); vec2 invlen = conj(len) * cabs_invsq(len); return vec4(cmul(z.xy, invlen), cmul(-z.zw, invlen)); }
@@ -230,8 +226,6 @@
             vec2 czeta(vec2 z) { return cmul(ceta(z), cinv(vec2(1.0, 0.0) - cexp(0.69314718056 * (vec2(1.0, 0.0) - z)))); }
             vec2 cdzeta(vec2 z) { vec2 dz = vec2(0.001, 0.0); return cmul(czeta(z + dz) - czeta(z - dz), cinv(2.0 * dz)); }
             vec2 czsinh(vec2 z, vec2 t) { return (czeta(z + t) - czeta(t - z)) * 0.5; }
-            vec2 bitoidempotent_left(vec4 z) { return vec2(z.x - z.w, z.y + z.z); }
-            vec2 bitoidempotent_right(vec4 z) { return vec2(z.x + z.w, z.y - z.z); }
             vec4 bizeta(vec4 z) { return bifromidempotent(czeta(bitoidempotent_left(z)), czeta(bitoidempotent_right(z))); }
 
             vec3 hue(float H) {
@@ -274,13 +268,11 @@
                     dz_right = cmul(step_dz_R, dz_right) + vec2(1.0, 0.0);
                     z = bipow(z, power);
                     if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); z.w = abs(z.w); }
-                    if (fractalindex == 1) { z.y = -z.y; z.z = -z.z; }
                     z = bizeta(z);
                     z = z + c;
                 }
-                vec4 dz_4d = bifromidempotent(dz_left, dz_right);
-                float dr = length(dz_4d);
-                return vec2(0.5 * log(znorm) * znorm / max(dr, 1e-8), float(n));
+                float dr = length(bifromidempotent(dz_left, dz_right));
+                return vec2(0.5 * log(znorm) * znorm / dr, float(n));
             }
 
             void main() {
