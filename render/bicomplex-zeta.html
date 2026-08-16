@@ -76,7 +76,6 @@
 
             float sinh(float x) { return (exp(x) - exp(-x)) * 0.5; }
             float cosh(float x) { return (exp(x) + exp(-x)) * 0.5; }
-
             float cabs_sq(vec2 z) { return dot(z, z); }
             float cabs(vec2 z) { return sqrt(z.x * z.x + z.y * z.y); }
             float cabs_invsq(vec2 z) { return 1.0 / (z.x * z.x + z.y * z.y); }
@@ -107,6 +106,7 @@
             vec2 csin(vec2 z) { return vec2(sin(z.x) * cosh(z.y), cos(z.x) * sinh(z.y)); }
             vec2 ccos(vec2 z) { return vec2(cos(z.x) * cosh(z.y), -sin(z.x) * sinh(z.y)); }
             vec2 cfib(vec2 z) { return (cpow(vec2(1.61803398875, 0.0), z) - cpow(vec2(-0.61803398875, 0.0), z)) * 0.4472135955; }
+            vec2 cdiv(vec2 a, vec2 b) { float d = dot(b, b); return vec2(dot(a, b), a.y * b.x - a.x * b.y) / max(d, 1e-8); }
             vec2 cgamma_right(vec2 z) {
                 vec2 w = z - vec2(1.0, 0.0);
                 vec2 t = w + vec2(7.5, 0.0);
@@ -211,19 +211,9 @@
                 if (z.y < 0.0) { z.y = -z.y; conjugate_mask.y = -1.0; }
                 return (z.x < 0.0 ? ceta_left(z) : ceta_right(z)) * conjugate_mask;
             }
-
-            vec2 czeta(vec2 z) { return cmul(ceta(z), cinv(vec2(1.0, 0.0) - cexp(0.69314718056 * (vec2(1.0, 0.0) - z)))); }
-            vec2 czsinh(vec2 z, vec2 t) { return (czeta(z + t) - czeta(t - z)) * 0.5; }
-            vec2 czcosh(vec2 z, vec2 t) { return (czeta(z + t) + czeta(t - z)) * 0.5; }
-            vec2 cdzeta(vec2 z) { vec2 dz = vec2(0.0, 0.001); return cmul(czeta(z + dz) - czeta(z - dz), cinv(2.0 * dz)); }
-            vec2 cdzsinh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czsinh(z + dz, t) - czsinh(z - dz, t), cinv(2.0 * dz)); }
-            vec2 cdzcosh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czcosh(z + dz, t) - czcosh(z - dz, t), cinv(2.0 * dz)); }
-
-            float biabs_sq(vec4 z) { return z.x * z.x + z.y * z.y + z.z * z.z + z.w * z.w; }
+            //vec4 bigamma(vec4 z) { return bifromidempotent(cgamma(bitoidempotent_left(z)), cgamma(bitoidempotent_right(z))); }
             float biabs(vec4 z) { return length(z); }
             vec2 bidabs_sq(vec4 z) { return cmul(z.xy, z.xy) + cmul(z.zw, z.zw); }
-            vec2 bitoidempotent_left(vec4 z) { return vec2(z.x - z.w, z.y + z.z); }
-            vec2 bitoidempotent_right(vec4 z) { return vec2(z.x + z.w, z.y - z.z); }
             vec4 bifromidempotent(vec2 z, vec2 w) { return 0.5 * vec4(w.x + z.x, z.y + w.y, z.y - w.y, w.x - z.x); }
             vec4 bimul(vec4 z, vec4 w) { return vec4(cmul(z.xy, w.xy) - cmul(z.zw, w.zw), cmul(z.xy, w.zw) + cmul(z.zw, w.xy)); }
             vec4 biinv(vec4 z) { vec2 len = bidabs_sq(z); vec2 invlen = conj(len) * cabs_invsq(len); return vec4(cmul(z.xy, invlen), cmul(-z.zw, invlen)); }
@@ -233,10 +223,15 @@
                 if (w == -1.0) { return biinv(z); }
                 else if (w == 1.0) { return z; }
                 else if (w == 2.0) { return vec4(z.x * z.x - z.y * z.y - z.z * z.z + z.w * z.w, 2.0 * (z.x * z.y - z.z * z.w), 2.0 * (z.x * z.z - z.y * z.w), 2.0 * (z.x * z.w + z.y * z.z)); }
-                else if (w == 0.0) { return biexp(0.001 * bilog(z)); }
                 return biexp(w * bilog(z));
             }
-            vec4 bigamma(vec4 z) { return bifromidempotent(cgamma(bitoidempotent_left(z)), cgamma(bitoidempotent_right(z))); }
+
+
+            vec2 czeta(vec2 z) { return cmul(ceta(z), cinv(vec2(1.0, 0.0) - cexp(0.69314718056 * (vec2(1.0, 0.0) - z)))); }
+            vec2 cdzeta(vec2 z) { vec2 dz = vec2(0.001, 0.0); return cmul(czeta(z + dz) - czeta(z - dz), cinv(2.0 * dz)); }
+            vec2 czsinh(vec2 z, vec2 t) { return (czeta(z + t) - czeta(t - z)) * 0.5; }
+            vec2 bitoidempotent_left(vec4 z) { return vec2(z.x - z.w, z.y + z.z); }
+            vec2 bitoidempotent_right(vec4 z) { return vec2(z.x + z.w, z.y - z.z); }
             vec4 bizeta(vec4 z) { return bifromidempotent(czeta(bitoidempotent_left(z)), czeta(bitoidempotent_right(z))); }
 
             vec3 hue(float H) {
@@ -251,30 +246,44 @@
 
             vec2 mandel_bicomplex(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
                 int n = 0;
-                float dr = 1.0, znorm = 0.0;
+                float znorm = 0.0;
                 vec4 z = vec4(zx, zy, zz, zw);
                 vec4 c = vec4(cx, cy, cz, cw);
-                vec4 z0 = z, ztmp = z;
+                vec2 dz_left = vec2(1.0, 0.0);
+                vec2 dz_right = vec2(1.0, 0.0);
                 for (int i = 0; i < 24; i++) {
                     znorm = length(z);
                     n = i;
                     if (znorm > range || i == iteration) { break; }
-                    z = bipow(z, power);
-                    if (isburning == 1) {
-                        z.x = abs(z.x);
-                        z.y = -abs(z.y);
-                        z.z = -abs(z.z);
-                        z.w = abs(z.w);
+                    vec2 z_L = bitoidempotent_left(z);
+                    vec2 z_R = bitoidempotent_right(z);
+                    vec2 step_dz_L, step_dz_R;
+                    if (power == 1.0) {
+                        step_dz_L = cdzeta(z_L);
+                        step_dz_R = cdzeta(z_R);
                     }
+                    //else {
+                    //    vec2 p = vec2(power, 0.0);
+                    //    vec2 p_minus_1 = vec2(power - 1.0, 0.0);
+                    //    vec2 dpow_L = cmul(p, cpow(z_L, p_minus_1));
+                    //    vec2 dpow_R = cmul(p, cpow(z_R, p_minus_1));
+                    //    step_dz_L = cmul(cdzeta(cpow(z_L, p)), dpow_L);
+                    //    step_dz_R = cmul(cdzeta(cpow(z_R, p)), dpow_R);
+                    //}
+                    dz_left = cmul(step_dz_L, dz_left) + vec2(1.0, 0.0);
+                    dz_right = cmul(step_dz_R, dz_right) + vec2(1.0, 0.0);
+                    z = bipow(z, power);
+                    if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); z.w = abs(z.w); }
                     if (fractalindex == 1) { z.y = -z.y; z.z = -z.z; }
                     z = bizeta(z);
                     z = z + c;
-                    if (power == 1.0) { dr = dr + 1.0; } else { dr = power * pow(znorm, power - 1.0) * dr + 1.0; }
                 }
-                return vec2(0.5 * log(znorm) * znorm / dr, n);
+                vec4 dz_4d = bifromidempotent(dz_left, dz_right);
+                float dr = length(dz_4d);
+                return vec2(0.5 * log(znorm) * znorm / max(dr, 1e-8), float(n));
             }
 
-            void mandel3d_calc() {
+            void main() {
                 vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
                 vec3 ro = vec3(ismandel == 1 ? cxval : zxval, ismandel == 1 ? cyval : zyval, ismandel == 1 ? -zoommandel : -zoomjulia);
                 vec3 rd = normalize(vec3(uv.x, uv.y, 1.0));
@@ -282,7 +291,7 @@
                 float cy = cosrotx * ro.y + sinrotx * ro.z;
                 float cx = cosrotz * ro.x + sinrotz * rozy;
                 float cz = cosrotz * rozy - sinrotz * ro.x;
-                float cw = 0.0;
+                float cw = scaleval;
                 if (inverse != 0.0) {
                     float cnorminv = 1.0 / (cx * cx + cy * cy + cz * cz + cw * cw) * inverse;
                     cx = cx * cnorminv + (1.0 - inverse) * cx;
@@ -293,7 +302,7 @@
                 float zx = ismandel == 1 ? cx : cxval;
                 float zy = ismandel == 1 ? cy : cyval;
                 float zz = ismandel == 1 ? cz : zoommandel;
-                float zw = ismandel == 1 ? cw : 0.0;
+                float zw = ismandel == 1 ? cw : scaleval;
                 float surDist = 0.1, val = 0.0, dO = 0.0, maxDist = 100.0;
                 const int raymarch_iterations = 100;
                 int ot = raymarch_iterations - 1;
@@ -335,10 +344,6 @@
                     col += vec3(0.1, 0.2, 0.4) * (1.0 - fog) * 0.3;
                     gl_FragColor = vec4(col, 1.0);
                 }
-            }
-
-            void main() {
-                mandel3d_calc();
             }
         `;
         
