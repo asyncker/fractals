@@ -272,9 +272,10 @@
             vec2 ccomp_pow(vec2 z, float k) { return vec2(fast_pow(z.x, k), fast_pow(z.y, k)); }
             vec2 csop(vec2 z, vec2 w) { return vec2(z.x * w.x + z.y * w.y, w.x * z.y + w.y * z.x); }
             vec2 cdot(vec2 z, vec2 w) { return vec2(z.x * w.x + z.y * w.y, w.x * z.y - w.y * z.x); }
-            vec2 cdtl(vec2 z, vec2 w, vec2 k) { return cmul(clog(cdot(z, w)), k); }
-            vec2 cdtp(vec2 z, vec2 w, vec2 k) { return cpow(cdot(z, w), k); }
-            vec2 csin_fast(vec2 z) { float ey = exp(z.y); float ey_inv = 1.0 / ey; return vec2(sin(z.x) * (ey + ey_inv) * 0.5, cos(z.x) * (ey - ey_inv) * 0.5); }
+            vec2 ch(vec2 z, vec2 w) { return -w/2.0 * clog(z); }
+            vec2 cdotlog(vec2 z, vec2 w, vec2 k) { return cmul(clog(cdot(z, w)), k); }
+            vec2 cdotpow(vec2 z, vec2 w, vec2 k) { return cpow(cdot(z, w), k); }
+            vec2 csin_fast(vec2 z) { float ey = exp(z.y); float eyminus = 1.0 / ey; return vec2(sin(z.x) * (ey + eyminus) * 0.5, cos(z.x) * (ey - eyminus) * 0.5); }
             vec2 csin(vec2 z) { return vec2(sin(z.x) * cosh(z.y), cos(z.x) * sinh(z.y)); }
             vec2 ccos(vec2 z) { return vec2(cos(z.x) * cosh(z.y), -sin(z.x) * sinh(z.y)); }
             vec2 csinh(vec2 z) { return vec2(sinh(z.x) * cos(z.y), cosh(z.x) * sin(z.y)); }
@@ -337,14 +338,17 @@
                 return result + s;
             }
 
-            vec4 czeta_helper(vec2 z, mat4 ns, mat4 bases) {
+            vec2 czeta_left(vec2 z) { return cmul(cpow(vec2(2.0 * PI, 0.0), z - vec2(1.0, 0.0)) * 2.0, cmul(csin(z * PI * 0.5), cgamma(vec2(1.0, 0.0) - z))); }
+
+            vec4 czeta_helper_4(vec2 z, mat4 ns, mat4 bases) {
                 mat4 phases = z.y * bases;
                 float cutoff = sqrt(z.y * 0.159154943092) + 100.0 * step(z.y, 120.0);
+                float cutoffscale = 0.884 * cutoff + 0.442;
                 vec4 res = vec4(0.0, 0.0, 0.0, 0.0);
                 for (int row = 0; row < 4; row++) {
-                    vec4 mags = exp(z.x*bases[row]);
-                    vec4 cutoffv = clamp(0.884*(cutoff-ns[row] + 0.5), 0.0, 1.0);
-                    vec4 mags2 = cutoffv/(ns[row] * mags);
+                    vec4 mags = exp(z.x * bases[row]);
+                    vec4 cutoffv = clamp(cutoffscale - 0.884 * ns[row], 0.0, 1.0);
+                    vec4 mags2 = cutoffv / (ns[row] * mags);
                     mags *= cutoffv;
                     vec4 re = cos(phases[row]);
                     vec4 im = sin(phases[row]);
@@ -353,22 +357,18 @@
                 return res;
             }
 
-            vec2 zeta_character(vec2 z) {
-                vec2 zconj = vec2(1.0, 0.0) - 2.0 * z;
-                return cexp(cmul(z, vec2(-2.38629436112, 1.57079632679) + clog(zconj)) + 0.5 * (vec2(1.69314718056, 0) - clog(z)) + 0.572364942925 * zconj);
-            }
+            vec2 cgammaphi(vec2 z) { return cexp(cmul(z, vec2(-3.53102424697, 1.57079632679) + clog(vec2(1.0, 0.0) - 2.0 * z)) - 0.5 * clog(z) + vec2(1.4189385332, 0.0)); }
 
             vec2 czeta_strip(vec2 z) {
-                vec4 zeta_est = vec4(1.0, 0, 1.0, 0);
-                zeta_est += czeta_helper(z,
+                vec4 zeta_est = vec4(1.0, 0.0, 1.0, 0.0);
+                zeta_est += czeta_helper_4(z,
                 mat4(2.,3.,4.,5.,6.,7.,8.,9.,10.,11.,12.,13.,14.,15.,16.,17.),
-                mat4(-0.693147180560,-1.098612288668,-1.386294361120,-1.609437912434,-1.791759469228,-1.945910149055,-2.079441541680,-2.197224577336,-2.302585092994,-2.397895272798,-2.484906649788,-2.564949357462,-2.639057329615,-2.708050201102,-2.772588722240,-2.833213344056));
-                zeta_est += czeta_helper(z,
+                mat4(-0.69314718056,-1.09861228866811,-1.38629436111989,-1.6094379124341,-1.79175946922805,-1.94591014905531,-2.07944154167984,-2.19722457733622,-2.30258509299405,-2.39789527279837,-2.48490664978800,-2.56494935746154,-2.63905732961526,-2.70805020110221,-2.77258872223978,-2.83321334405622));
+                zeta_est += czeta_helper_4(z,
                 mat4(18.,19.,20.,21.,22.,23.,24.,25.,26.,27.,28.,29.,30.,31.,32.,33.),
-                mat4(-2.890371757896,-2.944438979166,-2.995732273554,-3.044522437723,-3.091042453358,-3.135494215929,-3.178053830348,-3.218875824868,-3.258096538021,-3.295836866004,-3.332204510175,-3.367295829986,-3.401197381662,-3.433987204485,-3.465735902800,-3.496507561466));
+                mat4(-2.89037175789616,-2.94443897916644,-2.99573227355399,-3.04452243772342,-3.09104245335832,-3.13549421592915,-3.17805383034795,-3.21887582486820,-3.25809653802148,-3.29583686600433,-3.33220451017520,-3.36729582998647,-3.40119738166216,-3.43398720448515,-3.46573590279973,-3.49650756146648));
                 vec2 zetaA = zeta_est.xy;
-                vec2 zetaB = zeta_est.zw;
-                zetaB = cmul(zetaB, conj(zeta_character(vec2(1.0, 0.0) - conj(z))));
+                vec2 zetaB = cmul(zeta_est.zw, conj(cgammaphi(vec2(1.0, 0.0) - conj(z))));
                 if (z.y < 120.0) {
                     float t = 1.0 - min(z.x, 1.0);
                     float alpha = t * t * (3.0 - 2.0 * t);
@@ -389,12 +389,12 @@
                 return res;
             }
 
-            vec2 ceta_strip(vec2 z) { return cmul((vec2(1.0, 0.0) - cexp(0.69314718056 * (vec2(1.0, 0.0) - z))), czeta_strip(z)); }
+            vec2 ceta_strip(vec2 z) { return cmul(vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z), czeta_strip(z)); }
             vec2 ceta_right(vec2 z) {
                 if (z.x < 3.0 && z.y > 54.0) { return ceta_strip(z); }
                 vec2 result = vec2(1.0, 0.0);
                 result += czeta_helper_2(z,
-                mat4(-0.69314718055995,-1.09861228866811,-1.38629436111989,-1.60943791243410,-1.79175946922805,-1.94591014905531,-2.07944154167984,-2.19722457733622,-2.30258509299405,-2.39789527279837,-2.48490664978800,-2.56494935746154,-2.63905732961526,-2.70805020110221,-2.77258872223978,-2.83321334405622),
+                mat4(-0.69314718056,-1.09861228866811,-1.38629436111989,-1.6094379124341,-1.79175946922805,-1.94591014905531,-2.07944154167984,-2.19722457733622,-2.30258509299405,-2.39789527279837,-2.48490664978800,-2.56494935746154,-2.63905732961526,-2.70805020110221,-2.77258872223978,-2.83321334405622),
                 mat4(-1.00000000000000,1.00000000000000,-1.00000000000000,1.00000000000000,-0.99999999999995,0.99999999999847,-0.99999999996425,0.99999999937104,-0.99999999142280,0.99999990708781,-0.99999918494666,0.99999411949279,-0.99996466193028,0.99982127062071,-0.99923254216349,0.99718148818347));
                 result += czeta_helper_2(z,
                 mat4(-2.89037175789616,-2.94443897916644,-2.99573227355399,-3.04452243772342,-3.09104245335832,-3.13549421592915,-3.17805383034795,-3.21887582486820,-3.25809653802148,-3.29583686600433,-3.33220451017520,-3.36729582998647,-3.40119738166216,-3.43398720448515,-3.46573590279973,-3.49650756146648),
@@ -408,17 +408,17 @@
                 const float SQ2PI2 = 1.2533141373155001;
                 float log_r = log(length(z));
                 if (z.y > 200.0) {
-                    component_a = SQ2PI2 * cmul_i(cexp(vec2(z.x, 0) + (log_r - 1.0) * z - vec2(log_r * 0.5, 0.785398163397)));
+                    component_a = SQ2PI2 * cmul_i(cexp(vec2(z.x, 0.0) + (log_r - 1.0) * z - vec2(log_r * 0.5, 0.785398163397)));
                 } else if (z.y > 20.0) {
                     float theta = atan(z.y, z.x);
                     component_a = SQ2PI2 * cmul_i(cexp((theta - 1.57079632679) * cmul_i(z) + (log_r - 1.0) * z - 0.5 * vec2(log_r, theta)));
                 } else {
-                    component_a = cmul(cgamma(z), csin_fast(z * 1.57079632679));
+                    component_a = cmul(cgamma(z), csin(z * 1.57079632679));
                 }
                 vec2 zadd1 = z + vec2(1.0, 0.0);
+                vec2 two_neg_z = cexp(-0.69314718056 * z);
+                vec2 multiplier = cmul(cexp(-1.14472988585 * zadd1), cmul(vec2(1.0, 0.0) - 0.5 * two_neg_z, cinv(vec2(1.0, 0.0) - two_neg_z)));
                 vec2 component_b = cmul(z, ceta_right(zadd1));
-                vec2 multiplier_b = cmul(vec2(1.0, 0.0) - cexp(-0.69314718056 * zadd1), cinv(vec2(1.0, 0.0) - cexp(-0.69314718056 * z)));
-                vec2 multiplier = cmul(cexp(-1.14472988585 * zadd1), multiplier_b);
                 return 2.0 * conj(cmul(cmul(component_a, component_b), multiplier));
             }
 
@@ -427,30 +427,8 @@
                 if (z.y < 0.0) { z.y = -z.y; conjugate_mask.y = -1.0; }
                 return (z.x < 0.0 ? ceta_left(z) : ceta_right(z)) * conjugate_mask;
             }
-            vec2 czeta_left(vec2 z) { return cmul(cpow(vec2(2.0 * PI, 0.0), z - vec2(1.0, 0.0)) * 2.0, cmul(csin(z * PI * 0.5), cgamma(vec2(1.0, 0.0) - z))); }
 
-            vec2 czeta_from_eta(vec2 z) {
-                vec2 pow2 = cexp(cmul(vec2(1.0 - z.x, -z.y), vec2(0.69314718055994530942, 0.0)));
-                vec2 denom = vec2(1.0, 0.0) - pow2;
-                return cmul(ceta_right(z), cinv(denom));
-            }
-
-            vec2 czeta2(vec2 z) {
-                if (z.x > 0.0) {
-                    return czeta_from_eta(z);
-                } else {
-                    vec2 z_ref = vec2(1.0 - z.x, -z.y);
-                    vec2 zeta_ref = czeta_from_eta(z_ref);
-                    vec2 term_2pow  = cexp(cmul(z, vec2(0.69314718055994530942, 0.0)));
-                    vec2 term_pipow = cexp(cmul(z - vec2(1.0, 0.0), vec2(1.14472988584940017414, 0.0)));
-                    vec2 term_sin   = csin(z * (0.5 * PI));
-                    vec2 term_gamma = cgamma(z_ref);
-                    vec2 factor = cmul(cmul(term_2pow, term_pipow), cmul(term_sin, term_gamma));
-                    return cmul(factor, zeta_ref);
-                }
-            }
-
-            vec2 czeta(vec2 z) { return cmul(ceta(z), cinv(vec2(1.0, 0.0) - cexp(0.69314718056 * (vec2(1.0, 0.0) - z)))); }
+            vec2 czeta(vec2 z) { return cmul(ceta(z), cinv(vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z))); }
             vec2 czsinh(vec2 z, vec2 t) { return (czeta(z + t) - czeta(t - z)) * 0.5; }
             vec2 czcosh(vec2 z, vec2 t) { return (czeta(z + t) + czeta(t - z)) * 0.5; }
             float logmap(float r, float x) { return r * x * (1.0 - x); }
