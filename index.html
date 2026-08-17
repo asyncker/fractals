@@ -82,6 +82,11 @@
             <div class="control-buttons">
                 <button class="control-btn" onclick="fractalindex = 23; updateControls(true);">Zeta(z)*Zeta(-z)</button>
             </div>
+            <div class="control-buttons">
+                <button class="control-btn" onclick="fractalindex = 24; updateControls(true);">Sn(z, z)</button>
+                <button class="control-btn" onclick="fractalindex = 25; updateControls(true);">Cn(z, z)</button>
+                <button class="control-btn" onclick="fractalindex = 26; updateControls(true);">Dn(z, z)</button>
+            </div>
         </div>
         <div class="control-group">
             <label>2D/3D/4D Type:</label>
@@ -447,7 +452,7 @@
                 vec2 q = ell + 2.0 * cexp(5.0 * log_l) + 15.0 * cexp(9.0 * log_l);
                 return -cmul_i(clog(q)) / PI;
             }
-            vec2 theta00f(vec2 z, vec2 w) {
+            vec2 theta3(vec2 z, vec2 w) {
                 vec2 result = vec2(1.0, 0.0);
                 vec2 iz = 2.0 * cmul_i(z);
                 vec2 iw = cmul_i(w);
@@ -460,8 +465,8 @@
                 }
                 return result;
             }
-            vec2 theta000(vec2 w) {
-                vec2 result = 0.5 * vec2(1.0, 0.0);
+            vec2 theta3_z0(vec2 w) {
+                vec2 result = vec2(0.5, 0.0);
                 vec2 iz = cmul_i(w);
                 for (int i = 1; i < 8; i++) {
                     float n = float(i);
@@ -469,13 +474,13 @@
                 }
                 return 2.0 * result;
             }
-            vec2 jacobi_reduce(vec2 z, vec2 w) { vec2 t00 = theta000(w); vec2 zz = cdiv(z, PI * cmul(t00, t00)); float n = 2.0 * floor(0.5 * zz.y / w.y + 0.5); return zz - n * w; }
-            vec2 theta01f(vec2 z, vec2 w) { return theta00f(z + 0.5 * vec2(1.0, 0.0), w); }
-            vec2 theta10f(vec2 z, vec2 w) { return cmul(cexp(PI * cmul_i(z + 0.25 * w)), theta00f(z + 0.5 * w, w)); }
-            vec2 theta11f(vec2 z, vec2 w) { return cmul(cexp(PI * 0.25 * cmul_i(w + 4.0 * z + 2.0 * vec2(1.0, 0.0))), theta00f(z + 0.5 * (w + vec2(1.0, 0.0)), w)); }
-            vec2 raw_sn(vec2 z, vec2 w) { return -cdiv(cmul(theta000(w), theta11f(z, w)), cmul(theta10f(vec2(0.0, 0.0), w), theta01f(z, w))); }
-            vec2 raw_cn(vec2 z, vec2 w) { return cdiv(cmul(theta01f(vec2(0.0, 0.0), w), theta10f(z, w)), cmul(theta10f(vec2(0.0, 0.0), w), theta01f(z, w))); }
-            vec2 raw_dn(vec2 z, vec2 w) { return cdiv(cmul(theta01f(vec2(0.0, 0.0), w), theta00f(z, w)), cmul(theta000(w), theta01f(z, w))); }
+            vec2 jacobi_reduce(vec2 z, vec2 w) { vec2 t00 = theta3_z0(w); vec2 zz = cdiv(z, PI * cmul(t00, t00)); float n = 2.0 * floor(0.5 * zz.y / w.y + 0.5); return zz - n * w; }
+            vec2 theta2(vec2 z, vec2 w) { return theta3(z + 0.5 * vec2(1.0, 0.0), w); }
+            vec2 theta4(vec2 z, vec2 w) { return cmul(cexp(PI * cmul_i(z + 0.25 * w)), theta3(z + 0.5 * w, w)); }
+            vec2 theta1(vec2 z, vec2 w) { return cmul(cexp(PI * 0.25 * cmul_i(w + 4.0 * z + 2.0 * vec2(1.0, 0.0))), theta3(z + 0.5 * (w + vec2(1.0, 0.0)), w)); }
+            vec2 raw_sn(vec2 z, vec2 w) { return -cdiv(cmul(theta3_z0(w), theta1(z, w)), cmul(theta4(vec2(0.0, 0.0), w), theta2(z, w))); }
+            vec2 raw_cn(vec2 z, vec2 w) { return cdiv(cmul(theta2(vec2(0.0, 0.0), w), theta4(z, w)), cmul(theta4(vec2(0.0, 0.0), w), theta2(z, w))); }
+            vec2 raw_dn(vec2 z, vec2 w) { return cdiv(cmul(theta2(vec2(0.0, 0.0), w), theta3(z, w)), cmul(theta3_z0(w), theta2(z, w))); }
             vec2 sn(vec2 z, vec2 k) { vec2 tau = invert_tau(k); return raw_sn(jacobi_reduce(z, tau), tau); }
             vec2 cn(vec2 z, vec2 k) { vec2 tau = invert_tau(k); return raw_cn(jacobi_reduce(z, tau), tau); }
             vec2 dn(vec2 z, vec2 k) { vec2 tau = invert_tau(k); return raw_dn(jacobi_reduce(z, tau), tau); }
@@ -655,9 +660,12 @@
                     else if (fractalindex == 18) { z = cgamma(z); }
                     else if (fractalindex == 19) { z = czeta(z); }
                     else if (fractalindex == 20) { z = czsinh(z, vec2(0.5, scaleval)); }
-                    else if (fractalindex == 21) { z = czcosh(z, vec2(0.5, scaleval)); }
+                    //else if (fractalindex == 21) { z = czcosh(z, vec2(0.5, scaleval)); }
                     //else if (fractalindex == 22) { z = cdiv(czsinh(z, vec2(0.5, scaleval)), czcosh(z, vec2(0.5, scaleval))); }
                     //else if (fractalindex == 23) { z = cmul(czeta(z), czeta(-z)); }
+                    else if (fractalindex == 24) { z = sn(z, z); }
+                    else if (fractalindex == 25) { z = cn(z, z); }
+                    else if (fractalindex == 26) { z = dn(z, z); }
                     //if (isln == 1) { z = clog(z); }
                     z = z + c;
                     n += 1;
@@ -1153,8 +1161,8 @@
             if (keysPressed['q']) { if (ismandel) { zoomMandel *= 1.0 + (hypercomplexindex == 0 ? zoomSpeed : zoomSpeed * 0.1); } else { zoomJulia *= 1.0 + zoomSpeed; } keypress = true; }
             if (keysPressed['r'] && currentTime - lastChangeTime > 200) { power = Math.floor(power + 1); lastChangeTime = currentTime; keypress = true; }
             if (keysPressed['t'] && currentTime - lastChangeTime > 200) { power = Math.ceil(power - 1); lastChangeTime = currentTime; keypress = true; }
-            if (keysPressed['v'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 23 ? 0 : fractalindex + 1; lastChangeTime = currentTime; keypress = true; }
-            if (keysPressed['c'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 0 ? 23 : fractalindex - 1; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['v'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 26 ? 0 : fractalindex + 1; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['c'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 0 ? 26 : fractalindex - 1; lastChangeTime = currentTime; keypress = true; }
             if (keysPressed['u'] && currentTime - lastChangeTime > 200) { ismandel = ismandel == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }
             if (keysPressed['f'] && currentTime - lastChangeTime > 800) { inverse = inverse == 1.0 ? 0.0 : 1.0; lastChangeTime = currentTime; keypress = true; }
             if (keysPressed['n'] && currentTime - lastChangeTime > 200) { hypercomplexindex = hypercomplexindex == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }
