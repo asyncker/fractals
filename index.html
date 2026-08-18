@@ -320,14 +320,13 @@
             }
             vec2 cbeta(vec2 z, vec2 w) { return cmul(cmul(cgamma(z), cgamma(w)), cinv(cgamma(z + w))); }
             vec2 cdigamma(vec2 z) {
-                const int maxiter = 32;
                 vec2 s = vec2(0.0, 0.0);
-                for (int k = 0; k < maxiter; ++k) {
+                for (int k = 0; k < 32; ++k) {
                     s -= cinv(z);
+                    z += vec2(1.0, 0.0);
                 }
-                z += vec2(float(maxiter), 0.0);
-                vec2 inv  = cinv(z);
-                vec2 inv2 = csq(inv);
+                vec2 inv1 = cinv(z);
+                vec2 inv2 = csq(inv1);
                 vec2 inv4 = csq(inv2);
                 vec2 inv6 = cmul(inv4, inv2);
                 vec2 inv8 = csq(inv4);
