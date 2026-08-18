@@ -282,8 +282,9 @@
             vec2 cdotlog(vec2 z, vec2 w, vec2 k) { return cmul(clog(cdot(z, w)), k); }
             vec2 cdotpow(vec2 z, vec2 w, vec2 k) { return cpow(cdot(z, w), k); }
             vec2 csin(vec2 z) { float ey = exp(z.y); float eyminus = 1.0 / ey; return vec2(sin(z.x) * (ey + eyminus) * 0.5, cos(z.x) * (ey - eyminus) * 0.5); }
+            vec2 ccos(vec2 z) { float ey = exp(z.y); float eyminus = 1.0 / ey; return vec2(cos(z.x) * (ey + eyminus) * 0.5, -sin(z.x) * (ey - eyminus) * 0.5); }
             vec2 csin_slow(vec2 z) { return vec2(sin(z.x) * cosh(z.y), cos(z.x) * sinh(z.y)); }
-            vec2 ccos(vec2 z) { return vec2(cos(z.x) * cosh(z.y), -sin(z.x) * sinh(z.y)); }
+            vec2 ccos_slow(vec2 z) { return vec2(cos(z.x) * cosh(z.y), -sin(z.x) * sinh(z.y)); }
             vec2 csinh(vec2 z) { return vec2(sinh(z.x) * cos(z.y), cosh(z.x) * sin(z.y)); }
             vec2 ccosh(vec2 z) { return vec2(cosh(z.x) * cos(z.y), sinh(z.x) * sin(z.y)); }
             vec2 csinw(vec2 z, vec2 w) { return cpow(csin(z), w); }
@@ -439,8 +440,10 @@
             vec2 czsinh(vec2 z, vec2 t) { return (czeta(z + t) - czeta(t - z)) * 0.5; }
             vec2 czcosh(vec2 z, vec2 t) { return (czeta(z + t) + czeta(t - z)) * 0.5; }
             float logmap(float r, float x) { return r * x * (1.0 - x); }
-            float dlogmap(float r, float x) { return r * (1.0 - x - x); }
-            vec2 cdpow(vec2 z, vec2 w) { return cmul(w, cpow(z, w - vec2(1.0, 0.0))); }
+            float logmap_derv(float r, float x) { return r * (1.0 - x - x); }
+            vec2 cpow_derv(vec2 z, vec2 w) { return cmul(w, cpow(z, w - vec2(1.0, 0.0))); }
+            vec2 clog_derv(vec2 z) { return cinv(z); }
+            vec2 cinv_derv(vec2 z) { return cinv(csq(z)) * -1.0; }
             vec2 cdzeta(vec2 z) { vec2 dz = vec2(0.0, 0.001); return cmul(czeta(z + dz) - czeta(z - dz), cinv(2.0 * dz)); }
             vec2 cdzsinh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czsinh(z + dz, t) - czsinh(z - dz, t), cinv(2.0 * dz)); }
             vec2 cdzcosh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czcosh(z + dz, t) - czcosh(z - dz, t), cinv(2.0 * dz)); }
@@ -786,7 +789,7 @@
                     else if (modval == 0) { rx = z.y; } // im
                     xn = logmap(rx, xn);
                     if (i >= n0) {
-                        lambda += log(abs(dlogmap(rx, xn))) * invn;
+                        lambda += log(abs(logmap_derv(rx, xn))) * invn;
                     }
                     if (abs(lambda) > maxlambda || i - 2 == iteration) {
                         break;
