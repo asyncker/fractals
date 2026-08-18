@@ -281,8 +281,8 @@
             vec2 ch(vec2 z, vec2 w) { return -w/2.0 * clog(z); }
             vec2 cdotlog(vec2 z, vec2 w, vec2 k) { return cmul(clog(cdot(z, w)), k); }
             vec2 cdotpow(vec2 z, vec2 w, vec2 k) { return cpow(cdot(z, w), k); }
-            vec2 csin_fast(vec2 z) { float ey = exp(z.y); float eyminus = 1.0 / ey; return vec2(sin(z.x) * (ey + eyminus) * 0.5, cos(z.x) * (ey - eyminus) * 0.5); }
-            vec2 csin(vec2 z) { return vec2(sin(z.x) * cosh(z.y), cos(z.x) * sinh(z.y)); }
+            vec2 csin(vec2 z) { float ey = exp(z.y); float eyminus = 1.0 / ey; return vec2(sin(z.x) * (ey + eyminus) * 0.5, cos(z.x) * (ey - eyminus) * 0.5); }
+            vec2 csin_slow(vec2 z) { return vec2(sin(z.x) * cosh(z.y), cos(z.x) * sinh(z.y)); }
             vec2 ccos(vec2 z) { return vec2(cos(z.x) * cosh(z.y), -sin(z.x) * sinh(z.y)); }
             vec2 csinh(vec2 z) { return vec2(sinh(z.x) * cos(z.y), cosh(z.x) * sin(z.y)); }
             vec2 ccosh(vec2 z) { return vec2(cosh(z.x) * cos(z.y), sinh(z.x) * sin(z.y)); }
@@ -308,7 +308,7 @@
                 x += 1.5056327351493116e-7 * cinv(w + vec2(8.0, 0.0));
                 return 2.50662827463 * cmul(x, cexp(cmul(clog(t), w + vec2(0.5, 0.0)) - t));
             }
-            vec2 cgamma_left(vec2 z) { return PI * cinv(cmul(csin_fast(z * PI), cgamma_right(vec2(1.0, 0.0) - z))); }
+            vec2 cgamma_left(vec2 z) { return PI * cinv(cmul(csin(z * PI), cgamma_right(vec2(1.0, 0.0) - z))); }
             vec2 cgamma(vec2 z) { return z.x < 0.5 ? cgamma_left(z) : cgamma_right(z); }
             vec2 cinvgamma(vec2 z) {
                 vec2 result = cmul(z, cexp(EULER_GAMMA * z));
