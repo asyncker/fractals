@@ -367,10 +367,9 @@
 
             vec2 czeta_helper_2(vec2 z, mat4 bases, mat4 coeffs) {
                 mat4 phases = z.y * bases;
-                mat4 exps = z.x * bases;
                 vec2 res = vec2(0.0, 0.0);
                 for (int row = 0; row < 4; row++) {
-                    vec4 mags = exp(exps[row]) * coeffs[row];
+                    vec4 mags = exp(z.x * bases[row]) * coeffs[row];
                     vec4 re = cos(phases[row]);
                     vec4 im = sin(phases[row]);
                     res += vec2(dot(mags, re), dot(mags, im));
