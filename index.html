@@ -279,6 +279,10 @@
             vec2 csop(vec2 z, vec2 w) { return vec2(z.x * w.x + z.y * w.y, w.x * z.y + w.y * z.x); }
             vec2 cdot(vec2 z, vec2 w) { return vec2(z.x * w.x + z.y * w.y, w.x * z.y - w.y * z.x); }
             vec2 ch(vec2 z, vec2 w) { return -w/2.0 * clog(z); }
+            vec2 crefhalf(vec2 z) { return vec2(1.0, 0.0) - z; }
+            vec2 crefhalfconj(vec2 z) { return vec2(1.0, 0.0) - conj(z); }
+            vec2 cer(vec2 z) { return vec2(1.0, 0.0) - cexp(vec2(0.5, 0.0) - z); }
+            vec2 cexpscale(vec2 z) { return 2.0 * cexp(-0.69314718056 * z); }
             vec2 cdotlog(vec2 z, vec2 w, vec2 k) { return cmul(clog(cdot(z, w)), k); }
             vec2 cdotpow(vec2 z, vec2 w, vec2 k) { return cpow(cdot(z, w), k); }
             vec2 csin(vec2 z) { float ey = exp(z.y); float eyminus = 1.0 / ey; return vec2(sin(z.x) * (ey + eyminus) * 0.5, cos(z.x) * (ey - eyminus) * 0.5); }
