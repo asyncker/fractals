@@ -86,6 +86,7 @@
                 <button class="control-btn" onclick="fractalindex = 24; updateControls(true);">Sn(z, z)</button>
                 <button class="control-btn" onclick="fractalindex = 25; updateControls(true);">Cn(z, z)</button>
                 <button class="control-btn" onclick="fractalindex = 26; updateControls(true);">Dn(z, z)</button>
+                <button class="control-btn" onclick="fractalindex = 27; updateControls(true);">tau(z)</button>
             </div>
         </div>
         <div class="control-group">
@@ -279,6 +280,7 @@
             vec2 csop(vec2 z, vec2 w) { return vec2(z.x * w.x + z.y * w.y, w.x * z.y + w.y * z.x); }
             vec2 cdot(vec2 z, vec2 w) { return vec2(z.x * w.x + z.y * w.y, w.x * z.y - w.y * z.x); }
             vec2 ch(vec2 z, vec2 w) { return -w/2.0 * clog(z); }
+            vec2 ctau(vec2 z) { return vec2(1.0, 0.0) - cexp(vec2(0.5, 0.0) - z); }
             vec2 crefhalf(vec2 z) { return vec2(1.0, 0.0) - z; }
             vec2 crefhalfconj(vec2 z) { return vec2(1.0, 0.0) - conj(z); }
             vec2 cer(vec2 z) { return vec2(1.0, 0.0) - cexp(vec2(0.5, 0.0) - z); }
@@ -515,6 +517,7 @@
                 }
                 return qexp(qmul(w, qlog(z)));
             }
+            vec4 qtau(vec4 z) { return vec4(1.0, 0.0, 0.0, 0.0) - qexp(vec4(0.5, 0.0, 0.0, 0.0) - z); }
             vec4 qgamma_right(vec4 z) {
                 vec4 w = z - vec4(1.0, 0.0, 0.0, 0.0);
                 vec4 t = w + vec4(7.5, 0.0, 0.0, 0.0);
@@ -559,6 +562,7 @@
                 }
                 return biexp(bimul(w, bilog(z)));
             }
+            vec4 bitau(vec4 z) { return vec4(1.0, 0.0, 0.0, 0.0) - biexp(vec4(0.5, 0.0, 0.0, 0.0) - z); }
             vec4 bigamma_right(vec4 z) {
                 vec4 w = z - vec4(1.0, 0.0, 0.0, 0.0);
                 vec4 t = w + vec4(7.5, 0.0, 0.0, 0.0);
@@ -598,6 +602,7 @@
                 }
                 return texp(w * tlog(z));
             }
+            vec3 ttau(vec3 z) { return vec3(1.0, 0.0, 0.0) - texp(vec3(0.5, 0.0, 0.0) - z); }
 
             float bounce(float x, float min, float max) {
                 float size = max - min;
@@ -675,6 +680,7 @@
                     else if (fractalindex == 24) { z = sn(z, z); }
                     else if (fractalindex == 25) { z = cn(z, z); }
                     else if (fractalindex == 26) { z = dn(z, z); }
+                    else if (fractalindex == 27) { z = ctau(z); }
                     //if (isln == 1) { z = clog(z); }
                     z = z + c;
                     n += 1;
@@ -752,6 +758,7 @@
                     else if (fractalindex == 17) { func = csin(z_func); derv = ccos(z_func); }
                     else if (fractalindex == 18) { func = cgamma(z_func); derv = cmul(func, cdigamma(z_func)); }
                     else if (fractalindex == 19) { func = czeta(z_func); derv = cdzeta(z_func); }
+                    else if (fractalindex == 27) { func = ctau(z_func); derv = vec2(1.0, 0.0) - func; }
                     //else if (fractalindex == 21) { func = cdzcosh(z_func, vec2(0.5, scaleval)); derv = cdzcosh(z_func, vec2(0.5, scaleval)); }
                     if (fractalindex > 3) { derv = cmul(derv, z_derv); }
                     z = z_prev - cmul(func - subst, cinv(derv));
@@ -852,6 +859,7 @@
                     else if (fractalindex == 16) { z = qcos(z); }
                     else if (fractalindex == 17) { z = qsin(z); }
                     else if (fractalindex == 18) { z = qgamma(z); }
+                    else if (fractalindex == 27) { z = qtau(z); }
                     z = z + c;
                     dr = power * fast_pow(znorm, power - 1.0) * dr + 1.0;
                 }
@@ -889,6 +897,7 @@
                     else if (fractalindex == 15) { z = bitan(z); }
                     else if (fractalindex == 16) { z = bicos(z); }
                     else if (fractalindex == 17) { z = bisin(z); }
+                    else if (fractalindex == 27) { z = bitau(z); }
                     z = z + c;
                     dr = power * fast_pow(znorm, power - 1.0) * dr + 1.0;
                 }
@@ -917,6 +926,7 @@
                         else if (fractalindex == 4) { z = texp(z); }
                         else if (fractalindex == 5) { z = tsinh(z); }
                         else if (fractalindex == 6) { z = tcosh(z); }
+                        else if (fractalindex == 27) { z = ttau(z); }
                         dr = fast_pow(znorm, power - 1.0) * power * dr + 1.0;
                         z += c;
                     }
@@ -1170,8 +1180,8 @@
             if (keysPressed['q']) { if (ismandel) { zoomMandel *= 1.0 + (hypercomplexindex == 0 ? zoomSpeed : zoomSpeed * 0.1); } else { zoomJulia *= 1.0 + zoomSpeed; } keypress = true; }
             if (keysPressed['r'] && currentTime - lastChangeTime > 200) { power = Math.floor(power + 1); lastChangeTime = currentTime; keypress = true; }
             if (keysPressed['t'] && currentTime - lastChangeTime > 200) { power = Math.ceil(power - 1); lastChangeTime = currentTime; keypress = true; }
-            if (keysPressed['v'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 26 ? 0 : fractalindex + 1; lastChangeTime = currentTime; keypress = true; }
-            if (keysPressed['c'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 0 ? 26 : fractalindex - 1; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['v'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 27 ? 0 : fractalindex + 1; lastChangeTime = currentTime; keypress = true; }
+            if (keysPressed['c'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 0 ? 27 : fractalindex - 1; lastChangeTime = currentTime; keypress = true; }
             if (keysPressed['u'] && currentTime - lastChangeTime > 200) { ismandel = ismandel == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }
             if (keysPressed['f'] && currentTime - lastChangeTime > 800) { inverse = inverse == 1.0 ? 0.0 : 1.0; lastChangeTime = currentTime; keypress = true; }
             if (keysPressed['n'] && currentTime - lastChangeTime > 200) { hypercomplexindex = hypercomplexindex == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }
