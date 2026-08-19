@@ -9,17 +9,17 @@
     <style>
         body { margin: 0; overflow: hidden; }
         canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
-        #fractal-controls { position: fixed; top: 12px; right: 6px; background: rgba(0, 0, 0, 0.7); padding: 14px; border-radius: 8px; font-family: Arial, sans-serif; font-size: 14px; z-index: 1000; min-width: 200px; backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.2); }
-        #fractal-controls h3 { margin: 0 0 7px 0; color: #4fc3f7; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+        #controls { background: rgba(0, 0, 0, 0.7); position: fixed; top: 12px; right: 6px; padding: 14px; border-radius: 8px; font-family: Arial, sans-serif; font-size: 14px; z-index: 1000; min-width: 200px; backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        #controls h3 { margin: 0 0 7px 0; color: #4fc3f7; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
         .control-group { margin-bottom: 10px; }
-        .control-group label { display: block; color: #bbbbbb; font-size: 12px; }
+        .control-group label { display: block; color: #bbb; font-size: 12px; }
         .control-buttons { display: flex; gap: 5px; margin-top: 5px; }
         .control-btn { flex: 1; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 5px 6px; border-radius: 4px; cursor: pointer; font-size: 12px; text-align: center; transition: all 0.2s; white-space: nowrap; }
         .control-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
         .control-btn.active { background: rgba(79, 195, 247, 0.3); border-color: #4fc3f7; color: #4fc3f7; }
         .close-btn { background: none; border: none; color: #ff6b6b; font-size: 18px; cursor: pointer; padding: 0; width: 20px; height: 20px; border-radius: 50%; }
         .close-btn:hover { background: rgba(255, 107, 107, 0.2); }
-        .toggle-btn { position: fixed; top: 20px; right: 20px; background: rgba(0, 0, 0, 0.7); color: white; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 4px; padding: 4px 7px; cursor: pointer; font-size: 13px; z-index: 999; }
+        .toggle-btn { background: rgba(0, 0, 0, 0.7); position: fixed; top: 20px; right: 20px; color: white; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 4px; padding: 4px 7px; cursor: pointer; font-size: 13px; z-index: 999; }
         .toggle-btn:hover { background: rgba(0, 0, 0, 0.8); }
         .hidden { display: none; }
         .shortcuts { font-size: 11px; color: #888; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px; }
@@ -27,9 +27,9 @@
     <link rel="icon" type="image/png" sizes="32x32" href="./render/favicon.png">
 </head>
 <body>
-    <button id="toggle-controls" class="toggle-btn" onclick="document.getElementById('fractal-controls').classList.remove('hidden'); document.getElementById('toggle-controls').classList.add('hidden');">Menu</button>
-    <div id="fractal-controls">
-        <h3>Settings <button id="close-controls" class="close-btn" onclick="document.getElementById('fractal-controls').classList.add('hidden'); document.getElementById('toggle-controls').classList.remove('hidden');">×</button></h3>
+    <button id="toggle-controls" class="toggle-btn" onclick="document.getElementById('controls').classList.remove('hidden'); document.getElementById('toggle-controls').classList.add('hidden');">Menu</button>
+    <div id="controls">
+        <h3>Settings <button id="close-controls" class="close-btn" onclick="document.getElementById('controls').classList.add('hidden'); document.getElementById('toggle-controls').classList.remove('hidden');">×</button></h3>
         <div class="control-group">
             <label>Power:</label>
             <div class="control-buttons">
@@ -139,6 +139,7 @@
             <div class="control-buttons">
                 <button class="control-btn" onclick="cxval = 0; cyval = 0; updateControls(true);">0</button>
                 <button class="control-btn" onclick="cxval = -1.38629436112; updateControls(true);">-2*ln(2)</button>
+                <button class="control-btn" onclick="cxval = 0.5; updateControls(true);">1/2</button>
             </div>
         </div>
         <div class="shortcuts">
@@ -282,7 +283,6 @@
             vec2 ch(vec2 z, vec2 w) { return -w/2.0 * clog(z); }
             vec2 ctau(vec2 z) { return vec2(1.0, 0.0) - cexp(vec2(0.5, 0.0) - z); }
             vec2 cexpscale(vec2 z) { return 2.0 * cexp(-0.69314718056 * z); }
-            vec2 ctau_derv(vec2 z) { return cexp(vec2(0.5, 0.0) - z); }
             vec2 crefhalf(vec2 z) { return vec2(1.0, 0.0) - z; }
             vec2 crefhalfconj(vec2 z) { return vec2(1.0, 0.0) - conj(z); }
             vec2 cdotlog(vec2 z, vec2 w, vec2 k) { return cmul(clog(cdot(z, w)), k); }
@@ -298,6 +298,8 @@
             vec2 csinhw(vec2 z, vec2 w) { return cpow(csinh(z), w); }
             vec2 ccoshw(vec2 z, vec2 w) { return cpow(ccosh(z), w); }
             vec2 clogn(vec2 z, vec2 w) { return cdiv(clog(z), clog(w)); }
+            vec2 ctanh(vec2 z) { return cdiv(csinh(z), ccosh(z)); }
+            vec2 ccoth(vec2 z) { return cdiv(ccosh(z), csinh(z)); }
             vec2 ctan(vec2 z) { return cdiv(csin(z), ccos(z)); }
             vec2 ccot(vec2 z) { return cinv(ctan(z)); }
             vec2 cfib(vec2 z) { return (cpow(vec2(1.61803398875, 0.0), z) - cpow(vec2(-0.61803398875, 0.0), z)) * 0.4472135955; }
@@ -447,7 +449,11 @@
             vec2 czcosh(vec2 z, vec2 t) { return (czeta(z + t) + czeta(t - z)) * 0.5; }
             float logmap(float r, float x) { return r * x * (1.0 - x); }
             float logmap_derv(float r, float x) { return r * (1.0 - x - x); }
+            vec2 ctau_derv(vec2 z) { return cexp(vec2(0.5, 0.0) - z); }
+            vec2 ctanh_derv(vec2 z) { return vec2(1.0, 0.0) - csq(ctanh(z)); }
+            vec2 ctan_derv(vec2 z) { return csq(cinv(ccos(z))); }
             vec2 cpow_derv(vec2 z, vec2 w) { return cmul(w, cpow(z, w - vec2(1.0, 0.0))); }
+            vec2 cgamma_derv(vec2 z) { return cmul(cgamma(z), cdigamma(z)); }
             vec2 clog_derv(vec2 z) { return cinv(z); }
             vec2 cinv_derv(vec2 z) { return cinv(csq(z)) * -1.0; }
             vec2 cdzeta(vec2 z) { vec2 dz = vec2(0.0, 0.001); return cmul(czeta(z + dz) - czeta(z - dz), cinv(2.0 * dz)); }
@@ -1080,7 +1086,7 @@
                 console.error('canvas.captureStream is not supported'); return;
             }
             const stream = canvas.captureStream(30);
-            const options = { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 65000000 };
+            const options = { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 75000000 };
             recordedChunks = [];
             mediaRecorder = new MediaRecorder(stream, options);
             mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) { recordedChunks.push(event.data); } };
