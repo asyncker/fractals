@@ -268,8 +268,8 @@
             }
             vec2 croot(vec2 z, vec2 w) { return cpow(z, cinv(w)); }
             vec2 mpow(vec2 z, vec2 w) { return cmul(cexp(log(length(z)) * w), cexp(cmul(vec2(0.0, carg(z)), (vec2(1.0, 0.0) - cexp(PI * vec2(-w.y, w.x))) * 0.5))); }
-            vec2 cre(vec2 z) { return cdiv(z + conj(z), vec2(2.0, 0.0)); }
-            vec2 cim(vec2 z) { return cdiv(z - conj(z), vec2(2.0, 0.0)); }
+            vec2 cre(vec2 z) { return (z + conj(z)) * 0.5; }
+            vec2 cim(vec2 z) { return (z - conj(z)) * 0.5; }
             vec2 ccomp_identity(vec2 z) { return cre(z) + cim(z); }
             vec2 csign(vec2 z) { return z / length(z); }
             vec2 ccomp_dotre(vec2 z, vec2 w) { return cre(z) * cre(w) + cim(z) * cim(w); }
@@ -281,10 +281,10 @@
             vec2 cdot(vec2 z, vec2 w) { return vec2(z.x * w.x + z.y * w.y, w.x * z.y - w.y * z.x); }
             vec2 ch(vec2 z, vec2 w) { return -w/2.0 * clog(z); }
             vec2 ctau(vec2 z) { return vec2(1.0, 0.0) - cexp(vec2(0.5, 0.0) - z); }
+            vec2 cexpscale(vec2 z) { return 2.0 * cexp(-0.69314718056 * z); }
+            vec2 ctau_derv(vec2 z) { return cexp(vec2(0.5, 0.0) - z); }
             vec2 crefhalf(vec2 z) { return vec2(1.0, 0.0) - z; }
             vec2 crefhalfconj(vec2 z) { return vec2(1.0, 0.0) - conj(z); }
-            vec2 cer(vec2 z) { return vec2(1.0, 0.0) - cexp(vec2(0.5, 0.0) - z); }
-            vec2 cexpscale(vec2 z) { return 2.0 * cexp(-0.69314718056 * z); }
             vec2 cdotlog(vec2 z, vec2 w, vec2 k) { return cmul(clog(cdot(z, w)), k); }
             vec2 cdotpow(vec2 z, vec2 w, vec2 k) { return cpow(cdot(z, w), k); }
             vec2 csin(vec2 z) { float ey = exp(z.y); float eyminus = 1.0 / ey; return vec2(sin(z.x) * (ey + eyminus) * 0.5, cos(z.x) * (ey - eyminus) * 0.5); }
