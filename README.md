@@ -60,6 +60,8 @@ Platform support:
 ![](render/zeta_abs.png)
 26. Zeta((z^2) ^ (1/2)) + c (c ~= -2 * ln(2) - 0.128i)
 ![](render/zeta_abs_zoom.png)
+27. 1 - exp(1/2 - (|Re(z)| + |Im(z)| * i))
+![](render/t((w^2)^(0.5),0.5).png)
 
 <br />
 Visual similarity of exp and zeta with the same dynamics, comparing all functions, only exp and zeta behaved almost identically:<br />
