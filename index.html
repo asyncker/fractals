@@ -475,8 +475,9 @@
                 vec2 iw = cmul_i(w);
                 for (int i = 1; i < 4; i++) {
                     float n = float(i);
-                    vec2 B = n * n * iw;
+                    float fn = n * n;
                     vec2 A = n * iz;
+                    vec2 B = fn * iw;
                     result += cexp(PI * (B + A));
                     result += cexp(PI * (B - A));
                 }
@@ -487,7 +488,8 @@
                 vec2 iz = cmul_i(w);
                 for (int i = 1; i < 8; i++) {
                     float n = float(i);
-                    result += cexp(PI * n * n * iz);
+                    float fn = n * n;
+                    result += cexp(PI * fn * iz);
                 }
                 return 2.0 * result;
             }
