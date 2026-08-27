@@ -637,10 +637,9 @@
 
             void mandelbrot_calc() {
                 vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
-                uv = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : uv * zoomjulia + vec2(zxval, zyval);
-                vec2 c = vec2(ismandel == 1 ? uv.x : cxval, ismandel == 1 ? uv.y : cyval);
+                vec2 c = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : vec2(cxval, cyval);
                 if (inverse != 0.0) { c = cinvmix(c, inverse); }
-                vec2 z = vec2(ismandel == 1 ? c.x : uv.x, ismandel == 1 ? c.y : uv.y);
+                vec2 z = ismandel == 1 ? c : uv * zoomjulia + vec2(zxval, zyval);
                 const int maxiter = 180;
                 int iter = maxiter > iteration ? iteration : maxiter;
                 float znorm = 0.0;
@@ -723,10 +722,9 @@
 
             void newton_calc() {
                 vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
-                uv = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : uv * zoomjulia + vec2(zxval, zyval);
-                vec2 c = vec2(ismandel == 1 ? uv.x : cxval, ismandel == 1 ? uv.y : cyval);
+                vec2 c = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : vec2(cxval, cyval);
                 if (inverse != 0.0) { c = cinvmix(c, inverse); }
-                vec2 z = vec2(ismandel == 1 ? c.x : uv.x, ismandel == 1 ? c.y : uv.y);
+                vec2 z = ismandel == 1 ? c : uv * zoomjulia + vec2(zxval, zyval);
                 const int maxiter = 220;
                 float znorm = 0.0, rangeval = 1.0 / (50.0 * range);
                 if (fractalindex == 13) { rangeval = 1.0 / (0.000005 * range); }
@@ -795,10 +793,9 @@
 
             void lyapunov_calc() {
                 vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
-                uv = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : uv * zoomjulia + vec2(zxval, zyval);
-                vec2 c = vec2(ismandel == 1 ? uv.x : cxval, ismandel == 1 ? uv.y : cyval);
+                vec2 c = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : vec2(cxval, cyval);
                 if (inverse != 0.0) { c = cinvmix(c, inverse); }
-                vec2 z = vec2(ismandel == 1 ? c.x : uv.x, ismandel == 1 ? c.y : uv.y);
+                vec2 z = ismandel == 1 ? c : uv * zoomjulia + vec2(zxval, zyval);
                 const int maxiter = 180;
                 float lambda = 0.0, maxlambda = 120000.0, xn = 0.5, rx = 0.0, ri = 0.0, invn = 1.0 / float(maxiter);
                 int modval = 0, n0 = iteration / 10; // n0 > 1
