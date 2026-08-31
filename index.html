@@ -478,6 +478,7 @@
             vec2 cgammapsi(vec2 z) { return vec2(1.0, 0.0) - cdiv(cpgamma(vec2(1.0, 0.0) - z), cpgamma(z)); }
             vec2 czsinh(vec2 z, vec2 t) { return (czeta(z + t) - czeta(t - z)) * 0.5; }
             vec2 czcosh(vec2 z, vec2 t) { return (czeta(z + t) + czeta(t - z)) * 0.5; }
+            vec2 clogmap(vec2 z, vec2 w) { return cmul(cmul(z, w), (vec2(1.0, 0.0) - w)); }
             float logmap(float r, float x) { return r * x * (1.0 - x); }
             float logmap_derv(float r, float x) { return r * (1.0 - x - x); }
             vec2 ctau_derv(vec2 z) { return cexp(vec2(0.5, 0.0) - z); }
@@ -600,6 +601,7 @@
 
             float biabs_sq(vec4 z) { return dot(z, z); }
             float biabs(vec4 z) { return length(z); }
+            vec4 bisq(vec4 z) { return vec4(z.x * z.x - z.y * z.y - z.z * z.z + z.w * z.w, 2.0 * (z.x * z.y - z.z * z.w), 2.0 * (z.x * z.z - z.y * z.w), 2.0 * (z.x * z.w + z.y * z.z)); }
             vec2 bidabs_sq(vec4 z) { return cmul(z.xy, z.xy) + cmul(z.zw, z.zw); }
             vec2 bitoidempotent_left(vec4 z) { return vec2(z.x - z.w, z.y + z.z); }
             vec2 bitoidempotent_right(vec4 z) { return vec2(z.x + z.w, z.y - z.z); }
@@ -619,7 +621,7 @@
                 if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) { float zx = z.x, zy = z.y, zz = z.z, zw = z.w;
                     if (w.x == -1.0) { return biinv(z); }
                     else if (w.x == 1.0) { return z; }
-                    else if (w.x == 2.0) { return vec4(zx * zx - zy * zy - zz * zz + zw * zw, 2.0 * (zx * zy - zz * zw), 2.0 * (zx * zz - zy * zw), 2.0 * (zx * zw + zy * zz)); }
+                    else if (w.x == 2.0) { return bisq(z); }
                     return biexp(w.x * bilog(z));
                 }
                 return biexp(bimul(w, bilog(z)));
@@ -911,6 +913,78 @@
                 }
             }
 
+            vec2 mandelbulb(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
+                int n = 0;
+                float dr = 1.0, znorm = 0.0;
+                vec3 z = hypercomplexindex == 1 ? vec3(zx, zy, zz) : vec3(zx, zy, zz);
+                vec3 c = hypercomplexindex == 1 ? vec3(cx, cy, cz) : vec3(cx, cy, cz);
+                vec3 z2 = vec3(0.0, 0.0, 0.0);
+                float w = power;
+                float p = -0.5;
+                vec3 ztmp = z, z0 = z;
+                for (int i = 0; i < 25; i++) {
+                    ztmp = z;
+                    znorm = length(z);
+                    n = i;
+                    if (znorm > range) { break; }
+                    if (fractalindex == 2 || isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); }
+                    if (fractalindex == 1) { z.y = -z.y; }
+                    if (hypercomplexindex == 1)  {
+                        z = tpow(z, w);
+                        if (fractalindex == 3) { z = z + z2 * p; z2 = ztmp; ztmp = z; }
+                        else if (fractalindex == 4) { z = texp(z); }
+                        else if (fractalindex == 5) { z = tsinh(z); }
+                        else if (fractalindex == 6) { z = tcosh(z); }
+                        else if (fractalindex == 29) { z = ttau(z); }
+                        dr = fast_pow(znorm, power - 1.0) * power * dr + 1.0;
+                        z += c;
+                    }
+                    else if (hypercomplexindex == 2) {
+                        float theta = acos(z.z / znorm) * power;
+                        float phi = atan(z.y, z.x) * power;
+                        float zr = fast_pow(znorm, power);
+                        float sintheta = sin(theta);
+                        z.x = zr * cos(phi) * sintheta + c.x;
+                        z.y = zr * sin(phi) * sintheta + c.y;
+                        z.z = zr * cos(theta) + c.z;
+                        dr = fast_pow(znorm, power - 1.0) * power * dr + 1.0;
+                    }
+                }
+                return vec2(0.5 * log(znorm) * znorm / dr, n);
+            }
+
+            vec2 mandelbox(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
+                int n = 0;
+                float scale = -2.0, fixedRadius = 1.0, minRadius = 0.5, foldingLimit = 1.0, dr = 1.0, p = -0.5;
+                float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
+                vec3 z = vec3(zx, zy, zz);
+                vec3 c = vec3(cx, cy, cz);
+                vec3 z2 = vec3(0.0, 0.0, 0.0);
+                vec3 z0 = z, ztmp = z;
+                for (int i = 0; i < 20; i++) {
+                    ztmp = z;
+                    n = i;
+                    if (fractalindex == 2 || isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); }
+                    if (fractalindex == 1) { z.y = -z.y; }
+                    z = (clamp(z, -foldingLimit, foldingLimit) * 2.0 - z); //z = clamp(z, -foldingLimit, foldingLimit); z = z * 2.0 - z;
+                    if (fractalindex == 3) { z = z + z2 * p; z2 = ztmp; ztmp = z; }
+                    float r2 = dot(z, z);
+                    if (r2 < minRadius2) {
+                        float temp = fixedRadius2 / minRadius2; // float temp = fixedRadius2 / minRadius
+                        z *= temp;
+                        dr *= temp;
+                    } else if (r2 < fixedRadius2) {
+                        float temp = fixedRadius2 / r2;
+                        z *= temp;
+                        dr *= temp;
+                    }
+                    z = z * scale + c;
+                    dr = dr * abs(scale) + 1.0;
+                    if (dot(z, z) > range * 140.0) { break; }
+                }
+                return vec2(length(z) / abs(dr) * 0.25, float(n));
+            }
+
             vec2 mandel_quaternion(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
                 int n = 0;
                 float dr = 1.0, znorm = 0.0;
@@ -988,76 +1062,29 @@
                 return vec2(0.5 * log(znorm) * znorm / dr, n);
             }
 
-            vec2 mandelbulb(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
+            vec2 newton_bicomplex(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
                 int n = 0;
-                float dr = 1.0, znorm = 0.0;
-                vec3 z = hypercomplexindex == 1 ? vec3(zx, zy, zz) : vec3(zx, zy, zz);
-                vec3 c = hypercomplexindex == 1 ? vec3(cx, cy, cz) : vec3(cx, cy, cz);
-                vec3 z2 = vec3(0.0, 0.0, 0.0);
-                float w = power;
-                float p = -0.5;
-                vec3 ztmp = z, z0 = z;
+                vec4 z = vec4(zx, zy, zz, zw);
+                vec4 w = vec4(power, 0.0, 0.0, 0.0);
+                vec4 w_minus_1 = vec4(power - 1.0, 0.0, 0.0, 0.0);
+                vec4 w_minus_2 = vec4(power - 2.0, 0.0, 0.0, 0.0);
+                vec4 dz = vec4(1.0, 0.0, 0.0, 0.0);
                 for (int i = 0; i < 25; i++) {
-                    ztmp = z;
-                    znorm = length(z);
                     n = i;
-                    if (znorm > range) { break; }
-                    if (fractalindex == 2 || isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); }
-                    if (fractalindex == 1) { z.y = -z.y; }
-                    if (hypercomplexindex == 1)  {
-                        z = tpow(z, w);
-                        if (fractalindex == 3) { z = z + z2 * p; z2 = ztmp; ztmp = z; }
-                        else if (fractalindex == 4) { z = texp(z); }
-                        else if (fractalindex == 5) { z = tsinh(z); }
-                        else if (fractalindex == 6) { z = tcosh(z); }
-                        else if (fractalindex == 29) { z = ttau(z); }
-                        dr = fast_pow(znorm, power - 1.0) * power * dr + 1.0;
-                        z += c;
-                    }
-                    else if (hypercomplexindex == 2) {
-                        float theta = acos(z.z / znorm) * power;
-                        float phi = atan(z.y, z.x) * power;
-                        float zr = fast_pow(znorm, power);
-                        float sintheta = sin(theta);
-                        z.x = zr * cos(phi) * sintheta + c.x;
-                        z.y = zr * sin(phi) * sintheta + c.y;
-                        z.z = zr * cos(theta) + c.z;
-                        dr = fast_pow(znorm, power - 1.0) * power * dr + 1.0;
-                    }
+                    vec4 f_z = bipow(z, w) - vec4(1.0, 0.0, 0.0, 0.0);
+                    vec4 df_z = bimul(w, bipow(z, w_minus_1));
+                    vec4 ddf_z = bimul(bimul(w, w_minus_1), bipow(z, w_minus_2));
+                    vec4 df_inv = biinv(df_z);
+                    vec4 delta = bimul(df_inv, f_z);
+                    dz = bimul(dz, bimul(bimul(f_z, ddf_z), bimul(df_inv, df_inv)));
+                    z = z - delta;
+                    if (length(delta) < 0.001) { break; }
                 }
-                return vec2(0.5 * log(znorm) * znorm / dr, n);
-            }
-
-            vec2 mandelbox(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
-                int n = 0;
-                float scale = -2.0, fixedRadius = 1.0, minRadius = 0.5, foldingLimit = 1.0, dr = 1.0, p = -0.5;
-                float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
-                vec3 z = vec3(zx, zy, zz);
-                vec3 c = vec3(cx, cy, cz);
-                vec3 z2 = vec3(0.0, 0.0, 0.0);
-                vec3 z0 = z, ztmp = z;
-                for (int i = 0; i < 20; i++) {
-                    ztmp = z;
-                    n = i;
-                    if (fractalindex == 2 || isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); }
-                    if (fractalindex == 1) { z.y = -z.y; }
-                    z = (clamp(z, -foldingLimit, foldingLimit) * 2.0 - z); //z = clamp(z, -foldingLimit, foldingLimit); z = z * 2.0 - z;
-                    if (fractalindex == 3) { z = z + z2 * p; z2 = ztmp; ztmp = z; }
-                    float r2 = dot(z, z);
-                    if (r2 < minRadius2) {
-                        float temp = fixedRadius2 / minRadius2; // float temp = fixedRadius2 / minRadius
-                        z *= temp;
-                        dr *= temp;
-                    } else if (r2 < fixedRadius2) {
-                        float temp = fixedRadius2 / r2;
-                        z *= temp;
-                        dr *= temp;
-                    }
-                    z = z * scale + c;
-                    dr = dr * abs(scale) + 1.0;
-                    if (dot(z, z) > range * 140.0) { break; }
-                }
-                return vec2(length(z) / abs(dr) * 0.25, float(n));
+                float zabs = length(z);
+                float dist = zabs * log(max(zabs, 1.0001)) / max(length(dz), 0.0001);
+                return vec2(clamp(dist * 0.5, 0.0, 1.0), float(n));
+                //float dist = zabs / max(length(dz), 0.0001);
+                //return vec2(dist * 0.5, float(n));
             }
 
             void mandel3d_calc() {
@@ -1145,7 +1172,7 @@
                     }
                 }
                 else if (hypercomplexindex > 0) {
-                   mandel3d_calc();
+                    mandel3d_calc();
                 }
             }
         `;
@@ -1231,7 +1258,7 @@
         let zyval = 0.0;
         let zoomJulia = 3.0;
         let zwval = 0.0;
-        let power = 1.0;
+        let power = 2.0;
         let range = 6.0;
         let inverse = 0.0;
         let lastChangeTime = 0;
@@ -1239,14 +1266,14 @@
         let isnewton = 0;
         let isburning = 0;
         let isminusone = 0;
-        let fractalindex = 18;
+        let fractalindex = 0;
         let multlight = 1.0;
         let rotx = 0.0;
         let rotz = 0.0; // -3.14159 * 0.5
         let rotationSpeed = 0.05;
         let iteration = 220;
         let hypercomplexindex = 0;
-        let colorschemeindex = 2;
+        let colorschemeindex = 0;
         let movespeedx = 0.025;
         let movespeedy = 0.025 * 0.5;
         let isRecording = 0;
