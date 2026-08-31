@@ -114,7 +114,8 @@
                 <button class="control-btn" onclick="ismandel = ismandel == 1 ? 0 : 1; updateControls(true);">Mandel/Julia</button>
                 <button class="control-btn" onclick="inverse = inverse == 1 ? 0 : 1; updateControls(true);">1 / c</button>
                 <button class="control-btn" onclick="isnewton = isnewton == 1 ? 0 : 1; updateControls(true);">Newton</button>
-                <button class="control-btn" onclick="isburning = isburning == 1 ? 0 : 1; updateControls(true);">Burning</button>
+                <button class="control-btn" onclick="isburning = isburning == 1 ? 0 : 1; updateControls(true);">|z|</button>
+                <button class="control-btn" onclick="isminusone = isminusone == 1 ? 0 : 1; updateControls(true);">1 - z</button>
             </div>
         </div>
         <div class="control-group">
@@ -220,6 +221,7 @@
             uniform int ismandel;
             uniform int isnewton;
             uniform int isburning;
+            uniform int isminusone;
             uniform int hypercomplexindex;
             uniform int colorschemeindex;
             uniform int iteration;
@@ -237,9 +239,9 @@
                 }
                 if (y == 0.0) return 1.0;
                 if (y == -1.0) return 1.0 / x;
+                if (y == -2.0) return 1.0 / (x * x);
                 if (y == -0.5) return 1.0 / sqrt(x);
                 if (y == -1.5) return 1.0 / x * (1.0 / sqrt(x));
-                if (y == -2.0) return 1.0 / (x * x);
                 return 1.0 / pow(x, -y);
             }
 
@@ -273,15 +275,14 @@
                 return cexp(cmul(w, clog(z)));
             }
             vec2 croot(vec2 z, vec2 w) { return cpow(z, cinv(w)); }
-            vec2 mpow(vec2 z, vec2 w) { return cmul(cexp(log(length(z)) * w), cexp(cmul(vec2(0.0, carg(z)), (vec2(1.0, 0.0) - cexp(PI * vec2(-w.y, w.x))) * 0.5))); }
             vec2 cre(vec2 z) { return (z + conj(z)) * 0.5; }
             vec2 cim(vec2 z) { return (z - conj(z)) * 0.5; }
             vec2 ccomp_identity(vec2 z) { return cre(z) + cim(z); }
             vec2 csign(vec2 z) { return z / length(z); }
             vec2 cmax(vec2 z, vec2 w) { return vec2(max(z.x, w.x), max(z.y, w.y)); }
             vec2 cmin(vec2 z, vec2 w) { return vec2(min(z.x, w.x), min(z.y, w.y)); }
-            vec2 relumax(vec2 z) { return cmax(z, vec2(0.0, 0.0)); }
-            vec2 relumin(vec2 z) { return cmin(z, vec2(0.0, 0.0)); }
+            vec2 crelumax(vec2 z) { return cmax(z, vec2(0.0, 0.0)); }
+            vec2 crelumin(vec2 z) { return cmin(z, vec2(0.0, 0.0)); }
             vec2 ccomp_dotre(vec2 z, vec2 w) { return cre(z) * cre(w) + cim(z) * cim(w); }
             vec2 ccomp_dotim(vec2 z, vec2 w) { return cre(w) * cim(z) - cim(w) * cre(z); }
             // vec2 ccomp_dim(vec2 z, vec2 w) { return cre(z) * cim(w) - cim(w) * cre(z); }
@@ -291,11 +292,12 @@
             vec2 cdot(vec2 z, vec2 w) { return vec2(z.x * w.x + z.y * w.y, w.x * z.y - w.y * z.x); }
             vec2 ch(vec2 z, vec2 w) { return -w/2.0 * clog(z); }
             vec2 ctau(vec2 z) { return vec2(1.0, 0.0) - cexp(vec2(0.5, 0.0) - z); }
-            vec2 cexpscale(vec2 z) { return 2.0 * cexp(-0.69314718056 * z); }
+            vec2 ctau2(vec2 z) { return 2.0 * cexp(-0.69314718056 * z); }
             vec2 crefhalf(vec2 z) { return vec2(1.0, 0.0) - z; }
             vec2 crefhalfconj(vec2 z) { return vec2(1.0, 0.0) - conj(z); }
             vec2 cdotlog(vec2 z, vec2 w, vec2 k) { return cmul(clog(cdot(z, w)), k); }
             vec2 cdotpow(vec2 z, vec2 w, vec2 k) { return cpow(cdot(z, w), k); }
+            vec2 cmpow(vec2 z, vec2 w) { return cmul(cexp(log(length(z)) * w), cexp(cmul(vec2(0.0, carg(z)), (vec2(1.0, 0.0) - cexp(PI * vec2(-w.y, w.x))) * 0.5))); }
             vec2 csin(vec2 z) { float ey = exp(z.y); float eyminus = 1.0 / ey; return vec2(sin(z.x) * (ey + eyminus) * 0.5, cos(z.x) * (ey - eyminus) * 0.5); }
             vec2 ccos(vec2 z) { float ey = exp(z.y); float eyminus = 1.0 / ey; return vec2(cos(z.x) * (ey + eyminus) * 0.5, -sin(z.x) * (ey - eyminus) * 0.5); }
             vec2 csin_slow(vec2 z) { return vec2(sin(z.x) * cosh(z.y), cos(z.x) * sinh(z.y)); }
@@ -482,9 +484,9 @@
             vec2 ctanh_derv(vec2 z) { return vec2(1.0, 0.0) - csq(ctanh(z)); }
             vec2 ctan_derv(vec2 z) { return csq(cinv(ccos(z))); }
             vec2 cpow_derv(vec2 z, vec2 w) { return cmul(w, cpow(z, w - vec2(1.0, 0.0))); }
-            vec2 cgamma_derv(vec2 z) { return cmul(cgamma(z), cdigamma(z)); }
             vec2 clog_derv(vec2 z) { return cinv(z); }
-            vec2 cinv_derv(vec2 z) { return cinv(csq(z)) * -1.0; }
+            vec2 cinv_derv(vec2 z) { return -cinv(csq(z)); }
+            vec2 cgamma_derv(vec2 z) { return cmul(cgamma(z), cdigamma(z)); }
             vec2 cdzeta(vec2 z) { vec2 dz = vec2(0.0, 0.001); return cmul(czeta(z + dz) - czeta(z - dz), cinv(2.0 * dz)); }
             vec2 cdzsinh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czsinh(z + dz, t) - czsinh(z - dz, t), cinv(2.0 * dz)); }
             vec2 cdzcosh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czcosh(z + dz, t) - czcosh(z - dz, t), cinv(2.0 * dz)); }
@@ -707,19 +709,20 @@
                 vec2 z2 = vec2(0.0, 0.0);
                 vec2 z0 = z, ztmp = z;
                 for (int i = 0; i < maxiter; i++) {
-                    znorm = cabs_sq(z);
+                    znorm = dot(z, z);
                     if (znorm > range) { n = i; break; }
                     ztmp = z;
                     //z = cinv(z);
+                    if (isminusone == 1) { z = vec2(1.0, 0.0) - z; } // vec2(1.0, 0.0) - cdiv(cgamma(vec2(1.0, 0.0) - z), cgamma(z));
                     if (fractalindex == 2 || isburning == 1) {
                         z.x = abs(z.x);
-                        z.y = abs(z.y);
+                        z.y = -abs(z.y);
                         //z.x = cdtp(conj(z), z, vec2(0.5, 0.0)).x;
                         //z.y = cdtp(-z, conj(z), vec2(0.5, 0.0)).x;
                         //z.y = cdtp(z, conj(z), vec2(0.5, 0.0)).y;
                         //z = cdtp(conj(z), (z), vec2(0.5, 0.0));
                         //z = cdtp((z), (z), vec2(-0.5, 0.0));
-                        z = conj(z); }
+                    }
                     z = cpow(z, w);
                     if (fractalindex == 1) { z = conj(z); }
                     else if (fractalindex == 3) { z = z + cmul(z2, p); z2 = ztmp; ztmp = z; }
@@ -832,7 +835,7 @@
                     else if (fractalindex == 17) { func = csin(z_func); derv = ccos(z_func); }
                     else if (fractalindex == 18) { func = cgamma(z_func); derv = cmul(func, cdigamma(z_func)); }
                     else if (fractalindex == 19) { func = czeta(z_func); derv = cdzeta(z_func); }
-                    else if (fractalindex == 27) { func = ctau(z_func); derv = vec2(1.0, 0.0) - func; }
+                    else if (fractalindex == 29) { func = ctau(z_func); derv = vec2(1.0, 0.0) - func; }
                     //else if (fractalindex == 21) { func = cdzcosh(z_func, vec2(0.5, scaleval)); derv = cdzcosh(z_func, vec2(0.5, scaleval)); }
                     if (fractalindex > 3) { derv = cmul(derv, z_derv); }
                     z = z_prev - cmul(func - subst, cinv(derv));
@@ -940,7 +943,7 @@
                     else if (fractalindex == 16) { z = qcos(z); }
                     else if (fractalindex == 17) { z = qsin(z); }
                     else if (fractalindex == 18) { z = qgamma(z); }
-                    else if (fractalindex == 27) { z = qtau(z); }
+                    else if (fractalindex == 29) { z = qtau(z); }
                     z = z + c;
                     dr = power * fast_pow(znorm, power - 1.0) * dr + 1.0;
                 }
@@ -978,7 +981,7 @@
                     else if (fractalindex == 15) { z = bitan(z); }
                     else if (fractalindex == 16) { z = bicos(z); }
                     else if (fractalindex == 17) { z = bisin(z); }
-                    else if (fractalindex == 27) { z = bitau(z); }
+                    else if (fractalindex == 29) { z = bitau(z); }
                     z = z + c;
                     dr = power * fast_pow(znorm, power - 1.0) * dr + 1.0;
                 }
@@ -1007,7 +1010,7 @@
                         else if (fractalindex == 4) { z = texp(z); }
                         else if (fractalindex == 5) { z = tsinh(z); }
                         else if (fractalindex == 6) { z = tcosh(z); }
-                        else if (fractalindex == 27) { z = ttau(z); }
+                        else if (fractalindex == 29) { z = ttau(z); }
                         dr = fast_pow(znorm, power - 1.0) * power * dr + 1.0;
                         z += c;
                     }
@@ -1214,6 +1217,7 @@
         const ismandelLocation = gl.getUniformLocation(program, 'ismandel');
         const isnewtonLocation = gl.getUniformLocation(program, 'isnewton');
         const isburningLocation = gl.getUniformLocation(program, 'isburning');
+        const isminusoneLocation = gl.getUniformLocation(program, 'isminusone');
         const fractalindexLocation = gl.getUniformLocation(program, 'fractalindex');
         const hypercomplexindexLocation = gl.getUniformLocation(program, 'hypercomplexindex');
         const colorschemeindexLocation = gl.getUniformLocation(program, 'colorschemeindex');
@@ -1234,6 +1238,7 @@
         let ismandel = 1;
         let isnewton = 0;
         let isburning = 0;
+        let isminusone = 0;
         let fractalindex = 18;
         let multlight = 1.0;
         let rotx = 0.0;
@@ -1314,6 +1319,7 @@
                 gl.uniform1i(ismandelLocation, ismandel);
                 gl.uniform1i(isnewtonLocation, isnewton);
                 gl.uniform1i(isburningLocation, isburning);
+                gl.uniform1i(isminusoneLocation, isminusone);
                 gl.uniform1f(cxvalLocation, hypercomplexindex == 1 && power == 2.0 ? cxval + 0.00001 : cxval);
                 gl.uniform1f(cyvalLocation, cyval);
                 gl.uniform1f(zoommandelLocation, zoomMandel);
