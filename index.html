@@ -81,12 +81,14 @@
             </div>
             <div class="control-buttons">
                 <button class="control-btn" onclick="fractalindex = 23; updateControls(true);">Zeta(z)*Zeta(-z)</button>
+                <button class="control-btn" onclick="fractalindex = 24; updateControls(true);">gammasi(z)</button>
             </div>
             <div class="control-buttons">
-                <button class="control-btn" onclick="fractalindex = 24; updateControls(true);">Sn(z, z)</button>
-                <button class="control-btn" onclick="fractalindex = 25; updateControls(true);">Cn(z, z)</button>
-                <button class="control-btn" onclick="fractalindex = 26; updateControls(true);">Dn(z, z)</button>
-                <button class="control-btn" onclick="fractalindex = 27; updateControls(true);">tau(z)</button>
+                <button class="control-btn" onclick="fractalindex = 25; updateControls(true);">Sn(z, z)</button>
+                <button class="control-btn" onclick="fractalindex = 26; updateControls(true);">Cn(z, z)</button>
+                <button class="control-btn" onclick="fractalindex = 27; updateControls(true);">Dn(z, z)</button>
+                <button class="control-btn" onclick="fractalindex = 28; updateControls(true);">Wpp(z, z)</button>
+                <button class="control-btn" onclick="fractalindex = 29; updateControls(true);">tau(z)</button>
             </div>
         </div>
         <div class="control-group">
@@ -118,8 +120,10 @@
         <div class="control-group">
             <label>Color:</label>
             <div class="control-buttons">
-                <button class="control-btn" onclick="colorschemeindex = 1; updateControls(true);">Blue gradient</button>
                 <button class="control-btn" onclick="colorschemeindex = 0; updateControls(true);">RGB</button>
+                <button class="control-btn" onclick="colorschemeindex = 1; updateControls(true);">Blue</button>
+                <button class="control-btn" onclick="colorschemeindex = 2; updateControls(true);">Aqua</button>
+                <button class="control-btn" onclick="colorschemeindex = 3; updateControls(true);">Domain</button>
             </div>
         </div>
         <div class="control-group">
@@ -128,6 +132,7 @@
                 <button class="control-btn" onclick="iteration = 1; updateControls(true);">1</button>
                 <button class="control-btn" onclick="iteration = 2; updateControls(true);">2</button>
                 <button class="control-btn" onclick="iteration = 6; updateControls(true);">6</button>
+                <button class="control-btn" onclick="iteration = 12; updateControls(true);">12</button>
                 <button class="control-btn" onclick="iteration = 24; updateControls(true);">24</button>
                 <button class="control-btn" onclick="iteration = 60; updateControls(true);">60</button>
                 <button class="control-btn" onclick="iteration = 96; updateControls(true);">96</button>
@@ -239,7 +244,7 @@
             }
 
             float cabs_sq(vec2 z) { return dot(z, z); }
-            float cabs(vec2 z) { return sqrt(dot(z, z)); }
+            float cabs(vec2 z) { return length(z); }
             float cabs_pow(vec2 z, float k) { return fast_pow(dot(z, z), k); }
             float cabs_log(vec2 z, float k) { return log(dot(z, z)) * k; }
             float carg(vec2 z) { return atan(z.y, z.x); }
@@ -273,6 +278,10 @@
             vec2 cim(vec2 z) { return (z - conj(z)) * 0.5; }
             vec2 ccomp_identity(vec2 z) { return cre(z) + cim(z); }
             vec2 csign(vec2 z) { return z / length(z); }
+            vec2 cmax(vec2 z, vec2 w) { return vec2(max(z.x, w.x), max(z.y, w.y)); }
+            vec2 cmin(vec2 z, vec2 w) { return vec2(min(z.x, w.x), min(z.y, w.y)); }
+            vec2 relumax(vec2 z) { return cmax(z, vec2(0.0, 0.0)); }
+            vec2 relumin(vec2 z) { return cmin(z, vec2(0.0, 0.0)); }
             vec2 ccomp_dotre(vec2 z, vec2 w) { return cre(z) * cre(w) + cim(z) * cim(w); }
             vec2 ccomp_dotim(vec2 z, vec2 w) { return cre(w) * cim(z) - cim(w) * cre(z); }
             // vec2 ccomp_dim(vec2 z, vec2 w) { return cre(z) * cim(w) - cim(w) * cre(z); }
@@ -298,7 +307,7 @@
             vec2 csinhw(vec2 z, vec2 w) { return cpow(csinh(z), w); }
             vec2 ccoshw(vec2 z, vec2 w) { return cpow(ccosh(z), w); }
             vec2 clogn(vec2 z, vec2 w) { return cdiv(clog(z), clog(w)); }
-            vec2 ctanh(vec2 z) { return cdiv(csinh(z), ccosh(z)); }
+            vec2 ctanh(vec2 z) { return cdiv(csinh(z), ccosh(z)); } // return vec2(1.0, 0.0) - 2.0 / (vec2(1.0, 0.0) + cexp(2.0 * z));
             vec2 ccoth(vec2 z) { return cdiv(ccosh(z), csinh(z)); }
             vec2 ctan(vec2 z) { return cdiv(csin(z), ccos(z)); }
             vec2 ccot(vec2 z) { return cinv(ctan(z)); }
@@ -327,6 +336,25 @@
                 }
                 return result;
             }
+            vec2 cinvpgamma(vec2 z) { // calc with log
+                vec2 result = cmul(z, cexp(EULER_GAMMA * z));
+                mat4 prime16 = mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
+                mat4 prime32 = mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
+                for (int col = 0; col < 4; col++) {
+                    for (int row = 0; row < 4; row++) {
+                        float invn = 1.0 / float(prime16[row][col]);
+                        result = cmul(result, cmul(vec2(1.0, 0.0) + z * invn, cexp(-z * invn)));
+                    }
+                }
+                for (int col = 0; col < 4; col++) {
+                    for (int row = 0; row < 4; row++) {
+                        float invn = 1.0 / float(prime32[row][col]);
+                        result = cmul(result, cmul(vec2(1.0, 0.0) + z * invn, cexp(-z * invn)));
+                    }
+                }
+                return result;
+            }
+            vec2 cpgamma(vec2 z) { return cinv(cinvpgamma(z)); }
             vec2 cbeta(vec2 z, vec2 w) { return cmul(cmul(cgamma(z), cgamma(w)), cinv(cgamma(z + w))); }
             vec2 cdigamma(vec2 z) {
                 vec2 s = vec2(0.0, 0.0);
@@ -353,6 +381,8 @@
                 result -= inv14 * (1.0 / 12.0);
                 return result + s;
             }
+
+            vec2 cgammaphi(vec2 z) { return cexp(cmul(z, vec2(-3.53102424697, 1.57079632679) + clog(vec2(1.0, 0.0) - 2.0 * z)) - 0.5 * clog(z) + vec2(1.4189385332, 0.0)); }
 
             vec2 czeta_left(vec2 z) { return cmul(cpow(vec2(2.0 * PI, 0.0), z - vec2(1.0, 0.0)) * 2.0, cmul(csin(z * PI * 0.5), cgamma(vec2(1.0, 0.0) - z))); }
 
@@ -384,8 +414,6 @@
                 }
                 return res;
             }
-
-            vec2 cgammaphi(vec2 z) { return cexp(cmul(z, vec2(-3.53102424697, 1.57079632679) + clog(vec2(1.0, 0.0) - 2.0 * z)) - 0.5 * clog(z) + vec2(1.4189385332, 0.0)); }
 
             vec2 czeta_strip(vec2 z) {
                 vec4 zeta_est = vec4(1.0, 0.0, 1.0, 0.0);
@@ -421,13 +449,12 @@
             vec2 ceta_left(vec2 z) {
                 z.x = -z.x;
                 vec2 component_a;
-                const float SQ2PI2 = 1.2533141373155001;
                 float log_r = log(length(z));
                 if (z.y > 200.0) {
-                    component_a = SQ2PI2 * cmul_i(cexp(vec2(z.x, 0.0) + (log_r - 1.0) * z - vec2(log_r * 0.5, 0.785398163397)));
+                    component_a = 1.2533141373155001 * cmul_i(cexp(vec2(z.x, 0.0) + (log_r - 1.0) * z - vec2(log_r * 0.5, 0.785398163397)));
                 } else if (z.y > 20.0) {
                     float theta = atan(z.y, z.x);
-                    component_a = SQ2PI2 * cmul_i(cexp((theta - 1.57079632679) * cmul_i(z) + (log_r - 1.0) * z - 0.5 * vec2(log_r, theta)));
+                    component_a = 1.2533141373155001 * cmul_i(cexp((theta - 1.57079632679) * cmul_i(z) + (log_r - 1.0) * z - 0.5 * vec2(log_r, theta)));
                 } else {
                     component_a = cmul(cgamma(z), csin(z * 1.57079632679));
                 }
@@ -445,6 +472,8 @@
             }
 
             vec2 czeta(vec2 z) { return cmul(ceta(z), cinv(vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z))); }
+            vec2 cgammasi(vec2 z) { return vec2(1.0, 0.0) - cdiv(cgamma(vec2(1.0, 0.0) - z), cgamma(z)); }
+            vec2 cgammapsi(vec2 z) { return vec2(1.0, 0.0) - cdiv(cpgamma(vec2(1.0, 0.0) - z), cpgamma(z)); }
             vec2 czsinh(vec2 z, vec2 t) { return (czeta(z + t) - czeta(t - z)) * 0.5; }
             vec2 czcosh(vec2 z, vec2 t) { return (czeta(z + t) + czeta(t - z)) * 0.5; }
             float logmap(float r, float x) { return r * x * (1.0 - x); }
@@ -493,16 +522,38 @@
                 }
                 return 2.0 * result;
             }
-            vec2 jacobi_reduce(vec2 z, vec2 w) { vec2 t00 = theta3_z0(w); vec2 zz = cdiv(z, PI * cmul(t00, t00)); float n = 2.0 * floor(0.5 * zz.y / w.y + 0.5); return zz - n * w; }
-            vec2 theta2(vec2 z, vec2 w) { return theta3(z + 0.5 * vec2(1.0, 0.0), w); }
-            vec2 theta4(vec2 z, vec2 w) { return cmul(cexp(PI * cmul_i(z + 0.25 * w)), theta3(z + 0.5 * w, w)); }
+            vec2 jacobi_reduce(vec2 z, vec2 w) { vec2 t00 = theta3_z0(w); vec2 zz = cdiv(z, PI * csq(t00)); float n = 2.0 * floor(0.5 * zz.y / w.y + 0.5); return zz - n * w; }
+            vec2 theta2(vec2 z, vec2 w) { return theta3(z + 0.5 * vec2(1.0, 0.0), w); } // theta01f
+            vec2 theta4(vec2 z, vec2 w) { return cmul(cexp(PI * cmul_i(z + 0.25 * w)), theta3(z + 0.5 * w, w)); } // theta10f
             vec2 theta1(vec2 z, vec2 w) { return cmul(cexp(PI * 0.25 * cmul_i(w + 4.0 * z + 2.0 * vec2(1.0, 0.0))), theta3(z + 0.5 * (w + vec2(1.0, 0.0)), w)); }
             vec2 raw_sn(vec2 z, vec2 w) { return -cdiv(cmul(theta3_z0(w), theta1(z, w)), cmul(theta4(vec2(0.0, 0.0), w), theta2(z, w))); }
             vec2 raw_cn(vec2 z, vec2 w) { return cdiv(cmul(theta2(vec2(0.0, 0.0), w), theta4(z, w)), cmul(theta4(vec2(0.0, 0.0), w), theta2(z, w))); }
             vec2 raw_dn(vec2 z, vec2 w) { return cdiv(cmul(theta2(vec2(0.0, 0.0), w), theta3(z, w)), cmul(theta3_z0(w), theta2(z, w))); }
-            vec2 sn(vec2 z, vec2 k) { vec2 tau = invert_tau(k); return raw_sn(jacobi_reduce(z, tau), tau); }
-            vec2 cn(vec2 z, vec2 k) { vec2 tau = invert_tau(k); return raw_cn(jacobi_reduce(z, tau), tau); }
-            vec2 dn(vec2 z, vec2 k) { vec2 tau = invert_tau(k); return raw_dn(jacobi_reduce(z, tau), tau); }
+            vec2 raw_wp_derv(vec2 z, vec2 w, vec2 w1) { return -2.0 * cmul(cexp(3.0 * clog(cdiv(w, raw_sn(z, w1)))), cmul(raw_cn(z, w1), raw_dn(z, w1))); }
+            vec2 csn(vec2 z, vec2 k) { vec2 tau = invert_tau(k); return raw_sn(jacobi_reduce(z, tau), tau); }
+            vec2 ccn(vec2 z, vec2 k) { vec2 tau = invert_tau(k); return raw_cn(jacobi_reduce(z, tau), tau); }
+            vec2 cdn(vec2 z, vec2 k) { vec2 tau = invert_tau(k); return raw_dn(jacobi_reduce(z, tau), tau); }
+            vec2 cwp(vec2 z, vec2 w) {
+                float n = floor(z.y / w.y + 0.5);
+                vec2 zz = z - n * w;
+                vec2 t002 = csq(theta3_z0(w));
+                vec2 t102 = csq(theta4(vec2(0.0, 0.0), w));
+                vec2 e2 = -(PI*PI/3.0) * (csq(t102) + csq(t002));
+                return PI*PI*cmul(cmul(t002, t102), csq(cdiv(theta2(zz, w), theta1(zz, w)))) + e2;
+            }
+            vec2 cwp_derv(vec2 z, vec2 w) {
+                const float PI2_3 = PI * PI / 3.0;
+                vec2 t004 = csq(csq(theta3_z0(w)));
+                vec2 t104 = csq(csq(theta4(vec2(0.0, 0.0), w)));
+                vec2 t014 = csq(csq(theta2(vec2(0.0, 0.0), w)));
+                vec2 e1 = PI2_3 * (t004 + t014);
+                vec2 e2 = -PI2_3 * (t104 + t004);
+                vec2 e3 = PI2_3 * (t104 - t014);
+                vec2 A = csqrt(e1 - e3);
+                vec2 B = csqrt(e2 - e3);
+                vec2 tau = invert_tau(cdiv(B, A));
+                return raw_wp_derv(jacobi_reduce(cmul(z, A), tau), A, tau);
+            }
 
             float qabs_sq(vec4 z) { return dot(z, z); }
             float qabs(vec4 z) { return length(z); }
@@ -561,6 +612,7 @@
             vec4 bisinh(vec4 z) { vec2 r1 = cexp(z.xy); vec2 r2 = cexp(-z.xy); return vec4(cmul(ccos(z.zw), 0.5 * (r1 - r2)), cmul(csin(z.zw), 0.5 * (r1 + r2))); }
             vec4 bicosh(vec4 z) { vec2 r1 = cexp(z.xy); vec2 r2 = cexp(-z.xy); return vec4(cmul(ccos(z.zw), 0.5 * (r1 + r2)), cmul(csin(z.zw), 0.5 * (r1 - r2))); }
             vec4 bitan(vec4 z) { return bidiv(bisin(z), bicos(z)); }
+            vec4 bitanh(vec4 z) { return bidiv(bisinh(z), bicosh(z)); }
             vec4 bipow(vec4 z, vec4 w) {
                 if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) { float zx = z.x, zy = z.y, zz = z.z, zw = z.w;
                     if (w.x == -1.0) { return biinv(z); }
@@ -589,7 +641,13 @@
             vec4 bigamma_left(vec4 z) { return PI * biinv(bimul(bisin(z * PI), bigamma_right(vec4(1.0, 0.0, 0.0, 0.0) - z))); }
             vec4 bigamma1(vec4 z) { return z.x < 0.5 ? bigamma_left(z) : bigamma_right(z); }
             vec4 bigamma(vec4 z) { return bifromidempotent(cgamma(bitoidempotent_left(z)), cgamma(bitoidempotent_right(z))); }
+            vec4 bidigamma(vec4 z) { return bifromidempotent(cdigamma(bitoidempotent_left(z)), cdigamma(bitoidempotent_right(z))); }
             vec4 bizeta(vec4 z) { return bifromidempotent(czeta(bitoidempotent_left(z)), czeta(bitoidempotent_right(z))); }
+            vec4 bisn(vec4 z, vec4 k) { return bifromidempotent(csn(bitoidempotent_left(z), bitoidempotent_left(k)), csn(bitoidempotent_right(z), bitoidempotent_right(k))); }
+            vec4 bicn(vec4 z, vec4 k) { return bifromidempotent(ccn(bitoidempotent_left(z), bitoidempotent_left(k)), ccn(bitoidempotent_right(z), bitoidempotent_right(k))); }
+            vec4 bidn(vec4 z, vec4 k) { return bifromidempotent(cdn(bitoidempotent_left(z), bitoidempotent_left(k)), cdn(bitoidempotent_right(z), bitoidempotent_right(k))); }
+            vec4 biwp(vec4 z, vec4 k) { return bifromidempotent(cwp(bitoidempotent_left(z), bitoidempotent_left(k)), cwp(bitoidempotent_right(z), bitoidempotent_right(k))); }
+            vec4 biwp_derv(vec4 z, vec4 k) { return bifromidempotent(cwp_derv(bitoidempotent_left(z), bitoidempotent_left(k)), cwp_derv(bitoidempotent_right(z), bitoidempotent_right(k))); }
 
             vec3 texp(vec3 z) { float cosphi = cos(z.z); return exp(z.x) * vec3(cosphi * cos(z.y), cosphi * sin(z.y), sin(z.z)); }
             vec3 tlog(vec3 z) { float r = length(z); if (r < 1e-8) { return vec3(-18.42, 0.0, 0.0); } float phi = asin(clamp(z.z / r, -1.0, 1.0)); return vec3(log(r), atan(z.y, z.x), phi); }
@@ -684,10 +742,12 @@
                     //else if (fractalindex == 21) { z = czcosh(z, vec2(0.5, scaleval)); }
                     //else if (fractalindex == 22) { z = cdiv(czsinh(z, vec2(0.5, scaleval)), czcosh(z, vec2(0.5, scaleval))); }
                     //else if (fractalindex == 23) { z = cmul(czeta(z), czeta(-z)); }
-                    else if (fractalindex == 24) { z = sn(z, z); }
-                    else if (fractalindex == 25) { z = cn(z, z); }
-                    else if (fractalindex == 26) { z = dn(z, z); }
-                    else if (fractalindex == 27) { z = ctau(z); }
+                    else if (fractalindex == 24) { z = cgammasi(z); }
+                    else if (fractalindex == 25) { z = csn(z, z); }
+                    else if (fractalindex == 26) { z = ccn(z, z); }
+                    else if (fractalindex == 27) { z = cdn(z, z); }
+                    else if (fractalindex == 28) { z = cwp(z, vec2(0.0, 1.0)); }
+                    else if (fractalindex == 29) { z = ctau(z); }
                     //if (isln == 1) { z = clog(z); }
                     z = z + c;
                     n += 1;
@@ -717,6 +777,14 @@
                     float g = bounce(color * 2.0, 0.0, 1.0);
                     float b = bounce(color * 3.0, 0.0, 1.0);
                     gl_FragColor = vec4(r, g, b, 1.0);
+                } else if (colorschemeindex == 2) {
+                    float logMag = log(length(z) + 1.0);
+                    vec3 col = hsv2rgb(vec3(0.7 - logMag * 0.1, 0.7, clamp(logMag * 0.3, 0.0, 1.0)));
+                    gl_FragColor = vec4(col, 1.0);
+                } else if (colorschemeindex == 3) {
+                    float hue = (atan(z.y, z.x) * 0.159154943092 + 0.5);
+                    vec3 col = hsv2rgb(vec3(hue, 0.8, 0.9));
+                    gl_FragColor = vec4(col, 1.0);
                 }
             }
 
@@ -788,6 +856,14 @@
                     float g = bounce(color * 2.0, 0.0, 1.0);
                     float b = bounce(color * 3.0, 0.0, 1.0);
                     gl_FragColor = vec4(r, g, b, 1.0);
+                } else if (colorschemeindex == 2) {
+                    float logMag = log(length(z) + 1.0);
+                    vec3 col = hsv2rgb(vec3(0.7 - logMag * 0.1, 0.7, clamp(logMag * 0.3, 0.0, 1.0)));
+                    gl_FragColor = vec4(col, 1.0);
+                } else if (colorschemeindex == 3) {
+                    float hue = (atan(z.y, z.x) * 0.159154943092 + 0.5);
+                    vec3 col = hsv2rgb(vec3(hue, 0.8, 0.9));
+                    gl_FragColor = vec4(col, 1.0);
                 }
             }
 
@@ -1066,7 +1142,7 @@
                     }
                 }
                 else if (hypercomplexindex > 0) {
-                    mandel3d_calc();
+                   mandel3d_calc();
                 }
             }
         `;
@@ -1151,21 +1227,21 @@
         let zyval = 0.0;
         let zoomJulia = 3.0;
         let zwval = 0.0;
-        let power = 2.0;
+        let power = 1.0;
         let range = 6.0;
         let inverse = 0.0;
         let lastChangeTime = 0;
         let ismandel = 1;
         let isnewton = 0;
         let isburning = 0;
-        let fractalindex = 0;
+        let fractalindex = 18;
         let multlight = 1.0;
         let rotx = 0.0;
         let rotz = 0.0; // -3.14159 * 0.5
         let rotationSpeed = 0.05;
         let iteration = 220;
         let hypercomplexindex = 0;
-        let colorschemeindex = 1;
+        let colorschemeindex = 2;
         let movespeedx = 0.025;
         let movespeedy = 0.025 * 0.5;
         let isRecording = 0;
