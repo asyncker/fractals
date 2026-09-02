@@ -254,14 +254,14 @@
             vec2 cconj(vec2 z) { return vec2(z.x, -z.y); }
             vec2 conj(vec2 z) { return vec2(z.x, -z.y); }
             vec2 cshift(vec2 z) { return vec2(z.y, z.x); } // cmul_i(conj(z));
-            vec2 cminus(vec2 z) { return z * -1.0; }
+            vec2 cneg(vec2 z) { return z * -1.0; }
             vec2 cinv(vec2 z) { return vec2(z.x, -z.y) / dot(z, z); }
             vec2 clog(vec2 z) { return vec2(log(length(z)), carg(z)); }
             vec2 csq(vec2 z) { return vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y); }
             vec2 csqrt(vec2 z) { float phi = carg(z) * 0.5; return sqrt(length(z)) * vec2(cos(phi), sin(phi)); }
             vec2 cexp(vec2 z) { return exp(z.x) * vec2(cos(z.y), sin(z.y)); }
             vec2 cadd(vec2 z, vec2 w) { return vec2(z.x + w.x, z.y + w.y); }
-            vec2 csub(vec2 z, vec2 w) { return cadd(z, cminus(w)); }
+            vec2 csub(vec2 z, vec2 w) { return cadd(z, cneg(w)); }
             vec2 cmul(vec2 z, vec2 w) { return vec2(z.x * w.x - z.y * w.y, z.x * w.y + z.y * w.x); }
             vec2 cdiv(vec2 z, vec2 w) { return cmul(z, cinv(w)); }
             vec2 cpow(vec2 z, vec2 w) { 
@@ -311,11 +311,17 @@
             vec2 ccosw(vec2 z, vec2 w) { return cpow(ccos(z), w); }
             vec2 csinhw(vec2 z, vec2 w) { return cpow(csinh(z), w); }
             vec2 ccoshw(vec2 z, vec2 w) { return cpow(ccosh(z), w); }
+            vec2 ctanw(vec2 z, vec2 w, vec2 s) { return cmul(cpow(csin(z), s), cpow(ccos(z), w)); }
+            vec2 ccotw(vec2 z, vec2 w, vec2 s) { return cmul(cpow(ccos(z), s), cpow(csin(z), w)); }
+            vec2 ctanhw(vec2 z, vec2 w, vec2 s) { return cmul(cpow(csinh(z), s), cpow(ccosh(z), w)); }
+            vec2 ccothw(vec2 z, vec2 w, vec2 s) { return cmul(cpow(ccosh(z), s), cpow(csinh(z), w)); }
             vec2 clogn(vec2 z, vec2 w) { return cdiv(clog(z), clog(w)); }
             vec2 ctanh(vec2 z) { return cdiv(csinh(z), ccosh(z)); } // return vec2(1.0, 0.0) - 2.0 / (vec2(1.0, 0.0) + cexp(2.0 * z));
             vec2 ccoth(vec2 z) { return cdiv(ccosh(z), csinh(z)); }
             vec2 ctan(vec2 z) { return cdiv(csin(z), ccos(z)); }
             vec2 ccot(vec2 z) { return cinv(ctan(z)); }
+            vec2 carcsin(vec2 z) { vec2 a = csqrt(vec2(1.0, 0.0) - csq(z)); return z.y < 0.0 ? -cmul_i(clog(a + cmul_i(z))) : -cmul_i(-clog(a - cmul_i(z))); }
+            vec2 carccos(vec2 z) { return vec2(0.5 * PI, 0.0) - carcsin(z); }
             vec2 cfib(vec2 z) { return (cpow(vec2(1.61803398875, 0.0), z) - cpow(vec2(-0.61803398875, 0.0), z)) * 0.4472135955; }
             vec2 cgamma_right(vec2 z) {
                 vec2 w = z - vec2(1.0, 0.0);
@@ -572,7 +578,7 @@
                 float scale = sqrt(max(0.0, 0.5 * (norm - a))) / lenV;
                 return vec4(sqrt(max(0.0, 0.5 * (norm + a))), b * scale, c * scale, d * scale);
             }*/
-            vec4 qminus(vec4 z) { return z * -1.0; }
+            vec4 qneg(vec4 z) { return z * -1.0; }
             vec4 qconj(vec4 z) { return vec4(z.x, -z.yzw); }
             vec4 qinv(vec4 z) { return vec4(z.x, -z.yzw) / dot(z, z); }
             vec4 qadd(vec4 z, vec4 w) { return z + w; }
@@ -623,7 +629,7 @@
 
             float biabs_sq(vec4 z) { return dot(z, z); }
             float biabs(vec4 z) { return length(z); }
-            vec4 biminus(vec4 z) { return z * -1.0; }
+            vec4 bineg(vec4 z) { return z * -1.0; }
             vec4 biconj(vec4 z) { return vec4(z.x, -z.y, -z.z, z.w); }
             vec4 bisq(vec4 z) { return vec4(z.x * z.x - z.y * z.y - z.z * z.z + z.w * z.w, 2.0 * (z.x * z.y - z.z * z.w), 2.0 * (z.x * z.z - z.y * z.w), 2.0 * (z.x * z.w + z.y * z.z)); }
             vec2 bidabs_sq(vec4 z) { return cmul(z.xy, z.xy) + cmul(z.zw, z.zw); }
@@ -685,7 +691,7 @@
             vec4 biwp_derv(vec4 z, vec4 k) { return bifromidempotent(cwp_derv(bitoidempotent_left(z), bitoidempotent_left(k)), cwp_derv(bitoidempotent_right(z), bitoidempotent_right(k))); }
 
             float tabs(vec3 z) { return length(z); }
-            vec3 tminus(vec3 z) { return z * -1.0; }
+            vec3 tneg(vec3 z) { return z * -1.0; }
             vec3 tsq(vec3 z) {
                 float zxpow = z.x * z.x, zypow = z.y * z.y, zzpow = z.z * z.z;
                 float zxypow = zxpow + zypow;
@@ -1210,7 +1216,7 @@
             }
         `;
         
-        const functionlist = ["add", "sub", "mul", "div", "pow", "root", "minus", "inv", "log", "exp", "gamma", "zeta", "eta", "beta", "sinh", "cosh", "tanh", "coth", "sin", "cos", "tan", "cot", "tau", "gammasi", "fib", "sn", "cn", "dn", "wp", "abs", "arg", "conj", "sign", "floor", "ceil", "round", "max", "min", "relumax", "relumin", "step", "clamp", "sq", "sqrt", "dot", "sop"];
+        const functionlist = ["add", "sub", "mul", "div", "pow", "root", "neg", "inv", "log", "exp", "gamma", "zeta", "eta", "beta", "sinh", "cosh", "tanh", "coth", "sin", "cos", "tan", "cot", "tau", "gammasi", "fib", "sn", "cn", "dn", "wp", "abs", "arg", "conj", "sign", "floor", "ceil", "round", "max", "min", "relumax", "relumin", "step", "clamp", "sq", "sqrt", "dot", "sop"];
         const predfunctionlist = ["gcosh", "gsinh", "gsin", "gcos"]; // gamma sin, cos, cosh, sinh and pow(gsin(z), -1) and other
 
         function function_check(text, function_list) {
