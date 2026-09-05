@@ -79,6 +79,10 @@ https://asyncker.github.io/zeta-trigonometry/img/zeta_pow.png <br /> <br />
 4d bicomplex fractal:
 1. Mandelbrot Bicomplex
 ![](render/pic13.png)
+2. Zeta bicomplex branch
+![](render/bicomplex_zeta_branch.png)
+3. zeta bicomplex
+![](render/bicomplex_zeta_near_center.png)
 
 Compile to binary:
 ```bash
