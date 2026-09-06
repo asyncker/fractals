@@ -576,9 +576,9 @@
             float qabs(vec4 z) { return length(z); }
             float qarg(vec4 z) { float qlen = length(z); if (qlen < 1e-8) return 0.0; return acos(clamp(z.x / qlen, -1.0, 1.0)); }
             vec4 qsq(vec4 z) { return vec4(z.x * z.x - z.y * z.y - z.z * z.z - z.w * z.w, 2.0 * z.x * z.yzw); }
-            /*vec4 qsqrt(vec4 q) {
-                float a = q.x, b = q.y, c = q.z, d = q.w;
-                float norm = sqrt(a*a + b*b + c*c + d*d); // length
+            /*vec4 qsqrt(vec4 z) {
+                float a = z.x, b = z.y, c = z.z, d = z.w;
+                float norm = sqrt(a*a + b*b + c*c + d*d);
                 float lenV = sqrt(b*b + c*c + d*d);
                 if (lenV < 1e-10) { return vec4(sqrt(max(0.0, a)), 0, 0, 0); }
                 float scale = sqrt(max(0.0, 0.5 * (norm - a))) / lenV;
@@ -610,7 +610,7 @@
                     else if (w.x == 2.0) return qsq(z);
                     return qexp(w.x * qlog(z));
                 }
-                return qexp(qmul(w, qlog(z))); // qexp(qmul(qlog(z), w))
+                return qexp(qmul(w, qlog(z)));
             }
             vec4 qroot(vec4 z, vec4 w) { return qpow(z, qinv(w)); }
             vec4 qsign(vec4 z) { return z / length(z); }
@@ -648,7 +648,6 @@
 
             float biabs_sq(vec4 z) { return dot(z, z); }
             float biabs(vec4 z) { return length(z); }
-            //vec4 bi1arg(vec4 z) { vec2 arg = bilog(z).zw; return vec4(0.0, 0.0, arg.x, arg.y); }
             vec4 bineg(vec4 z) { return z * -1.0; }
             vec4 biconj(vec4 z) { return vec4(z.x, -z.y, -z.z, z.w); }
             vec4 bisq(vec4 z) { return vec4(z.x * z.x - z.y * z.y - z.z * z.z + z.w * z.w, 2.0 * (z.x * z.y - z.z * z.w), 2.0 * (z.x * z.z - z.y * z.w), 2.0 * (z.x * z.w + z.y * z.z)); }
@@ -663,6 +662,7 @@
             vec4 bidiv(vec4 z, vec4 w) { return bimul(z, biinv(w)); }
             vec4 biexp(vec4 z) { vec2 r = cexp(z.xy); return vec4(cmul(r, ccos(z.zw)), cmul(r, csin(z.zw))); }
             vec4 bilog(vec4 z) { vec2 logz = clog(z.xy + cmul_i(z.zw)); vec2 logw = clog(z.xy - cmul_i(z.zw)); return vec4(0.5 * (logz + logw), -0.5 * cmul_i(logz - logw)); }
+            vec4 biarg(vec4 z) { vec4 arg = bilog(z); return vec4(0.0, 0.0, arg.z, arg.w); }
             vec4 bisin(vec4 z) { vec2 r1 = cexp(z.zw); vec2 r2 = cexp(-z.zw); return vec4(cmul(csin(z.xy), 0.5 * (r1 + r2)), cmul(ccos(z.xy), 0.5 * (r1 - r2))); }
             vec4 bicos(vec4 z) { vec2 r1 = cexp(z.zw); vec2 r2 = cexp(-z.zw); return vec4(cmul(ccos(z.xy), 0.5 * (r1 + r2)),-cmul(csin(z.xy), 0.5 * (r1 - r2))); }
             vec4 bisinh(vec4 z) { vec2 r1 = cexp(z.xy); vec2 r2 = cexp(-z.xy); return vec4(cmul(ccos(z.zw), 0.5 * (r1 - r2)), cmul(csin(z.zw), 0.5 * (r1 + r2))); }
