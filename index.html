@@ -244,6 +244,7 @@
                 if (y == -1.5) return 1.0 / x * (1.0 / sqrt(x));
                 return 1.0 / pow(x, -y);
             }
+            float pow_derv(float x, float y) { return fast_pow(x, y - 1.0) * y; }
 
             float cabs_sq(vec2 z) { return dot(z, z); }
             float cabs(vec2 z) { return length(z); }
