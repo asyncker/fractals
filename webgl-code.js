@@ -102,7 +102,7 @@ let mathcode = `
   vec2 cdot(vec2 z, vec2 w) { return vec2(z.x * w.x + z.y * w.y, w.x * z.y - w.y * z.x); }
   vec2 csop(vec2 z, vec2 w) { return cdiv(z, conj(w)); }
   vec2 ch(vec2 z, vec2 w) { return -w/2.0 * clog(z); }
-  vec2 ctau(vec2 z) { return vec2(1.0, 0.0) - cexp(vec2(0.5, 0.0) - z); }
+  vec2 ctau(vec2 z, vec2 w) { return vec2(1.0, 0.0) - cpow(z, vec2(0.5, 0.0) - w); }
   vec2 ctau2(vec2 z) { return 2.0 * cexp(-0.69314718056 * z); }
   vec2 cinvmix(vec2 z, float s) { return mix(z, cinv(z), s); } // return cinv(z) * s + z * (1.0 - s);
   vec2 crefhalf(vec2 z) { return vec2(1.0, 0.0) - z; }
@@ -308,7 +308,7 @@ let mathcode = `
   float cosh_derv(float x) { return cosh(x); }
   float sinh_derv(float x) { return sinh(x); }
   float tan_derv(float x) { return sq(inv(cos(x))); }
-  vec2 ctau_derv(vec2 z) { return cexp(vec2(0.5, 0.0) - z); }
+  vec2 ctau_derv(vec2 z, vec2 w) { return cmul(cpow(z, -w - vec2(0.5, 0.0)), vec2(-0.5, 0.0) + w; }
   vec2 ctanh_derv(vec2 z) { return vec2(1.0, 0.0) - csq(ctanh(z)); }
   vec2 ctan_derv(vec2 z) { return csq(cinv(ccos(z))); }
   vec2 cpow_derv(vec2 z, vec2 w) { return cmul(w, cpow(z, w - vec2(1.0, 0.0))); }
@@ -316,6 +316,7 @@ let mathcode = `
   vec2 cinv_derv(vec2 z) { return -cinv(csq(z)); }
   vec2 cgamma_derv(vec2 z) { return cmul(cgamma(z), cdigamma(z)); }
   vec2 czeta_derv(vec2 z) { vec2 dz = vec2(0.0, 0.001); return cmul(czeta(z + dz) - czeta(z - dz), cinv(2.0 * dz)); }
+  vec2 ceta_derv(vec2 z) { vec2 dz = vec2(0.0, 0.001); return cmul(ceta(z + dz) - ceta(z - dz), cinv(2.0 * dz)); }
   vec2 cdzsinh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czsinh(z + dz, t) - czsinh(z - dz, t), cinv(2.0 * dz)); }
   vec2 cdzcosh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czcosh(z + dz, t) - czcosh(z - dz, t), cinv(2.0 * dz)); }
   vec2 cdlogzeta(vec2 z) { return cdiv(czeta(z), czeta_derv(z)); }
@@ -554,6 +555,7 @@ let mathcode = `
   vec4 bipow_derv(vec4 z, vec4 w) { return bimul(bipow(z, w - vec4(1.0, 0.0, 0.0, 0.0)), w); }
   vec4 bigamma_derv(vec4 z) { return bifromidempotent(cgamma_derv(bitoidempotent_left(z)), cgamma_derv(bitoidempotent_right(z))); }
   vec4 bizeta_derv(vec4 z) { return bifromidempotent(czeta_derv(bitoidempotent_left(z)), czeta_derv(bitoidempotent_right(z))); }
+  vec4 bieta_derv(vec4 z) { return bifromidempotent(ceta_derv(bitoidempotent_left(z)), ceta_derv(bitoidempotent_right(z))); }
   vec4 biwp_derv(vec4 z, vec4 w) { return bifromidempotent(cwp_derv(bitoidempotent_left(z), bitoidempotent_left(w)), cwp_derv(bitoidempotent_right(z), bitoidempotent_right(w))); }
 
   float tabs(vec4 z) { return length(z); }
