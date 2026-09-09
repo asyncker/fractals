@@ -137,27 +137,21 @@
           gl.deleteProgram(newProgram);
           return false;
         }
-
         gl.attachShader(newProgram, vs);
         gl.attachShader(newProgram, fs);
         gl.linkProgram(newProgram);
-
-        // Отсоединяем и удаляем промежуточные объекты шейдеров из GPU
         gl.detachShader(newProgram, vs);
         gl.detachShader(newProgram, fs);
         gl.deleteShader(vs);
         gl.deleteShader(fs);
-
         if (!gl.getProgramParameter(newProgram, gl.LINK_STATUS)) {
           console.error('Error link program:', gl.getProgramInfoLog(newProgram));
           gl.deleteProgram(newProgram);
           return false;
         }
-
         if (currentProgram) {
           gl.deleteProgram(currentProgram);
         }
-
         currentProgram = newProgram;
         gl.useProgram(currentProgram);
 
@@ -350,9 +344,8 @@
         }
       }
 
-      const startcode = quaternionshadercode();
-      document.getElementById('code').value = startcode;
-      useShader(uniformcode + mathcode + startcode);
+      codeEditor.value = getfractal("z = pow(z, power) + c", "q");
+      runCode();
       animFrameId = requestAnimationFrame(render);
 
       function runCode() {
