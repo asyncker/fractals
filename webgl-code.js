@@ -961,7 +961,7 @@ let bicomplexnewtonshader = `vec2 newton_bicomplex(float zx, float zy, float zz,
 function getDerivative(f, v = 'z') {
   const F = ["add","sub","mul","div","pow","root","neg","inv","log","exp","gamma","zeta","eta","beta","sinh","cosh","tanh","coth","sin","cos","tan","cot","tau","gammasi","fib","sn","cn","dn","wp","abs","arg","conj","sign","floor","ceil","round","max","min","relumax","relumin","step","clamp","sq","sqrt","dot","sop"];
   const D = ["gamma","zeta","eta","beta","tau","gammasi","fib","sn","cn","dn","wp"];
-  const T = f.match(/\d+(?:\.\d+)?|[a-zA-Z_]\w*|[()+\-*/,]/g) || [];
+  const T = f.match(/\d+(?:\.\d+)?|[a-zA-Z_]\w*|[()+\-/*^,]/g) || [];
   let p = 0;
   const pk = () => T[p];
   const nx = () => T[p++];
@@ -975,17 +975,26 @@ function getDerivative(f, v = 'z') {
       return l;
   };
   const parseTerm = () => {
-      let l = parseFact();
+      let l = parseUnary();
       while (pk() === '*' || pk() === '/') {
           const o = nx();
-          l = { t: 'b', o, l, r: parseFact() };
+          l = { t: 'b', o, l, r: parseUnary() };
       }
       return l;
   };
-  const parseFact = () => {
-      if (pk() === '-') { nx(); return { t: 'u', o: '-', c: parseFact() }; }
-      if (pk() === '+') { nx(); return parseFact(); }
-      return parsePrim();
+  const parseUnary = () => {
+      if (pk() === '-') { nx(); return { t: 'u', o: '-', c: parsePower() }; }
+      if (pk() === '+') { nx(); return parsePower(); }
+      return parsePower();
+  };
+  const parsePower = () => {
+      let l = parsePrim();
+      if (pk() === '^') {
+          nx();
+          const r = parsePower(); 
+          l = { t: 'f', n: 'pow', a: [l, r] };
+      }
+      return l;
   };
   const parsePrim = () => {
       const tk = nx();
@@ -1070,6 +1079,9 @@ function getDerivative(f, v = 'z') {
               if (r.t === 'n' && parseFloat(r.v) === 1) return l;
               if (r.t === 'n' && parseFloat(r.v) === -1) return { t: 'u', o: '-', c: l };
               if (l.t === 'n' && parseFloat(l.v) === 1) return { t: 'f', n: 'inv', a: [r] };
+              if (l.t === 'u' && l.o === '-' && l.c.t === 'n' && parseFloat(l.c.v) === 1) {
+                  return { t: 'f', n: 'neg', a: [{ t: 'f', n: 'inv', a: [r] }] };
+              }
               if (JSON.stringify(l) === JSON.stringify(r)) return { t: 'n', v: '1' };
           }
           return { t: 'b', o, l, r };
@@ -1104,7 +1116,7 @@ function getDerivative(f, v = 'z') {
               else if (isConst(a[0])) od = m('*', m('*', fn('pow', a), fn('log', [a[0]])), diff(a[1]));
               else od = m('*', fn('pow', a), m('+', m('*', diff(a[1]), fn('log', [a[0]])), m('/', m('*', a[1], diff(a[0])), a[0])));
           }
-          else if (n === 'inv') od = simplify(m('/', fn('neg', [df]), fn('sq', [a[0]]))); // -f' / f^2
+          else if (n === 'inv') od = simplify(m('/', fn('neg', [df]), fn('sq', [a[0]])));
           else if (n === 'sqrt') od = m('/', df, m('*', c('2'), fn('sqrt', [a[0]])));
           else if (n === 'sq') od = m('*', c('2'), m('*', a[0], df));
           else if (n === 'exp') od = m('*', fn('exp', [a[0]]), df);
@@ -1145,12 +1157,14 @@ function getDerivative(f, v = 'z') {
 }
 
 function convertformulatowebgl(f) {
-  const T = f.match(/\d+(?:\.\d+)?|[a-zA-Z_]\w*|[()+\-*/,]/g) || [];
+  const T = f.match(/\d+(?:\.\d+)?|[a-zA-Z_]\w*|[()+\-/*^,]/g) || [];
   let p = 0;
   const pk = () => T[p], nx = () => T[p++];
+  
   const pE = () => { let l = pT(); while (pk() === '+' || pk() === '-') { const o = nx(); l = { t: 'b', o, l, r: pT() }; } return l; };
-  const pT = () => { let l = pF(); while (pk() === '*' || pk() === '/') { const o = nx(); l = { t: 'b', o, l, r: pF() }; } return l; };
-  const pF = () => { if (pk() === '-') { nx(); return { t: 'u', o: '-', c: pF() }; } if (pk() === '+') { nx(); return pF(); } return pP(); };
+  const pT = () => { let l = pU(); while (pk() === '*' || pk() === '/') { const o = nx(); l = { t: 'b', o, l, r: pU() }; } return l; };
+  const pU = () => { if (pk() === '-') { nx(); return { t: 'u', o: '-', c: pPow() }; } if (pk() === '+') { nx(); return pPow(); } return pPow(); };
+  const pPow = () => { let l = pP(); if (pk() === '^') { nx(); l = { t: 'f', n: 'pow', a: [l, pPow()] }; } return l; };
   const pP = () => {
       const tk = nx();
       if (tk === '(') { const e = pE(); nx(); return e; }
@@ -1164,6 +1178,7 @@ function convertformulatowebgl(f) {
   };
 
   let ast = pE();
+  
   const fmt = (v) => {
       let n = parseFloat(v);
       if (Number.isInteger(n)) return n.toFixed(1);
@@ -1174,31 +1189,72 @@ function convertformulatowebgl(f) {
       'sin': 'sin', 'cos': 'cos', 'tan': 'tan', 'exp': 'exp', 'log': 'log', 
       'sqrt': 'sqrt', 'abs': 'abs', 'pow': 'pow',
       'sinh': 'sinh', 'cosh': 'cosh', 'tanh': 'tanh',
-      'sq': 'sq', 'inv': 'inv', 'neg': 'neg',
+      'inv': 'inv', 'neg': 'neg',
+      // sq для комплексных чисел должен быть mul(x, x), а не x*x
+      'sq': (args) => `mul(${args[0]}, ${args[0]})`, 
       'cot': (args) => `inv(tan(${args[0]}))`, 
       'coth': (args) => `inv(tanh(${args[0]}))`
   };
 
-  const str = (n, pr = 0) => {
+  // Проверка, является ли узел скалярной константой (числом или минусом числа)
+  const isScalarConst = (node) => {
+      return node.t === 'n' || (node.t === 'u' && node.c.t === 'n');
+  };
+
+  // ctx: 'add' | 'sub' | 'mul' | 'div' | 'func' | 'top'
+  const str = (n, pr = 0, ctx = 'top') => {
       if (n.t === 'v') return n.n;
-      if (n.t === 'n') return fmt(n.v);
-      if (n.t === 'u') {
-          return `-${str(n.c, 3)}`; 
+      
+      // Контекстно-зависимый вывод чисел
+      if (n.t === 'n') {
+          if (ctx === 'mul' || ctx === 'div') return fmt(n.v); // Оставляем float
+          return `vec2(${fmt(n.v)}, 0.0)`; // Превращаем в vec2 для сложения/функций
       }
+      
+      if (n.t === 'u') {
+          if ((ctx === 'mul' || ctx === 'div') && n.c.t === 'n') {
+              return `-${fmt(n.c.v)}`; // Избегаем -(vec2(...)) при умножении
+          }
+          return `-${str(n.c, 3, ctx)}`; 
+      }
+      
       if (n.t === 'f') {
-          let args = n.a.map(x => str(x, 0));
+          let args = n.a.map(x => str(x, 0, 'func'));
           if (typeof glslFuncs[n.n] === 'function') return glslFuncs[n.n](args);
           return `${glslFuncs[n.n] || n.n}(${args.join(', ')})`;
       }
+      
       if (n.t === 'b') {
           const { o, l, r } = n;
-          const p = (o === '*' || o === '/') ? 2 : 1;
-          const lS = str(l, p);
-          const rS = str(r, p + (o === '-' || o === '/' ? 0.5 : 0));
-          const s = `${lS} ${o} ${rS}`;
-          return p < pr ? `(${s})` : s;
+          
+          if (o === '*' || o === '/') {
+              const lIsConst = isScalarConst(l);
+              const rIsConst = isScalarConst(r);
+              
+              if (lIsConst || rIsConst) {
+                  // Один из операндов константа -> оставляем оператор *
+                  const lS = str(l, 2, 'mul');
+                  const rS = str(r, 2, o === '/' ? 'div' : 'mul');
+                  if (o === '/') return `${lS} * inv(${rS})`;
+                  return `${lS} * ${rS}`;
+              } else {
+                  // Оба операнда комплексные -> используем функцию mul
+                  const lS = str(l, 0, 'mul');
+                  const rS = str(r, 0, o === '/' ? 'div' : 'mul');
+                  if (o === '/') return `mul(${lS}, inv(${rS}))`;
+                  return `mul(${lS}, ${rS})`;
+              }
+          }
+          
+          if (o === '+' || o === '-') {
+              const p = 1;
+              const lS = str(l, p, 'add');
+              const rS = str(r, p + (o === '-' ? 0.5 : 0), 'add');
+              const s = `${lS} ${o} ${rS}`;
+              return p < pr ? `(${s})` : s;
+          }
       }
-      return '0.0';
+      return 'vec2(0.0, 0.0)';
   };
   
   return str(ast);
