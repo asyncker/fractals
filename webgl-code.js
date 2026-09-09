@@ -464,6 +464,8 @@ let mathcode = `
   vec4 qbeta(vec4 z, vec4 w) { return qmul(qmul(qgamma(z), qgamma(w)), qinv(qgamma(z + w))); }
   vec4 qfib(vec4 z) { return (qpow(vec4(1.61803398875, 0.0, 0.0, 0.0), z) - qpow(vec4(-0.61803398875, 0.0, 0.0, 0.0), z)) * 0.4472135955; }
   vec4 v4invmix(vec4 z, float w) { return z * (w / dot(z, z)) + (1.0 - w) * z; }
+  vec4 qpow_derv(vec4 z, float w) { return qpow(z, w - 1.0) * w; }
+  vec4 qpow_derv(vec4 z, vec4 w) { return qmul(qpow(z, w - vec4(1.0, 0.0, 0.0, 0.0)), w); }
 
   float biabs_sq(vec4 z) { return dot(z, z); }
   float biabs(vec4 z) { return length(z); }
@@ -492,7 +494,7 @@ let mathcode = `
   vec4 bicoth(vec4 z) { return bidiv(bicosh(z), bisinh(z)); }
   vec4 bipow(vec4 z, float w) {
     if (w == -2.0) { return biinv(bisq(z)); }
-    if (w == -1.0) { return biinv(z); }
+    else if (w == -1.0) { return biinv(z); }
     else if (w == 0.0) { return vec4(1.0, 0.0, 0.0, 0.0); }
     else if (w == 1.0) { return z; }
     else if (w == 2.0) { return bisq(z); }
@@ -548,6 +550,8 @@ let mathcode = `
   vec4 bicn(vec4 z, vec4 w) { return bifromidempotent(ccn(bitoidempotent_left(z), bitoidempotent_left(w)), ccn(bitoidempotent_right(z), bitoidempotent_right(w))); }
   vec4 bidn(vec4 z, vec4 w) { return bifromidempotent(cdn(bitoidempotent_left(z), bitoidempotent_left(w)), cdn(bitoidempotent_right(z), bitoidempotent_right(w))); }
   vec4 biwp(vec4 z, vec4 w) { return bifromidempotent(cwp(bitoidempotent_left(z), bitoidempotent_left(w)), cwp(bitoidempotent_right(z), bitoidempotent_right(w))); }
+  vec4 bipow_derv(vec4 z, float w) { return bipow(z, w - 1.0) * w; }
+  vec4 bipow_derv(vec4 z, vec4 w) { return bimul(bipow(z, w - vec4(1.0, 0.0, 0.0, 0.0)), w); }
   vec4 bigamma_derv(vec4 z) { return bifromidempotent(cgamma_derv(bitoidempotent_left(z)), cgamma_derv(bitoidempotent_right(z))); }
   vec4 bizeta_derv(vec4 z) { return bifromidempotent(czeta_derv(bitoidempotent_left(z)), czeta_derv(bitoidempotent_right(z))); }
   vec4 biwp_derv(vec4 z, vec4 w) { return bifromidempotent(cwp_derv(bitoidempotent_left(z), bitoidempotent_left(w)), cwp_derv(bitoidempotent_right(z), bitoidempotent_right(w))); }
