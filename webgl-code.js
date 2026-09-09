@@ -1009,18 +1009,88 @@ function getDerivative(f, v = 'z') {
       return false;
   };
 
+  const simplify = (node) => {
+      if (!node) return { t: 'n', v: '0' };
+      if (node.t === 'n' || node.t === 'v') return node;
+
+      if (node.t === 'u') {
+          let c = simplify(node.c);
+          if (c.t === 'n') return { t: 'n', v: String(-parseFloat(c.v)) };
+          if (c.t === 'u' && c.o === '-') return c.c;
+          return { t: 'u', o: '-', c };
+      }
+
+      if (node.t === 'f') {
+          let args = node.a.map(simplify);
+          if (args.every(a => a.t === 'n')) {
+              let val = parseFloat(args[0].v);
+              let res = 0;
+              try {
+                  if (node.n === 'sin') res = Math.sin(val);
+                  else if (node.n === 'cos') res = Math.cos(val);
+                  else if (node.n === 'exp') res = Math.exp(val);
+                  else if (node.n === 'log') res = Math.log(val);
+                  else if (node.n === 'sqrt') res = Math.sqrt(val);
+                  else if (node.n === 'sq') res = val * val;
+                  else if (node.n === 'inv') res = 1 / val;
+                  else if (node.n === 'neg') res = -val;
+                  else if (node.n === 'abs') res = Math.abs(val);
+                  if (isFinite(res)) return { t: 'n', v: String(res) };
+              } catch(e) {}
+          }
+          return { t: 'f', n: node.n, a: args };
+      }
+      if (node.t === 'b') {
+          let l = simplify(node.l);
+          let r = simplify(node.r);
+          let o = node.o;
+          if (l.t === 'n' && r.t === 'n') {
+              let lv = parseFloat(l.v), rv = parseFloat(r.v);
+              let res = o==='+' ? lv+rv : o==='-' ? lv-rv : o==='*' ? lv*rv : lv/rv;
+              if (isFinite(res)) return { t: 'n', v: String(res) };
+          }
+          if (o === '+') {
+              if (l.t === 'n' && parseFloat(l.v) === 0) return r;
+              if (r.t === 'n' && parseFloat(r.v) === 0) return l;
+          }
+          if (o === '-') {
+              if (r.t === 'n' && parseFloat(r.v) === 0) return l;
+              if (l.t === 'n' && parseFloat(l.v) === 0) return { t: 'u', o: '-', c: r };
+          }
+          if (o === '*') {
+              if ((l.t === 'n' && parseFloat(l.v) === 0) || (r.t === 'n' && parseFloat(r.v) === 0)) return { t: 'n', v: '0' };
+              if (l.t === 'n' && parseFloat(l.v) === 1) return r;
+              if (r.t === 'n' && parseFloat(r.v) === 1) return l;
+              if (l.t === 'n' && parseFloat(l.v) === -1) return { t: 'u', o: '-', c: r };
+              if (r.t === 'n' && parseFloat(r.v) === -1) return { t: 'u', o: '-', c: l };
+              if (JSON.stringify(l) === JSON.stringify(r)) return { t: 'f', n: 'sq', a: [l] };
+          }
+          if (o === '/') {
+              if (l.t === 'n' && parseFloat(l.v) === 0) return { t: 'n', v: '0' };
+              if (r.t === 'n' && parseFloat(r.v) === 1) return l;
+              if (r.t === 'n' && parseFloat(r.v) === -1) return { t: 'u', o: '-', c: l };
+              if (l.t === 'n' && parseFloat(l.v) === 1) return { t: 'f', n: 'inv', a: [r] };
+              if (JSON.stringify(l) === JSON.stringify(r)) return { t: 'n', v: '1' };
+          }
+          return { t: 'b', o, l, r };
+      }
+      return node;
+  };
+
   const diff = (node) => {
       if (node.t === 'n') return { t: 'n', v: '0' };
       if (node.t === 'v') return { t: 'n', v: node.n === v ? '1' : '0' };
-      if (node.t === 'u') return { t: 'u', o: '-', c: diff(node.c) };
+      if (node.t === 'u') return simplify({ t: 'u', o: '-', c: diff(node.c) });
+      
       if (node.t === 'b') {
           const { o, l, r } = node;
           const dl = diff(l), dr = diff(r);
-          if (o === '+') return { t: 'b', o: '+', l: dl, r: dr };
-          if (o === '-') return { t: 'b', o: '-', l: dl, r: dr };
-          if (o === '*') return { t: 'b', o: '+', l: { t: 'b', o: '*', l: dl, r }, r: { t: 'b', o: '*', l, r: dr } };
-          if (o === '/') return { t: 'b', o: '/', l: { t: 'b', o: '-', l: { t: 'b', o: '*', l: dl, r }, r: { t: 'b', o: '*', l, r: dr } }, r: { t: 'b', o: '*', l: r, r } };
+          if (o === '+') return simplify({ t: 'b', o: '+', l: dl, r: dr });
+          if (o === '-') return simplify({ t: 'b', o: '-', l: dl, r: dr });
+          if (o === '*') return simplify({ t: 'b', o: '+', l: { t: 'b', o: '*', l: dl, r }, r: { t: 'b', o: '*', l, r: dr } });
+          if (o === '/') return simplify({ t: 'b', o: '/', l: { t: 'b', o: '-', l: { t: 'b', o: '*', l: dl, r }, r: { t: 'b', o: '*', l, r: dr } }, r: { t: 'b', o: '*', l: r, r } });
       }
+      
       if (node.t === 'f') {
           const { n, a } = node;
           const f = a[0], df = diff(f);
@@ -1029,17 +1099,12 @@ function getDerivative(f, v = 'z') {
           const fn = (name, args) => ({ t: 'f', n: name, a: args });
           let od = null;
 
-          if (n === 'add') od = m('+', diff(a[0]), diff(a[1]));
-          else if (n === 'sub') od = m('-', diff(a[0]), diff(a[1]));
-          else if (n === 'mul') od = m('+', m('*', diff(a[0]), a[1]), m('*', a[0], diff(a[1])));
-          else if (n === 'div') od = m('/', m('-', m('*', diff(a[0]), a[1]), m('*', a[0], diff(a[1]))), m('*', a[1], a[1]));
-          else if (n === 'pow') {
+          if (n === 'pow') {
               if (isConst(a[1])) od = m('*', m('*', a[1], fn('pow', [a[0], m('-', a[1], c('1'))])), df);
               else if (isConst(a[0])) od = m('*', m('*', fn('pow', a), fn('log', [a[0]])), diff(a[1]));
               else od = m('*', fn('pow', a), m('+', m('*', diff(a[1]), fn('log', [a[0]])), m('/', m('*', a[1], diff(a[0])), a[0])));
           }
-          else if (n === 'neg') od = fn('neg', [df]);
-          else if (n === 'inv') od = fn('neg', [m('/', df, m('*', a[0], a[0]))]);
+          else if (n === 'inv') od = simplify(m('/', fn('neg', [df]), fn('sq', [a[0]]))); // -f' / f^2
           else if (n === 'sqrt') od = m('/', df, m('*', c('2'), fn('sqrt', [a[0]])));
           else if (n === 'sq') od = m('*', c('2'), m('*', a[0], df));
           else if (n === 'exp') od = m('*', fn('exp', [a[0]]), df);
@@ -1056,7 +1121,7 @@ function getDerivative(f, v = 'z') {
           else if (D.includes(n)) od = m('*', fn(n + '_derv', a), df);
           else od = c('0');
 
-          return od;
+          return simplify(od);
       }
       return { t: 'n', v: '0' };
   };
@@ -1076,7 +1141,7 @@ function getDerivative(f, v = 'z') {
       return '0';
   };
 
-  return str(diff(parseExpr()));
+  return str(simplify(diff(parseExpr())));
 }
 
 function convertformulatowebgl(f) {
@@ -1085,7 +1150,7 @@ function convertformulatowebgl(f) {
   const pk = () => T[p], nx = () => T[p++];
   const pE = () => { let l = pT(); while (pk() === '+' || pk() === '-') { const o = nx(); l = { t: 'b', o, l, r: pT() }; } return l; };
   const pT = () => { let l = pF(); while (pk() === '*' || pk() === '/') { const o = nx(); l = { t: 'b', o, l, r: pF() }; } return l; };
-  const pF = () => { if (pk() === '-') { nx(); return { t: 'u', c: pF() }; } if (pk() === '+') { nx(); return pF(); } return pP(); };
+  const pF = () => { if (pk() === '-') { nx(); return { t: 'u', o: '-', c: pF() }; } if (pk() === '+') { nx(); return pF(); } return pP(); };
   const pP = () => {
       const tk = nx();
       if (tk === '(') { const e = pE(); nx(); return e; }
@@ -1098,79 +1163,67 @@ function convertformulatowebgl(f) {
       return { t: 'v', n: tk };
   };
 
-  const M = { sin:Math.sin, cos:Math.cos, tan:Math.tan, cot:x=>1/Math.tan(x), sinh:Math.sinh, cosh:Math.cosh, tanh:Math.tanh, coth:x=>1/Math.tanh(x), exp:Math.exp, log:Math.log, sqrt:Math.sqrt, abs:Math.abs, sq:x=>x*x, inv:x=>1/x, neg:x=>-x };
-  const simp = (n) => {
-      if (n.t === 'n' || n.t === 'v') return n;
-      if (n.t === 'u') { let c = simp(n.c); return c.t === 'n' ? { t: 'n', v: -c.v } : { t: 'u', c }; }
-      if (n.t === 'f') {
-          let a = n.a.map(simp);
-          if (M[n.n] && a.length === 1 && a[0].t === 'n') return { t: 'n', v: M[n.n](a[0].v) };
-          return { t: 'f', n: n.n, a };
-      }
-      if (n.t === 'b') {
-          let l = simp(n.l), r = simp(n.r), o = n.o;
-          if (l.t === 'n' && r.t === 'n') return { t: 'n', v: o==='+'?l.v+r.v : o==='-'?l.v-r.v : o==='*'?l.v*r.v : l.v/r.v };
-          if (o==='+' && l.t==='n' && l.v===0) return r;
-          if (o==='+' && r.t==='n' && r.v===0) return l;
-          if (o==='-' && r.t==='n' && r.v===0) return l;
-          if (o==='*' && (l.t==='n' && l.v===0 || r.t==='n' && r.v===0)) return { t: 'n', v: 0 };
-          if (o==='*' && l.t==='n' && l.v===1) return r;
-          if (o==='*' && r.t==='n' && r.v===1) return l;
-          if (o==='/' && l.t==='n' && l.v===0) return { t: 'n', v: 0 };
-          if (o==='/' && r.t==='n' && r.v===1) return l;
-          return { t: 'b', o, l, r };
-      }
-      return n;
+  let ast = pE();
+  const fmt = (v) => {
+      let n = parseFloat(v);
+      if (Number.isInteger(n)) return n.toFixed(1);
+      return String(n);
   };
 
-  let ast = simp(pE());
-  const isN = n => n && n.t === 'n';
-  const fmt = v => v % 1 === 0 ? v.toFixed(1) : String(v);
-  
+  const glslFuncs = {
+      'sin': 'sin', 'cos': 'cos', 'tan': 'tan', 'exp': 'exp', 'log': 'log', 
+      'sqrt': 'sqrt', 'abs': 'abs', 'pow': 'pow',
+      'sinh': 'sinh', 'cosh': 'cosh', 'tanh': 'tanh',
+      'sq': 'sq', 'inv': 'inv', 'neg': 'neg',
+      'cot': (args) => `inv(tan(${args[0]}))`, 
+      'coth': (args) => `inv(tanh(${args[0]}))`
+  };
+
   const str = (n, pr = 0) => {
       if (n.t === 'v') return n.n;
       if (n.t === 'n') return fmt(n.v);
-      if (n.t === 'u') return `-${str(n.c, 3)}`;
-      if (n.t === 'f') return `${n.n}(${n.a.map(x => str(x, 0)).join(', ')})`;
+      if (n.t === 'u') {
+          return `-${str(n.c, 3)}`; 
+      }
+      if (n.t === 'f') {
+          let args = n.a.map(x => str(x, 0));
+          if (typeof glslFuncs[n.n] === 'function') return glslFuncs[n.n](args);
+          return `${glslFuncs[n.n] || n.n}(${args.join(', ')})`;
+      }
       if (n.t === 'b') {
           const { o, l, r } = n;
           const p = (o === '*' || o === '/') ? 2 : 1;
-          const lIsN = isN(l), rIsN = isN(r);
-          
-          if (!lIsN && !rIsN) {
-              const fn = {'+':'add','-':'sub','*':'mul','/':'div'}[o];
-              return `${fn}(${str(l, 0)}, ${str(r, 0)})`;
-          }
-          
-          const lS = (lIsN && !rIsN) ? `vec2(${fmt(l.v)}, 0.0)` : str(l, p);
-          const rS = (rIsN && !lIsN) ? `vec2(${fmt(r.v)}, 0.0)` : str(r, p + (o === '-' || o === '/' ? 0.5 : 0));
+          const lS = str(l, p);
+          const rS = str(r, p + (o === '-' || o === '/' ? 0.5 : 0));
           const s = `${lS} ${o} ${rS}`;
           return p < pr ? `(${s})` : s;
       }
-      return '0';
+      return '0.0';
   };
+  
   return str(ast);
 }
 
 function getformula_and_derv(formula) {
   const formulas = formula.split("=");
-  const newformula = formulas[0] + "= "  + convertformulatowebgl(formulas[1]);
-  const dervformula = formulas[0] + "= " + convertformulatowebgl(getDerivative(formulas[1]));
+  const expr = formulas[1].trim();
+  const dervExpr = getDerivative(expr);
+  const newformula = formulas[0] + " = " + convertformulatowebgl(expr);
+  const dervformula = formulas[0] + " = " + convertformulatowebgl(dervExpr);
   return [newformula, dervformula];
 }
 
-function convertformula(formula, addtag = "c") {
-  const functionlist = ["add", "sub", "mul", "div", "pow", "root", "neg", "inv", "log", "exp", "gamma", "zeta", "eta", "beta", "sinh", "cosh", "tanh", "coth", "sin", "cos", "tan", "cot", "tau", "gammasi", "fib", "sn", "cn", "dn", "wp", "abs", "arg", "conj", "sign", "floor", "ceil", "round", "max", "min", "relumax", "relumin", "step", "clamp", "sq", "sqrt", "dot", "sop"];
-  const functiondervlist = [ "gamma_derv", "zeta_derv", "eta_derv", "beta_derv", "tau_derv", "gammasi_derv", "fib_derv", "sn_derv", "cn_derv", "dn_derv", "wp_derv" ];
-  let newFormula = formula;
-  for (let i = 0; i < functionlist.length; i++) {
-    const func = functionlist[i];
-    newFormula = newFormula.replace(new RegExp('\\b' + func + '\\b', 'g'), addtag + func);
-  }
-  return newFormula;
-}
-
 function getfractal(formula, type) {
+  function convertformula(formula, addtag = "c") {
+    const functionlist = ["add", "sub", "mul", "div", "pow", "root", "neg", "inv", "log", "exp", "gamma", "zeta", "eta", "beta", "sinh", "cosh", "tanh", "coth", "sin", "cos", "tan", "cot", "tau", "gammasi", "fib", "sn", "cn", "dn", "wp", "abs", "arg", "conj", "sign", "floor", "ceil", "round", "max", "min", "relumax", "relumin", "step", "clamp", "sq", "sqrt", "dot", "sop"];
+    const functiondervlist = [ "gamma_derv", "zeta_derv", "eta_derv", "beta_derv", "tau_derv", "gammasi_derv", "fib_derv", "sn_derv", "cn_derv", "dn_derv", "wp_derv" ];
+    let newFormula = formula;
+    for (let i = 0; i < functionlist.length; i++) {
+      const func = functionlist[i];
+      newFormula = newFormula.replace(new RegExp('\\b' + func + '\\b', 'g'), addtag + func);
+    }
+    return newFormula;
+  }
   const formulas = getformula_and_derv(formula);
   const newformula = formulas[0];
   if (type == "bi") { return bicomplexshadercode(convertformula(newformula, "bi") + ";"); }
