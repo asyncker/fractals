@@ -600,7 +600,8 @@ let mathcode = `
   }
 `;
 
-let mandelbrotshader = `void mandelbrot_calc() {
+function mandelbrotshadercode(formula = "z = cpow(z, w) + c;") {
+return `void mandelbrot_calc() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
   vec2 c = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : vec2(cxval, cyval);
   if (inverse != 0.0) { c = cinvmix(c, inverse); }
@@ -618,8 +619,7 @@ let mandelbrotshader = `void mandelbrot_calc() {
     if (znorm > range) { n = i; break; }
     if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); }
     if (isminusone == 1) { z = vec2(1.0, 0.0) - z; }
-    z = cpow(z, w);
-    z = z + c;
+    ` + formula + `
     n += 1;
     if (n >= maxn) { n = iter; break; }
   }
@@ -653,9 +653,8 @@ let mandelbrotshader = `void mandelbrot_calc() {
     vec3 col = hsv2rgb(vec3(hue, 0.8, 0.9));
     gl_FragColor = vec4(col, 1.0);
   }
+} void main() { mandelbrot_calc(); }`;
 }
-
-void main() { mandelbrot_calc(); }`;
 
 let newtonshader = `void newton_calc() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
@@ -666,16 +665,13 @@ let newtonshader = `void newton_calc() {
   float znorm = 0.0, rangeval = 1.0 / (50.0 * range);
   vec2 w = vec2(power, 0.0);
   vec2 p = vec2(-0.5, 0.0);
-  vec2 z_prev = z, func = z, derv = z;
+  vec2 z_prev = z, func = z, derv = vec2(1.0, 0.0);
   int n = 0, maxn = iteration;
-  vec2 subst = vec2(1.0, 0.0); // vec2(0.0, 0.0)
   for (int i = 0; i < maxiter; i++) {
     z_prev = z;
-    func = cpow(z, w);
-    derv = cmul(derv, cpow_derv(z, w));
-    z = z_prev - cdiv(func - subst, derv);
+    z = z_prev - cdiv(ccosh(cpow(z, w)) - vec2(0.0, 0.0), cmul(csinh(z), cpow_derv(z, w))) + c;
+    //z = z_prev - cdiv(cpow(z, w) - vec2(1.0, 0.0), cmul(vec2(1.0, 0.0), cpow_derv(z, w))) + c;
     n += 1;
-    z += c;
     znorm = dot(z - z_prev, z - z_prev);
     if (znorm < rangeval || n >= maxn) { z = z_prev; n = n >= maxn ? maxiter : i; break; }
   }
@@ -815,39 +811,15 @@ function raymarchingsharecode(func1, func2) {
 }`;
 }
 
-let mandelbulbshader = `vec2 mandelbulb(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
-  int n = 0;
-  float dr = 1.0, znorm = 0.0;
-  vec4 z = vec4(zx, zy, zz, zw);
-  vec4 c = vec4(cx, cy, cz, cw);
-  vec4 z2 = vec4(0.0, 0.0, 0.0, 0.0);
-  float w = power;
-  float p = -0.5;
-  vec4 z_prev = z, z0 = z;
-  for (int i = 0; i < 25; i++) {
-    z_prev = z;
-    znorm = length(z);
-    n = i;
-    if (znorm > range) { break; }
-    if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); }
-    z = tpow(z, w);
-    dr = pow_derv(znorm, power) * dr + 1.0;
-    z = z + c;
-  }
-  return vec2(0.5 * log(znorm) * znorm / dr, n);
-}
-` + raymarchingsharecode("surDist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
-
 let mandelboxshader = `vec2 mandelbox(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
   int n = 0;
-  float scale = -2.0, fixedRadius = 1.0, minRadius = 0.5, foldingLimit = 1.0, dr = 1.0, p = -0.5;
+  float dr = 1.0, znorm = 0.0, scale = -2.0, fixedRadius = 1.0, minRadius = 0.5, foldingLimit = 1.0, p = -0.5;
   float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
   vec3 z = vec3(zx, zy, zz);
   vec3 c = vec3(cx, cy, cz);
-  vec3 z2 = vec3(0.0, 0.0, 0.0);
-  vec3 z0 = z, ztmp = z;
+  vec3 z0 = z, z_prev = z;
   for (int i = 0; i < 20; i++) {
-    ztmp = z;
+    z_prev = z;
     n = i;
     if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); }
     z = (clamp(z, -foldingLimit, foldingLimit) * 2.0 - z); //z = clamp(z, -foldingLimit, foldingLimit); z = z * 2.0 - z;
@@ -869,22 +841,64 @@ let mandelboxshader = `vec2 mandelbox(float zx, float zy, float zz, float zw, fl
 }
 ` + raymarchingsharecode("surDist = mandelbox(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandelbox(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
 
+function mandelbulbshadercode(formula = "z = tpow(z, w) + c;") {
+  return `vec2 mandelbulb(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
+    int n = 0;
+    float dr = 1.0, znorm = 0.0;
+    vec4 z = vec4(zx, zy, zz, zw);
+    vec4 c = vec4(cx, cy, cz, cw);
+    float w = power;
+    vec4 z0 = z, z_prev = z;
+    for (int i = 0; i < 25; i++) {
+      z_prev = z;
+      znorm = length(z);
+      n = i;
+      if (znorm > range) { break; }
+      if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); z.w = abs(z.w); }
+      ` + formula + `
+      dr = pow_derv(znorm, power) * dr + 1.0;
+    }
+    return vec2(0.5 * log(znorm) * znorm / dr, n);
+  }
+  ` + raymarchingsharecode("surDist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
+}
+
+function quaternionshadercode(formula = "z = qpow(z, w) + c;") {
+  return `vec2 mandel_quaternion(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
+    int n = 0;
+    float dr = 1.0, znorm = 0.0;
+    vec4 z = vec4(zx, zy, zz, zw);
+    vec4 c = vec4(cx, cy, cz, cw);
+    vec4 w = vec4(power, 0.0, 0.0, 0.0);
+    vec4 z0 = z, z_prev = z;
+    for (int i = 0; i < 25; i++) {
+      z_prev = z;
+      znorm = length(z);
+      n = i;
+      if (znorm > range) { break; }
+      if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); z.w = abs(z.w); }
+      ` + formula + `
+      dr = pow_derv(znorm, power) * dr + 1.0;
+    }
+    return vec2(0.5 * log(znorm) * znorm / dr, n);
+  }
+  ` + raymarchingsharecode("surDist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
+}
+
 let quaternionshader = `vec2 mandel_quaternion(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
   int n = 0;
   float dr = 1.0, znorm = 0.0;
   vec4 z = vec4(zx, zy, zz, zw);
-  vec4 w = vec4(power, 0.0, 0.0, 0.0);
   vec4 c = vec4(cx, cy, cz, cw);
-  vec4 z0 = z, ztmp = z;
-  vec4 p = vec4(-0.5, 0.0, 0.0, 0.0);
-  vec4 z2 = vec4(0.0, 0.0, 0.0, 0.0);
-  for (int i = 0; i < 26; i++) {
-    ztmp = z;
+  vec4 w = vec4(power, 0.0, 0.0, 0.0);
+  vec4 z0 = z, z_prev = z;
+  for (int i = 0; i < 25; i++) {
+    z_prev = z;
     znorm = length(z);
     n = i;
     if (znorm > range) { break; }
-    z = qpow(z, w);
     if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); z.w = abs(z.w); }
+    z = qpow(z, w);
     z = z + c;
     dr = pow_derv(znorm, power) * dr + 1.0;
   }
@@ -892,28 +906,28 @@ let quaternionshader = `vec2 mandel_quaternion(float zx, float zy, float zz, flo
 }
 ` + raymarchingsharecode("surDist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
 
-let bicomplexshader = `vec2 mandel_bicomplex(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
-  int n = 0;
-  float dr = 1.0, znorm = 0.0;
-  vec4 z = vec4(zx, zy, zz, zw);
-  vec4 c = vec4(cx, cy, cz, cw);
-  vec4 w = vec4(power, 0.0, 0.0, 0.0);
-  vec4 z0 = z, ztmp = z;
-  vec4 p = vec4(-0.5, 0.0, 0.0, 0.0);
-  vec4 z2 = vec4(0.0, 0.0, 0.0, 0.0);
-  for (int i = 0; i < 25; i++) {
-    ztmp = z;
-    znorm = length(z);
-    n = i;
-    if (znorm > range) { break; }
-    z = bipow(z, w);
-    if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); z.w = abs(z.w); }
-    z = z + c;
-    dr = pow_derv(znorm, power) * dr + 1.0;
+function bicomplexshadercode(formula = "z = bipow(z, w) + c;") {
+  return `vec2 mandel_bicomplex(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
+    int n = 0;
+    float dr = 1.0, znorm = 0.0;
+    vec4 z = vec4(zx, zy, zz, zw);
+    vec4 c = vec4(cx, cy, cz, cw);
+    vec4 w = vec4(power, 0.0, 0.0, 0.0);
+    vec4 z0 = z, z_prev = z;
+    for (int i = 0; i < 25; i++) {
+      z_prev = z;
+      znorm = length(z);
+      n = i;
+      if (znorm > range) { break; }
+      if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); z.w = abs(z.w); }
+      ` + formula + `
+      dr = pow_derv(znorm, power) * dr + 1.0;
+    }
+    return vec2(0.5 * log(znorm) * znorm / dr, n);
   }
-  return vec2(0.5 * log(znorm) * znorm / dr, n);
+  ` + raymarchingsharecode("surDist = mandel_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandel_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
 }
-` + raymarchingsharecode("surDist = mandel_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandel_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
+
 
 let bicomplexnewtonshader = `vec2 newton_bicomplex(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
   int n = 0;
@@ -938,3 +952,4 @@ let bicomplexnewtonshader = `vec2 newton_bicomplex(float zx, float zy, float zz,
   return vec2(clamp(dist * 0.5, 0.0, 1.0), float(n));
 }
 ` + raymarchingsharecode("surDist = newton_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = newton_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
+
