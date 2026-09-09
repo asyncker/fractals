@@ -68,16 +68,16 @@ let mathcode = `
   vec2 cmul(vec2 z, vec2 w) { return vec2(z.x * w.x - z.y * w.y, z.x * w.y + z.y * w.x); }
   vec2 cdiv(vec2 z, vec2 w) { return cmul(z, cinv(w)); }
   vec2 cpow(vec2 z, vec2 w) { 
-      if (w.y == 0.0) { 
-          if (w.x == 1.0) return z;
-          if (w.x == 2.0) return csq(z);
-          if (w.x == 3.0) return cmul(csq(z), z);
-          if (w.x == -2.0) return cinv(csq(z));
-          if (w.x == -1.0) return cinv(z);
-          if (w.x == 0.0) return vec2(1.0, 0.0);
-          return cexp(w.x * clog(z));
-      } else if (z.y == 0.0 && z.x > 0.0) { return cexp(w * log(z.x)); }
-      return cexp(cmul(w, clog(z)));
+    if (w.y == 0.0) { 
+      if (w.x == 1.0) return z;
+      if (w.x == 2.0) return csq(z);
+      if (w.x == 3.0) return cmul(csq(z), z);
+      if (w.x == -2.0) return cinv(csq(z));
+      if (w.x == -1.0) return cinv(z);
+      if (w.x == 0.0) return vec2(1.0, 0.0);
+      return cexp(w.x * clog(z));
+    } else if (z.y == 0.0 && z.x > 0.0) { return cexp(w * log(z.x)); }
+    return cexp(cmul(w, clog(z)));
   }
   vec2 croot(vec2 z, vec2 w) { return cpow(z, cinv(w)); }
   vec2 cre(vec2 z) { return (z + conj(z)) * 0.5; }
@@ -302,6 +302,7 @@ let mathcode = `
   float logmap_derv(float r, float x) { return r * (1.0 - x - x); }
   float exp_derv(float x) { return exp(x); }
   float pow_derv(float x, float y) { return fast_pow(x, y - 1.0) * y; }
+  float powy_derv(float x, float y) { return fast_pow(x, y) * log(x); }
   float sin_derv(float x) { return cos(x); }
   float cos_derv(float x) { return -sin(x); }
   float cosh_derv(float x) { return cosh(x); }
@@ -328,28 +329,28 @@ let mathcode = `
     return -cmul_i(clog(q)) / PI;
   }
   vec2 theta3(vec2 z, vec2 w) {
-      vec2 result = vec2(1.0, 0.0);
-      vec2 iz = 2.0 * cmul_i(z);
-      vec2 iw = cmul_i(w);
-      for (int i = 1; i < 4; i++) {
-          float n = float(i);
-          float fn = n * n;
-          vec2 A = n * iz;
-          vec2 B = fn * iw;
-          result += cexp(PI * (B + A));
-          result += cexp(PI * (B - A));
-      }
-      return result;
+    vec2 result = vec2(1.0, 0.0);
+    vec2 iz = 2.0 * cmul_i(z);
+    vec2 iw = cmul_i(w);
+    for (int i = 1; i < 4; i++) {
+      float n = float(i);
+      float fn = n * n;
+      vec2 A = n * iz;
+      vec2 B = fn * iw;
+      result += cexp(PI * (B + A));
+      result += cexp(PI * (B - A));
+    }
+    return result;
   }
   vec2 theta3_z0(vec2 w) {
-      vec2 result = vec2(0.5, 0.0);
-      vec2 iz = cmul_i(w);
-      for (int i = 1; i < 8; i++) {
-          float n = float(i);
-          float fn = n * n;
-          result += cexp(PI * fn * iz);
-      }
-      return 2.0 * result;
+    vec2 result = vec2(0.5, 0.0);
+    vec2 iz = cmul_i(w);
+    for (int i = 1; i < 8; i++) {
+      float n = float(i);
+      float fn = n * n;
+      result += cexp(PI * fn * iz);
+    }
+    return 2.0 * result;
   }
   vec2 jacobi_reduce(vec2 z, vec2 w) { vec2 t00 = theta3_z0(w); vec2 zz = cdiv(z, PI * csq(t00)); float n = 2.0 * floor(0.5 * zz.y / w.y + 0.5); return zz - n * w; }
   vec2 theta2(vec2 z, vec2 w) { return theta3(z + 0.5 * vec2(1.0, 0.0), w); } // theta01f
@@ -363,25 +364,25 @@ let mathcode = `
   vec2 ccn(vec2 z, vec2 w) { vec2 tau = invert_tau(w); return raw_cn(jacobi_reduce(z, tau), tau); }
   vec2 cdn(vec2 z, vec2 w) { vec2 tau = invert_tau(w); return raw_dn(jacobi_reduce(z, tau), tau); }
   vec2 cwp(vec2 z, vec2 w) {
-      float n = floor(z.y / w.y + 0.5);
-      vec2 zz = z - n * w;
-      vec2 t002 = csq(theta3_z0(w));
-      vec2 t102 = csq(theta4(vec2(0.0, 0.0), w));
-      vec2 e2 = -(PI*PI/3.0) * (csq(t102) + csq(t002));
-      return PI*PI*cmul(cmul(t002, t102), csq(cdiv(theta2(zz, w), theta1(zz, w)))) + e2;
+    float n = floor(z.y / w.y + 0.5);
+    vec2 zz = z - n * w;
+    vec2 t002 = csq(theta3_z0(w));
+    vec2 t102 = csq(theta4(vec2(0.0, 0.0), w));
+    vec2 e2 = -(PI*PI/3.0) * (csq(t102) + csq(t002));
+    return PI*PI*cmul(cmul(t002, t102), csq(cdiv(theta2(zz, w), theta1(zz, w)))) + e2;
   }
   vec2 cwp_derv(vec2 z, vec2 w) {
-      const float PI2_3 = PI * PI / 3.0;
-      vec2 t004 = csq(csq(theta3_z0(w)));
-      vec2 t104 = csq(csq(theta4(vec2(0.0, 0.0), w)));
-      vec2 t014 = csq(csq(theta2(vec2(0.0, 0.0), w)));
-      vec2 e1 = PI2_3 * (t004 + t014);
-      vec2 e2 = -PI2_3 * (t104 + t004);
-      vec2 e3 = PI2_3 * (t104 - t014);
-      vec2 A = csqrt(e1 - e3);
-      vec2 B = csqrt(e2 - e3);
-      vec2 tau = invert_tau(cdiv(B, A));
-      return raw_wp_derv(jacobi_reduce(cmul(z, A), tau), A, tau);
+    const float PI2_3 = PI * PI / 3.0;
+    vec2 t004 = csq(csq(theta3_z0(w)));
+    vec2 t104 = csq(csq(theta4(vec2(0.0, 0.0), w)));
+    vec2 t014 = csq(csq(theta2(vec2(0.0, 0.0), w)));
+    vec2 e1 = PI2_3 * (t004 + t014);
+    vec2 e2 = -PI2_3 * (t104 + t004);
+    vec2 e3 = PI2_3 * (t104 - t014);
+    vec2 A = csqrt(e1 - e3);
+    vec2 B = csqrt(e2 - e3);
+    vec2 tau = invert_tau(cdiv(B, A));
+    return raw_wp_derv(jacobi_reduce(cmul(z, A), tau), A, tau);
   }
 
   float qabs_sq(vec4 z) { return dot(z, z); }
@@ -389,12 +390,12 @@ let mathcode = `
   float qarg(vec4 z) { float qlen = length(z); if (qlen < 1e-8) return 0.0; return acos(clamp(z.x / qlen, -1.0, 1.0)); }
   vec4 qsq(vec4 z) { return vec4(z.x * z.x - z.y * z.y - z.z * z.z - z.w * z.w, 2.0 * z.x * z.yzw); }
   /*vec4 qsqrt(vec4 q) {
-      float a = q.x, b = q.y, c = q.z, d = q.w;
-      float norm = sqrt(a*a + b*b + c*c + d*d); // length
-      float lenV = sqrt(b*b + c*c + d*d);
-      if (lenV < 1e-10) { return vec4(sqrt(max(0.0, a)), 0, 0, 0); }
-      float scale = sqrt(max(0.0, 0.5 * (norm - a))) / lenV;
-      return vec4(sqrt(max(0.0, 0.5 * (norm + a))), b * scale, c * scale, d * scale);
+    float a = q.x, b = q.y, c = q.z, d = q.w;
+    float norm = sqrt(a*a + b*b + c*c + d*d); // length
+    float lenV = sqrt(b*b + c*c + d*d);
+    if (lenV < 1e-10) { return vec4(sqrt(max(0.0, a)), 0, 0, 0); }
+    float scale = sqrt(max(0.0, 0.5 * (norm - a))) / lenV;
+    return vec4(sqrt(max(0.0, 0.5 * (norm + a))), b * scale, c * scale, d * scale);
   }*/
   vec4 qneg(vec4 z) { return z * -1.0; }
   vec4 qconj(vec4 z) { return vec4(z.x, -z.yzw); }
@@ -416,13 +417,13 @@ let mathcode = `
   vec4 qtanh(vec4 z) { return qdiv(qsinh(z), qcosh(z)); }
   vec4 qcoth(vec4 z) { return qdiv(qcosh(z), qsinh(z)); }
   vec4 qpow(vec4 z, vec4 w) {
-      if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) {
-          if (w.x == 1.0) return z;
-          else if (w.x ==-1.0) return qinv(z);
-          else if (w.x == 2.0) return qsq(z);
-          return qexp(w.x * qlog(z));
-      }
-      return qexp(qmul(w, qlog(z))); // qexp(qmul(qlog(z), w))
+    if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) {
+      if (w.x == 1.0) return z;
+      else if (w.x ==-1.0) return qinv(z);
+      else if (w.x == 2.0) return qsq(z);
+      return qexp(w.x * qlog(z));
+    }
+    return qexp(qmul(w, qlog(z))); // qexp(qmul(qlog(z), w))
   }
   vec4 qroot(vec4 z, vec4 w) { return qpow(z, qinv(w)); }
   vec4 qsign(vec4 z) { return z / length(z); }
@@ -437,19 +438,19 @@ let mathcode = `
   vec4 qclamp(vec4 z, vec4 w, vec4 s) { return vec4(clamp(z.x, w.x, s.y), clamp(z.y, w.y, s.y), clamp(z.z, w.z, s.z), clamp(z.w, w.w, s.w)); }
   vec4 qtau(vec4 z) { return vec4(1.0, 0.0, 0.0, 0.0) - qexp(vec4(0.5, 0.0, 0.0, 0.0) - z); }
   vec4 qgamma_right(vec4 z) {
-      vec4 w = z - vec4(1.0, 0.0, 0.0, 0.0);
-      vec4 t = w + vec4(7.5, 0.0, 0.0, 0.0);
-      vec4 x = vec4(0.99999999999980993, 0.0, 0.0, 0.0);
-      x += 676.5203681218851 * qinv(w + vec4(1.0, 0.0, 0.0, 0.0));
-      x -= 1259.1392167224028 * qinv(w + vec4(2.0, 0.0, 0.0, 0.0));
-      x += 771.32342877765313 * qinv(w + vec4(3.0, 0.0, 0.0, 0.0));
-      x -= 176.61502916214059 * qinv(w + vec4(4.0, 0.0, 0.0, 0.0));
-      x += 12.507343278686905 * qinv(w + vec4(5.0, 0.0, 0.0, 0.0));
-      x -= 0.13857109526572012 * qinv(w + vec4(6.0, 0.0, 0.0, 0.0));
-      x += 9.9843695780195716e-6 * qinv(w + vec4(7.0, 0.0, 0.0, 0.0));
-      x += 1.5056327351493116e-7 * qinv(w + vec4(8.0, 0.0, 0.0, 0.0));
-      vec4 log_term = qmul(qlog(t), w + vec4(0.5, 0.0, 0.0, 0.0)) - t;
-      return 2.50662827463 * qmul(x, qexp(log_term));
+    vec4 w = z - vec4(1.0, 0.0, 0.0, 0.0);
+    vec4 t = w + vec4(7.5, 0.0, 0.0, 0.0);
+    vec4 x = vec4(0.99999999999980993, 0.0, 0.0, 0.0);
+    x += 676.5203681218851 * qinv(w + vec4(1.0, 0.0, 0.0, 0.0));
+    x -= 1259.1392167224028 * qinv(w + vec4(2.0, 0.0, 0.0, 0.0));
+    x += 771.32342877765313 * qinv(w + vec4(3.0, 0.0, 0.0, 0.0));
+    x -= 176.61502916214059 * qinv(w + vec4(4.0, 0.0, 0.0, 0.0));
+    x += 12.507343278686905 * qinv(w + vec4(5.0, 0.0, 0.0, 0.0));
+    x -= 0.13857109526572012 * qinv(w + vec4(6.0, 0.0, 0.0, 0.0));
+    x += 9.9843695780195716e-6 * qinv(w + vec4(7.0, 0.0, 0.0, 0.0));
+    x += 1.5056327351493116e-7 * qinv(w + vec4(8.0, 0.0, 0.0, 0.0));
+    vec4 log_term = qmul(qlog(t), w + vec4(0.5, 0.0, 0.0, 0.0)) - t;
+    return 2.50662827463 * qmul(x, qexp(log_term));
   }
   vec4 qgamma_left(vec4 z) { return PI * qinv(qmul(qsin(z * PI), qgamma_right(vec4(1.0, 0.0, 0.0, 0.0) - z))); }
   vec4 qgamma(vec4 z) { return z.x < 0.5 ? qgamma_left(z) : qgamma_right(z); }
@@ -484,13 +485,13 @@ let mathcode = `
   vec4 bicot(vec4 z) { return bidiv(bicos(z), bisin(z)); }
   vec4 bicoth(vec4 z) { return bidiv(bicosh(z), bisinh(z)); }
   vec4 bipow(vec4 z, vec4 w) {
-      if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) {
-          if (w.x == -1.0) { return biinv(z); }
-          else if (w.x == 1.0) { return z; }
-          else if (w.x == 2.0) { return bisq(z); }
-          return biexp(w.x * bilog(z));
-      }
-      return biexp(bimul(w, bilog(z)));
+    if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) {
+      if (w.x == -1.0) { return biinv(z); }
+      else if (w.x == 1.0) { return z; }
+      else if (w.x == 2.0) { return bisq(z); }
+      return biexp(w.x * bilog(z));
+    }
+    return biexp(bimul(w, bilog(z)));
   }
   vec4 biroot(vec4 z, vec4 w) { return bipow(z, biinv(w)); }
   vec4 bisign(vec4 z) { return z / length(z); }
@@ -597,156 +598,151 @@ let mathcode = `
   }
 `;
 
-let mandelbrotshader = `
-  void mandelbrot_calc() {
-      vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
-      vec2 c = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : vec2(cxval, cyval);
-      if (inverse != 0.0) { c = cinvmix(c, inverse); }
-      vec2 z = ismandel == 1 ? c : uv * zoomjulia + vec2(zxval, zyval);
-      const int maxiter = 180;
-      int iter = maxiter > iteration ? iteration : maxiter;
-      float znorm = 0.0;
-      int n = 0, maxn = iter;
-      vec2 w = vec2(power, 0.0);
-      vec2 z2 = vec2(0.0, 0.0);
-      vec2 z0 = z, z_prev = z;
-      for (int i = 0; i < maxiter; i++) {
-        z_prev = z;
-        znorm = dot(z, z);
-        if (znorm > range) { n = i; break; }
-        if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); }
-        if (isminusone == 1) { z = vec2(1.0, 0.0) - z; }
-        z = cpow(z, w);
-        z = z + c;
-        n += 1;
-        if (n >= maxn) { n = iter; break; }
-      }
-      if (colorschemeindex == 0) {
-        float hue = (atan(z.y, z.x) * 0.159154943092 + 0.5);
-        vec3 color1 = vec3(0.0, 0.0, 0.0);
-        if (hue != 0.0) {
-          float value = log(znorm + 1.0) * 0.5;
-          color1 = hsv2rgb(vec3(hue, 0.8, clamp(value, 0.0, 1.0)));
-        }
-        gl_FragColor = vec4(color1, 1.0);
-      } else if (colorschemeindex == 1) {
-        float color = 0.0;
-        if (n != 0 && n != iter) {
-          float nu = log(log(znorm) * logval * 0.5) * logval;
-          if (nu < float(n)) { color = float(n) - nu; }
-        } else {
-          color = n == iter ? 0.0 : float(n);
-        }
-        color *= 0.0078431372549 * multlight;
-        float r = bounce(color, 0.0, 1.0);
-        float g = bounce(color * 2.0, 0.0, 1.0);
-        float b = bounce(color * 3.0, 0.0, 1.0);
-        gl_FragColor = vec4(r, g, b, 1.0);
-      } else if (colorschemeindex == 2) {
-        float logMag = log(length(z) + 1.0);
-        vec3 col = hsv2rgb(vec3(0.7 - logMag * 0.1, 0.7, clamp(logMag * 0.3, 0.0, 1.0)));
-        gl_FragColor = vec4(col, 1.0);
-      } else if (colorschemeindex == 3) {
-        float hue = (atan(z.y, z.x) * 0.159154943092 + 0.5);
-        vec3 col = hsv2rgb(vec3(hue, 0.8, 0.9));
-        gl_FragColor = vec4(col, 1.0);
-      }
+let mandelbrotshader = `void mandelbrot_calc() {
+  vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
+  vec2 c = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : vec2(cxval, cyval);
+  if (inverse != 0.0) { c = cinvmix(c, inverse); }
+  vec2 z = ismandel == 1 ? c : uv * zoomjulia + vec2(zxval, zyval);
+  const int maxiter = 180;
+  int iter = maxiter > iteration ? iteration : maxiter;
+  float znorm = 0.0;
+  int n = 0, maxn = iter;
+  vec2 w = vec2(power, 0.0);
+  vec2 z2 = vec2(0.0, 0.0);
+  vec2 z0 = z, z_prev = z;
+  for (int i = 0; i < maxiter; i++) {
+    z_prev = z;
+    znorm = dot(z, z);
+    if (znorm > range) { n = i; break; }
+    if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); }
+    if (isminusone == 1) { z = vec2(1.0, 0.0) - z; }
+    z = cpow(z, w);
+    z = z + c;
+    n += 1;
+    if (n >= maxn) { n = iter; break; }
   }
-
-  void main() { mandelbrot_calc(); }
-`;
-
-let newtonshader = `
-  void newton_calc() {
-    vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
-    vec2 c = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : vec2(cxval, cyval);
-    if (inverse != 0.0) { c = cinvmix(c, inverse); }
-    vec2 z = ismandel == 1 ? c : uv * zoomjulia + vec2(zxval, zyval);
-    const int maxiter = 220;
-    float znorm = 0.0, rangeval = 1.0 / (50.0 * range);
-    vec2 w = vec2(power, 0.0);
-    vec2 p = vec2(-0.5, 0.0);
-    vec2 z_prev = z, func = z, derv = z;
-    int n = 0, maxn = iteration;
-    vec2 subst = vec2(1.0, 0.0); // vec2(0.0, 0.0)
-    for (int i = 0; i < maxiter; i++) {
-      z_prev = z;
-      func = cpow(z, w);
-      derv = cmul(derv, cpow_derv(z, w));
-      z = z_prev - cdiv(func - subst, derv);
-      n += 1;
-      z += c;
-      znorm = dot(z - z_prev, z - z_prev);
-      if (znorm < rangeval || n >= maxn) { z = z_prev; n = n >= maxn ? maxiter : i; break; }
+  if (colorschemeindex == 0) {
+    float hue = (atan(z.y, z.x) * 0.159154943092 + 0.5);
+    vec3 color1 = vec3(0.0, 0.0, 0.0);
+    if (hue != 0.0) {
+      float value = log(znorm + 1.0) * 0.5;
+      color1 = hsv2rgb(vec3(hue, 0.8, clamp(value, 0.0, 1.0)));
     }
-    if (colorschemeindex == 0) {
-      float hue = (atan(z.y, z.x) * 0.159154943092 + 0.5);
-      vec3 color1 = vec3(0.0, 0.0, 0.0);
-      if (hue != 0.0) {
-        float value = log((z.x * z.x + z.y * z.y) + 1.0) * 0.5;
-        color1 = hsv2rgb(vec3(hue, 0.8, clamp(value, 0.0, 1.0)));
-      }
-      gl_FragColor = vec4(color1, 1.0);
-    } else if (colorschemeindex == 1) {
-      float color = n == iteration ? 0.0 : float(n);
-      color *= 0.0078431372549 * multlight;
-      float r = bounce(color, 0.0, 1.0);
-      float g = bounce(color * 2.0, 0.0, 1.0);
-      float b = bounce(color * 3.0, 0.0, 1.0);
-      gl_FragColor = vec4(r, g, b, 1.0);
-    } else if (colorschemeindex == 2) {
-      float logMag = log(length(z) + 1.0);
-      vec3 col = hsv2rgb(vec3(0.7 - logMag * 0.1, 0.7, clamp(logMag * 0.3, 0.0, 1.0)));
-      gl_FragColor = vec4(col, 1.0);
-    } else if (colorschemeindex == 3) {
-      float hue = (atan(z.y, z.x) * 0.159154943092 + 0.5);
-      vec3 col = hsv2rgb(vec3(hue, 0.8, 0.9));
-      gl_FragColor = vec4(col, 1.0);
+    gl_FragColor = vec4(color1, 1.0);
+  } else if (colorschemeindex == 1) {
+    float color = 0.0;
+    if (n != 0 && n != iter) {
+      float nu = log(log(znorm) * logval * 0.5) * logval;
+      if (nu < float(n)) { color = float(n) - nu; }
+    } else {
+      color = n == iter ? 0.0 : float(n);
     }
+    color *= 0.0078431372549 * multlight;
+    float r = bounce(color, 0.0, 1.0);
+    float g = bounce(color * 2.0, 0.0, 1.0);
+    float b = bounce(color * 3.0, 0.0, 1.0);
+    gl_FragColor = vec4(r, g, b, 1.0);
+  } else if (colorschemeindex == 2) {
+    float logMag = log(length(z) + 1.0);
+    vec3 col = hsv2rgb(vec3(0.7 - logMag * 0.1, 0.7, clamp(logMag * 0.3, 0.0, 1.0)));
+    gl_FragColor = vec4(col, 1.0);
+  } else if (colorschemeindex == 3) {
+    float hue = (atan(z.y, z.x) * 0.159154943092 + 0.5);
+    vec3 col = hsv2rgb(vec3(hue, 0.8, 0.9));
+    gl_FragColor = vec4(col, 1.0);
   }
+}
 
-  void main() { newton_calc(); }
-`;
+void main() { mandelbrot_calc(); }`;
 
-let lyapunovshader = `
-  void lyapunov_calc() {
-    vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
-    vec2 c = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : vec2(cxval, cyval);
-    if (inverse != 0.0) { c = cinvmix(c, inverse); }
-    vec2 z = ismandel == 1 ? c : uv * zoomjulia + vec2(zxval, zyval);
-    const int maxiter = 180;
-    float lambda = 0.0, maxlambda = 120000.0, xn = 0.5, rx = 0.0, ri = 0.0, invn = 1.0 / float(maxiter);
-    int modval = 0, n0 = iteration / 10; // n0 > 1
-    for (int i = 1; i < maxiter; i++) {
-      modval = i - (i / 2) * 2;
-      if (modval == 1) { rx = z.x; } // re 
-      else if (modval == 0) { rx = z.y; } // im
-      xn = logmap(rx, xn);
-      if (i >= n0) { lambda += log(abs(logmap_derv(rx, xn))) * invn; }
-      if (abs(lambda) > maxlambda || i - 2 == iteration) { break; }
-    }
-    if (lambda > 0.0) {
-      ri = exp(-3.3 * lambda) * 25.5;
-    }
-    else {
-      lambda = exp(lambda);
-      ri = (lambda <= 0.98 ? lambda * 15.2653061226 : (1.76 + -37.0 * (0.98 - lambda)) * 8.5);
-    }
-    if (colorschemeindex == 0) {
-      float hue = atan(rx, ri) * 0.159154943092 + 0.5;
-      float value1 = log((rx * rx + ri * ri) + 1.0) * 0.5;
-      vec3 color1 = hsv2rgb(vec3(hue, 0.8, clamp(value1, 0.0, 1.0)));
-      gl_FragColor = vec4(color1, 1.0);
-    } else if (colorschemeindex == 1) {
-      float color = ri * multlight * 0.00392156862745 * 2.5;
-      float r = bounce(color, 0.0, 1.0);
-      float g = bounce(color * 2.0, 0.0, 1.0);
-      float b = bounce(color * 3.0, 0.0, 1.0);
-      gl_FragColor = vec4(r, g, b, 1.0);
-    }
+let newtonshader = `void newton_calc() {
+  vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
+  vec2 c = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : vec2(cxval, cyval);
+  if (inverse != 0.0) { c = cinvmix(c, inverse); }
+  vec2 z = ismandel == 1 ? c : uv * zoomjulia + vec2(zxval, zyval);
+  const int maxiter = 220;
+  float znorm = 0.0, rangeval = 1.0 / (50.0 * range);
+  vec2 w = vec2(power, 0.0);
+  vec2 p = vec2(-0.5, 0.0);
+  vec2 z_prev = z, func = z, derv = z;
+  int n = 0, maxn = iteration;
+  vec2 subst = vec2(1.0, 0.0); // vec2(0.0, 0.0)
+  for (int i = 0; i < maxiter; i++) {
+    z_prev = z;
+    func = cpow(z, w);
+    derv = cmul(derv, cpow_derv(z, w));
+    z = z_prev - cdiv(func - subst, derv);
+    n += 1;
+    z += c;
+    znorm = dot(z - z_prev, z - z_prev);
+    if (znorm < rangeval || n >= maxn) { z = z_prev; n = n >= maxn ? maxiter : i; break; }
   }
+  if (colorschemeindex == 0) {
+    float hue = (atan(z.y, z.x) * 0.159154943092 + 0.5);
+    vec3 color1 = vec3(0.0, 0.0, 0.0);
+    if (hue != 0.0) {
+      float value = log((z.x * z.x + z.y * z.y) + 1.0) * 0.5;
+      color1 = hsv2rgb(vec3(hue, 0.8, clamp(value, 0.0, 1.0)));
+    }
+    gl_FragColor = vec4(color1, 1.0);
+  } else if (colorschemeindex == 1) {
+    float color = n == iteration ? 0.0 : float(n);
+    color *= 0.0078431372549 * multlight;
+    float r = bounce(color, 0.0, 1.0);
+    float g = bounce(color * 2.0, 0.0, 1.0);
+    float b = bounce(color * 3.0, 0.0, 1.0);
+    gl_FragColor = vec4(r, g, b, 1.0);
+  } else if (colorschemeindex == 2) {
+    float logMag = log(length(z) + 1.0);
+    vec3 col = hsv2rgb(vec3(0.7 - logMag * 0.1, 0.7, clamp(logMag * 0.3, 0.0, 1.0)));
+    gl_FragColor = vec4(col, 1.0);
+  } else if (colorschemeindex == 3) {
+    float hue = (atan(z.y, z.x) * 0.159154943092 + 0.5);
+    vec3 col = hsv2rgb(vec3(hue, 0.8, 0.9));
+    gl_FragColor = vec4(col, 1.0);
+  }
+}
 
-  void main() { lyapunov_calc(); }`;
+void main() { newton_calc(); }`;
+
+let lyapunovshader = `void lyapunov_calc() {
+  vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
+  vec2 c = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : vec2(cxval, cyval);
+  if (inverse != 0.0) { c = cinvmix(c, inverse); }
+  vec2 z = ismandel == 1 ? c : uv * zoomjulia + vec2(zxval, zyval);
+  const int maxiter = 180;
+  float lambda = 0.0, maxlambda = 120000.0, xn = 0.5, rx = 0.0, ri = 0.0, invn = 1.0 / float(maxiter);
+  int modval = 0, n0 = iteration / 10; // n0 > 1
+  for (int i = 1; i < maxiter; i++) {
+    modval = i - (i / 2) * 2;
+    if (modval == 1) { rx = z.x; } // re 
+    else if (modval == 0) { rx = z.y; } // im
+    xn = logmap(rx, xn);
+    if (i >= n0) { lambda += log(abs(logmap_derv(rx, xn))) * invn; }
+    if (abs(lambda) > maxlambda || i - 2 == iteration) { break; }
+  }
+  if (lambda > 0.0) {
+    ri = exp(-3.3 * lambda) * 25.5;
+  }
+  else {
+    lambda = exp(lambda);
+    ri = (lambda <= 0.98 ? lambda * 15.2653061226 : (1.76 + -37.0 * (0.98 - lambda)) * 8.5);
+  }
+  if (colorschemeindex == 0) {
+    float hue = atan(rx, ri) * 0.159154943092 + 0.5;
+    float value1 = log((rx * rx + ri * ri) + 1.0) * 0.5;
+    vec3 color1 = hsv2rgb(vec3(hue, 0.8, clamp(value1, 0.0, 1.0)));
+    gl_FragColor = vec4(color1, 1.0);
+  } else if (colorschemeindex == 1) {
+    float color = ri * multlight * 0.00392156862745 * 2.5;
+    float r = bounce(color, 0.0, 1.0);
+    float g = bounce(color * 2.0, 0.0, 1.0);
+    float b = bounce(color * 3.0, 0.0, 1.0);
+    gl_FragColor = vec4(r, g, b, 1.0);
+  }
+}
+
+void main() { lyapunov_calc(); }`;
 
 function raymarchingsharecode(func1, func2) {
   return `void mandel3d_calc() {
@@ -818,30 +814,29 @@ function raymarchingsharecode(func1, func2) {
 }
 
 let mandelbulbshader = `vec2 mandelbulb(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
-    int n = 0;
-    float dr = 1.0, znorm = 0.0;
-    vec3 z = vec3(zx, zy, zz);
-    vec3 c = vec3(cx, cy, cz);
-    vec3 z2 = vec3(0.0, 0.0, 0.0);
-    float w = power;
-    float p = -0.5;
-    vec3 z_prev = z, z0 = z;
-    for (int i = 0; i < 25; i++) {
-      z_prev = z;
-      znorm = length(z);
-      n = i;
-      if (znorm > range) { break; }
-      if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); }
-      z = tpow(z, w);
-      dr = pow_derv(znorm, power) * dr + 1.0;
-      z = z + c;
-    }
-    return vec2(0.5 * log(znorm) * znorm / dr, n);
+  int n = 0;
+  float dr = 1.0, znorm = 0.0;
+  vec3 z = vec3(zx, zy, zz);
+  vec3 c = vec3(cx, cy, cz);
+  vec3 z2 = vec3(0.0, 0.0, 0.0);
+  float w = power;
+  float p = -0.5;
+  vec3 z_prev = z, z0 = z;
+  for (int i = 0; i < 25; i++) {
+    z_prev = z;
+    znorm = length(z);
+    n = i;
+    if (znorm > range) { break; }
+    if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); }
+    z = tpow(z, w);
+    dr = pow_derv(znorm, power) * dr + 1.0;
+    z = z + c;
   }
+  return vec2(0.5 * log(znorm) * znorm / dr, n);
+}
 ` + raymarchingsharecode("surDist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
 
-let mandelboxshader = `
-vec2 mandelbox(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
+let mandelboxshader = `vec2 mandelbox(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
   int n = 0;
   float scale = -2.0, fixedRadius = 1.0, minRadius = 0.5, foldingLimit = 1.0, dr = 1.0, p = -0.5;
   float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
@@ -896,26 +891,26 @@ let quaternionshader = `vec2 mandel_quaternion(float zx, float zy, float zz, flo
 ` + raymarchingsharecode("surDist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
 
 let bicomplexshader = `vec2 mandel_bicomplex(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
-    int n = 0;
-    float dr = 1.0, znorm = 0.0;
-    vec4 z = vec4(zx, zy, zz, zw);
-    vec4 c = vec4(cx, cy, cz, cw);
-    vec4 w = vec4(power, 0.0, 0.0, 0.0);
-    vec4 z0 = z, ztmp = z;
-    vec4 p = vec4(-0.5, 0.0, 0.0, 0.0);
-    vec4 z2 = vec4(0.0, 0.0, 0.0, 0.0);
-    for (int i = 0; i < 25; i++) {
-      ztmp = z;
-      znorm = length(z);
-      n = i;
-      if (znorm > range) { break; }
-      z = bipow(z, w);
-      if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); z.w = abs(z.w); }
-      z = z + c;
-      dr = pow_derv(znorm, power) * dr + 1.0;
-    }
-    return vec2(0.5 * log(znorm) * znorm / dr, n);
+  int n = 0;
+  float dr = 1.0, znorm = 0.0;
+  vec4 z = vec4(zx, zy, zz, zw);
+  vec4 c = vec4(cx, cy, cz, cw);
+  vec4 w = vec4(power, 0.0, 0.0, 0.0);
+  vec4 z0 = z, ztmp = z;
+  vec4 p = vec4(-0.5, 0.0, 0.0, 0.0);
+  vec4 z2 = vec4(0.0, 0.0, 0.0, 0.0);
+  for (int i = 0; i < 25; i++) {
+    ztmp = z;
+    znorm = length(z);
+    n = i;
+    if (znorm > range) { break; }
+    z = bipow(z, w);
+    if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); z.w = abs(z.w); }
+    z = z + c;
+    dr = pow_derv(znorm, power) * dr + 1.0;
   }
+  return vec2(0.5 * log(znorm) * znorm / dr, n);
+}
 ` + raymarchingsharecode("surDist = mandel_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandel_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
 
 let bicomplexnewtonshader = `vec2 newton_bicomplex(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
