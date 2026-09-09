@@ -406,6 +406,7 @@ let mathcode = `
   vec4 qdiv(vec4 z, vec4 w) { return qmul(z, qinv(w)); } // qmul(qinv(w), z)
   vec4 qexp(vec4 z) { float vlen = length(z.yzw), expv = exp(z.x); if (vlen < 1e-6) return vec4(expv, z.yzw); return expv * vec4(cos(vlen), sin(vlen) / vlen * z.yzw); }
   vec4 qlog(vec4 z) { float vlen = length(z.yzw), qlen = length(z); float logv = log(qlen); if (vlen < 1e-6) return vec4(logv, 0.0, 0.0, 0.0); return vec4(logv, acos(clamp(z.x / qlen, -1.0, 1.0)) / vlen * z.yzw); }
+  vec4 qlog(float x) { if (x > 0.0) return vec4(log(x), 0.0, 0.0, 0.0); if (x < 0.0) return vec4(log(-x), 3.14159265359, 0.0, 0.0); return vec4(0.0, 0.0, 0.0, 0.0); }
   vec4 qsin(vec4 z) { float vlen = length(z.yzw); if (vlen < 1e-6) vlen = 1e-6; return vec4(sin(z.x) * cosh(vlen), cos(z.x) * sinh(vlen) / vlen * z.yzw); }
   vec4 qcos(vec4 z) { float vlen = length(z.yzw); if (vlen < 1e-6) vlen = 1e-6; return vec4(cos(z.x) * cosh(vlen),-sin(z.x) * sinh(vlen) / vlen * z.yzw); }
   vec4 qsinh(vec4 z) {float vlen = length(z.yzw); if (vlen < 1e-6) vlen = 1e-6; return vec4(sinh(z.x) * cos(vlen), cosh(z.x) * sin(vlen) / vlen * z.yzw); }
@@ -416,14 +417,18 @@ let mathcode = `
   vec4 qcot(vec4 z) { return qdiv(qcos(z), qsin(z)); }
   vec4 qtanh(vec4 z) { return qdiv(qsinh(z), qcosh(z)); }
   vec4 qcoth(vec4 z) { return qdiv(qcosh(z), qsinh(z)); }
-  vec4 qpow(vec4 z, float w) { return qexp(w * qlog(z)); }
+  vec4 qpow(vec4 z, float w) {
+    if (w == 2.0) return qsq(z);
+    else if (w == 1.0) return z;
+    else if (w == 0.0) return vec4(1.0, 0.0, 0.0, 0.0);
+    else if (w ==-1.0) return qinv(z);
+    else if (w ==-2.0) return qinv(qsq(z));
+    else if (w ==-3.0) return qinv(qmul(qsq(z), z));
+    return qexp(w * qlog(z));
+  }
+  //vec4 qpow(float z, vec4 w) { return qexp(w * qlog(z)); }
   vec4 qpow(vec4 z, vec4 w) {
-    if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) {
-      if (w.x == 1.0) return z;
-      else if (w.x ==-1.0) return qinv(z);
-      else if (w.x == 2.0) return qsq(z);
-      return qexp(w.x * qlog(z));
-    }
+    if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) { return qpow(z, w.x); }
     return qexp(qmul(w, qlog(z))); // qexp(qmul(qlog(z), w))
   }
   vec4 qroot(vec4 z, vec4 w) { return qpow(z, qinv(w)); }
@@ -485,14 +490,18 @@ let mathcode = `
   vec4 bitanh(vec4 z) { return bidiv(bisinh(z), bicosh(z)); }
   vec4 bicot(vec4 z) { return bidiv(bicos(z), bisin(z)); }
   vec4 bicoth(vec4 z) { return bidiv(bicosh(z), bisinh(z)); }
-  vec4 bipow(vec4 z, float w) { return biexp(w * bilog(z)); }
+  vec4 bipow(vec4 z, float w) {
+    if (w == -2.0) { return biinv(bisq(z)); }
+    if (w == -1.0) { return biinv(z); }
+    else if (w == 0.0) { return vec4(1.0, 0.0, 0.0, 0.0); }
+    else if (w == 1.0) { return z; }
+    else if (w == 2.0) { return bisq(z); }
+    else if (w == 3.0) { return bimul(bisq(z), z); }
+    return biexp(w * bilog(z));
+  }
+  //vec4 bipow(float z, vec4 w) { return biexp(bimul(w, bilog(vec4(z, 0.0, 0.0, 0.0)))); }
   vec4 bipow(vec4 z, vec4 w) {
-    if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) {
-      if (w.x == -1.0) { return biinv(z); }
-      else if (w.x == 1.0) { return z; }
-      else if (w.x == 2.0) { return bisq(z); }
-      return biexp(w.x * bilog(z));
-    }
+    if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) { return bipow(z, w.x); }
     return biexp(bimul(w, bilog(z)));
   }
   vec4 biroot(vec4 z, vec4 w) { return bipow(z, biinv(w)); }
@@ -524,11 +533,11 @@ let mathcode = `
       vec4 logterm = bimul(bilog(t), w + vec4(0.5, 0.0, 0.0, 0.0)) - t;
       return 2.50662827463 * bimul(x, biexp(logterm));
   }
-  vec4 bidot(vec4 z, vec4 w) { return bimul(z, biconj(w)); }
-  vec4 bisop(vec4 z, vec4 w) { return bidiv(z, biconj(w)); }
   vec4 bigamma_left(vec4 z) { return PI * biinv(bimul(bisin(z * PI), bigamma_right(vec4(1.0, 0.0, 0.0, 0.0) - z))); }
   vec4 bigamma1(vec4 z) { return z.x < 0.5 ? bigamma_left(z) : bigamma_right(z); }
   vec4 bisqrt(vec4 z) { return bifromidempotent(csqrt(bitoidempotent_left(z)), csqrt(bitoidempotent_right(z))); }
+  vec4 bidot(vec4 z, vec4 w) { return bimul(z, biconj(w)); }
+  vec4 bisop(vec4 z, vec4 w) { return bidiv(z, biconj(w)); }
   vec4 bigamma(vec4 z) { return bifromidempotent(cgamma(bitoidempotent_left(z)), cgamma(bitoidempotent_right(z))); }
   vec4 bidigamma(vec4 z) { return bifromidempotent(cdigamma(bitoidempotent_left(z)), cdigamma(bitoidempotent_right(z))); }
   vec4 bigammasi(vec4 z) { return bifromidempotent(cgammasi(bitoidempotent_left(z)), cgammasi(bitoidempotent_right(z))); }
@@ -539,6 +548,8 @@ let mathcode = `
   vec4 bicn(vec4 z, vec4 w) { return bifromidempotent(ccn(bitoidempotent_left(z), bitoidempotent_left(w)), ccn(bitoidempotent_right(z), bitoidempotent_right(w))); }
   vec4 bidn(vec4 z, vec4 w) { return bifromidempotent(cdn(bitoidempotent_left(z), bitoidempotent_left(w)), cdn(bitoidempotent_right(z), bitoidempotent_right(w))); }
   vec4 biwp(vec4 z, vec4 w) { return bifromidempotent(cwp(bitoidempotent_left(z), bitoidempotent_left(w)), cwp(bitoidempotent_right(z), bitoidempotent_right(w))); }
+  vec4 bigamma_derv(vec4 z) { return bifromidempotent(cgamma_derv(bitoidempotent_left(z)), cgamma_derv(bitoidempotent_right(z))); }
+  vec4 bizeta_derv(vec4 z) { return bifromidempotent(czeta_derv(bitoidempotent_left(z)), czeta_derv(bitoidempotent_right(z))); }
   vec4 biwp_derv(vec4 z, vec4 w) { return bifromidempotent(cwp_derv(bitoidempotent_left(z), bitoidempotent_left(w)), cwp_derv(bitoidempotent_right(z), bitoidempotent_right(w))); }
 
   float tabs(vec4 z) { return length(z); }
@@ -668,10 +679,11 @@ return `void newton_calc() {
   vec2 p = vec2(-0.5, 0.0);
   vec2 z_prev = z, func = z, derv = vec2(1.0, 0.0);
   int n = 0, maxn = iteration;
+  vec2 zpos = vec2(1.0, 0.0);
   for (int i = 0; i < maxiter; i++) {
     z_prev = z;
     //z = z_prev - cdiv(ccosh(cpow(z, w)) - vec2(0.0, 0.0), cmul(csinh(z), cpow_derv(z, w))) + c;
-    //z = z_prev - cdiv(cpow(z, w) - vec2(1.0, 0.0), cmul(vec2(1.0, 0.0), cpow_derv(z, w))) + c;
+    //z = z_prev - cdiv(cpow(z, w) - zpos, cmul(vec2(1.0, 0.0), cpow_derv(z, w))) + c;
     ` + formula + `
     n += 1;
     znorm = dot(z - z_prev, z - z_prev);
