@@ -416,6 +416,7 @@ let mathcode = `
   vec4 qcot(vec4 z) { return qdiv(qcos(z), qsin(z)); }
   vec4 qtanh(vec4 z) { return qdiv(qsinh(z), qcosh(z)); }
   vec4 qcoth(vec4 z) { return qdiv(qcosh(z), qsinh(z)); }
+  vec4 qpow(vec4 z, float w) { return qexp(w * qlog(z)); }
   vec4 qpow(vec4 z, vec4 w) {
     if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) {
       if (w.x == 1.0) return z;
@@ -484,6 +485,7 @@ let mathcode = `
   vec4 bitanh(vec4 z) { return bidiv(bisinh(z), bicosh(z)); }
   vec4 bicot(vec4 z) { return bidiv(bicos(z), bisin(z)); }
   vec4 bicoth(vec4 z) { return bidiv(bicosh(z), bisinh(z)); }
+  vec4 bipow(vec4 z, float w) { return biexp(w * bilog(z)); }
   vec4 bipow(vec4 z, vec4 w) {
     if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) {
       if (w.x == -1.0) { return biinv(z); }
@@ -539,9 +541,9 @@ let mathcode = `
   vec4 biwp(vec4 z, vec4 w) { return bifromidempotent(cwp(bitoidempotent_left(z), bitoidempotent_left(w)), cwp(bitoidempotent_right(z), bitoidempotent_right(w))); }
   vec4 biwp_derv(vec4 z, vec4 w) { return bifromidempotent(cwp_derv(bitoidempotent_left(z), bitoidempotent_left(w)), cwp_derv(bitoidempotent_right(z), bitoidempotent_right(w))); }
 
-  float tabs(vec3 z) { return length(z); }
-  vec3 tneg(vec3 z) { return z * -1.0; }
-  vec3 tsq(vec3 z) {
+  float tabs(vec4 z) { return length(z); }
+  vec4 tneg(vec4 z) { return z * -1.0; }
+  vec4 tsq(vec4 z) {
     z.x = z.x + 0.00000001;
     float zxpow = z.x * z.x, zypow = z.y * z.y, zzpow = z.z * z.z;
     float zxypow = zxpow + zypow;
@@ -549,30 +551,30 @@ let mathcode = `
     float y = 2.0 * z.y * z.x * a;
     float zz = 2.0 * z.z * sqrt(zxypow);
     float x = (zxpow - zypow) * a;
-    return vec3(x, y, zz);
+    return vec4(x, y, zz, z.w);
   }
-  vec3 texp(vec3 z) { float cosphi = cos(z.z); return exp(z.x) * vec3(cosphi * cos(z.y), cosphi * sin(z.y), sin(z.z)); }
-  vec3 tlog(vec3 z) { float r = length(z); if (r < 1e-8) { return vec3(-18.42, 0.0, 0.0); } float phi = asin(clamp(z.z / r, -1.0, 1.0)); return vec3(log(r), atan(z.y, z.x), phi); }
-  vec3 tinv(vec3 z) { return texp(-1.0 * tlog(z)); }
-  vec3 tadd(vec3 z, vec3 w) { return z + w; }
-  vec3 tsub(vec3 z, vec3 w) { return z - w; }
-  vec3 tsinh(vec3 z) { return (texp(z) - texp(-z)) * 0.5; }
-  vec3 tcosh(vec3 z) { return (texp(z) + texp(-z)) * 0.5; }
-  vec3 texpsumlog(vec3 z, vec3 w) { return texp(tlog(z) + tlog(w)); }
-  vec3 tpow(vec3 z, float w) { if (w == 1.0) { return z; } else if (w == 2.0) { return tsq(z); } return texp(w * tlog(z)); }
-  vec3 troot(vec3 z, float w) { return tpow(z, 1.0 / w); }
-  vec3 tsqrt(vec3 z) { return texp(0.5 * tlog(z)); }
-  vec3 ttau(vec3 z) { return vec3(1.0, 0.0, 0.0) - texp(vec3(0.5, 0.0, 0.0) - z); }
-  vec3 tsign(vec3 z) { return z / length(z); }
-  vec3 tmax(vec3 z, vec3 w) { return vec3(max(z.x, w.x), max(z.y, w.y), min(z.z, w.z)); }
-  vec3 tmin(vec3 z, vec3 w) { return vec3(min(z.x, w.x), min(z.y, w.y), min(z.z, w.z)); }
-  vec3 trelumax(vec3 z) { return tmax(z, vec3(0.0, 0.0, 0.0)); }
-  vec3 trelumin(vec3 z) { return tmin(z, vec3(0.0, 0.0, 0.0)); }
-  vec3 tfloor(vec3 z) { return floor(z); }
-  vec3 tceil(vec3 z) { return ceil(z); }
-  vec3 tround(vec3 z) { return floor(z + 0.5); }
-  vec3 tstep(vec3 z) { return vec3(step(0.0, z.x), 0.0, 0.0); }
-  vec3 tclamp(vec3 z, vec3 w, vec3 s) { return vec3(clamp(z.x, w.x, s.y), clamp(z.y, w.y, s.y), clamp(z.z, w.z, s.z)); }
+  vec4 texp(vec4 z) { float cosphi = cos(z.z); return exp(z.x) * vec4(cosphi * cos(z.y), cosphi * sin(z.y), sin(z.z), z.w); }
+  vec4 tlog(vec4 z) { float r = length(z); if (r < 1e-8) { return vec4(-18.42, 0.0, 0.0, 0.0); } float phi = asin(clamp(z.z / r, -1.0, 1.0)); return vec4(log(r), atan(z.y, z.x), phi, z.w); }
+  vec4 tinv(vec4 z) { return texp(-1.0 * tlog(z)); }
+  vec4 tadd(vec4 z, vec4 w) { return z + w; }
+  vec4 tsub(vec4 z, vec4 w) { return z - w; }
+  vec4 tsinh(vec4 z) { return (texp(z) - texp(-z)) * 0.5; }
+  vec4 tcosh(vec4 z) { return (texp(z) + texp(-z)) * 0.5; }
+  vec4 texpsumlog(vec4 z, vec4 w) { return texp(tlog(z) + tlog(w)); }
+  vec4 tpow(vec4 z, float w) { if (w == 1.0) { return z; } else if (w == 2.0) { return tsq(z); } return texp(w * tlog(z)); }
+  vec4 troot(vec4 z, float w) { return tpow(z, 1.0 / w); }
+  vec4 tsqrt(vec4 z) { return texp(0.5 * tlog(z)); }
+  vec4 ttau(vec4 z) { return vec4(1.0, 0.0, 0.0, 0.0) - texp(vec4(0.5, 0.0, 0.0, 0.0) - z); }
+  vec4 tsign(vec4 z) { return z / length(z); }
+  vec4 tmax(vec4 z, vec4 w) { return vec4(max(z.x, w.x), max(z.y, w.y), min(z.z, w.z), min(z.w, w.w)); }
+  vec4 tmin(vec4 z, vec4 w) { return vec4(min(z.x, w.x), min(z.y, w.y), min(z.z, w.z), min(z.w, w.w)); }
+  vec4 trelumax(vec4 z) { return tmax(z, vec4(0.0, 0.0, 0.0, 0.0)); }
+  vec4 trelumin(vec4 z) { return tmin(z, vec4(0.0, 0.0, 0.0, 0.0)); }
+  vec4 tfloor(vec4 z) { return floor(z); }
+  vec4 tceil(vec4 z) { return ceil(z); }
+  vec4 tround(vec4 z) { return floor(z + 0.5); }
+  vec4 tstep(vec4 z) { return vec4(step(0.0, z.x), 0.0, 0.0, 0.0); }
+  vec4 tclamp(vec4 z, vec4 w, vec4 s) { return vec4(clamp(z.x, w.x, s.y), clamp(z.y, w.y, s.y), clamp(z.z, w.z, s.z), clamp(z.w, w.w, s.w)); }
 
   float bounce(float x, float min, float max) {
     float size = max - min;
@@ -816,12 +818,12 @@ function raymarchingsharecode(func1, func2) {
 let mandelbulbshader = `vec2 mandelbulb(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
   int n = 0;
   float dr = 1.0, znorm = 0.0;
-  vec3 z = vec3(zx, zy, zz);
-  vec3 c = vec3(cx, cy, cz);
-  vec3 z2 = vec3(0.0, 0.0, 0.0);
+  vec4 z = vec4(zx, zy, zz, zw);
+  vec4 c = vec4(cx, cy, cz, cw);
+  vec4 z2 = vec4(0.0, 0.0, 0.0, 0.0);
   float w = power;
   float p = -0.5;
-  vec3 z_prev = z, z0 = z;
+  vec4 z_prev = z, z0 = z;
   for (int i = 0; i < 25; i++) {
     z_prev = z;
     znorm = length(z);
