@@ -350,8 +350,9 @@
         }
       }
 
-      document.getElementById('code').value = quaternionshader;
-      useShader(uniformcode + mathcode + quaternionshader);
+      const startcode = quaternionshadercode();
+      document.getElementById('code').value = startcode;
+      useShader(uniformcode + mathcode + startcode);
       animFrameId = requestAnimationFrame(render);
 
       function runCode() {
