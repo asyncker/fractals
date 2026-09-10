@@ -338,7 +338,7 @@
       }
       function runCode() { useShader(uniformcode + mathcode + codeEditor.value.trim()); isRenderPaused = false; }
 
-      codeEditor.value = getfractal("z^2 + c", "bi", 24);
+      codeEditor.value = getfractal("z^(w * 2.0) + c", "bi", 24);
       runCode();
       animFrameId = requestAnimationFrame(render);
       window.addEventListener('resize', () => { resize(); });
