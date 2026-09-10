@@ -37,7 +37,7 @@
   <script src="./webgl-code.js"></script>
   <script>
       let editorVisible = true;
-      let isEditing = false;
+      let isRenderPaused = false;
       let renderPaused = false;
 
       const canvas = document.getElementById('canvas');
@@ -272,6 +272,7 @@
         if (keysPressed['arrowright']) { rotz -= rotationSpeed * 0.1; keypress = true; }
         if (keysPressed['o']) { scaleval -= 0.01; keypress = true; }
         if (keysPressed['p']) { scaleval += 0.01; keypress = true; }
+        if (keysPressed['b']) { colorschemeindex += 1; colorschemeindex = colorschemeindex == 4 ? 0 : colorschemeindex; keypress = true; }
         if ((keypress || keyinit) && currentProgram) {
           const logval = power > 2.0 ? 1.0 / Math.log(Math.abs(power)) : 1.44269504088896;
           let rangecalc = range;
@@ -303,11 +304,11 @@
         }
       }
 
-      codeEditor.addEventListener('focus', function() { isEditing = true; });
-      canvas.addEventListener('click', function() { isEditing = false; });
+      codeEditor.addEventListener('focus', function() { isRenderPaused = true; });
+      canvas.addEventListener('click', function() { isRenderPaused = false; });
 
       function render(currentTimeMs) {
-        if (isEditing) { animFrameId = requestAnimationFrame(render); return; }
+        if (isRenderPaused) { animFrameId = requestAnimationFrame(render); return; }
         updateControls();
         if (currentProgram) {
           gl.uniform1f(timeLocation, currentTimeMs * 0.001);
@@ -332,9 +333,9 @@
           gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
         }
       }
-      function runCode() { useShader(uniformcode + mathcode + codeEditor.value.trim()); isEditing = false; }
+      function runCode() { useShader(uniformcode + mathcode + codeEditor.value.trim()); isRenderPaused = false; }
 
-      codeEditor.value = getfractal("pow(z, power) + c", "q");
+      codeEditor.value = getfractal("z^2 + c", "bi", 24);
       runCode();
       animFrameId = requestAnimationFrame(render);
       window.addEventListener('resize', () => { resize(); });
