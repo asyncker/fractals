@@ -440,6 +440,7 @@ let mathcode = `
     if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) { return qpow(z, w.x); }
     return qexp(qmul(w, qlog(z))); // qexp(qmul(qlog(z), w))
   }
+  vec4 qsqrt(vec4 z) { return qpow(z, 0.5); }
   vec4 qroot(vec4 z, vec4 w) { return qpow(z, qinv(w)); }
   vec4 qsign(vec4 z) { return z / length(z); }
   vec4 qmax(vec4 z, vec4 w) { return vec4(max(z.x, w.x), max(z.y, w.y), max(z.z, w.z), max(z.w, w.w)); }
