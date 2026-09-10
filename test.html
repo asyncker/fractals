@@ -50,7 +50,7 @@
       let cwvalLocation, zxvalLocation, zyvalLocation, zoomjuliaLocation, zwvalLocation;
       let rangeLocation, powerLocation, logvalLocation, inverseLocation, multlightLocation;
       let cosrotxLocation, sinrotxLocation, cosrotzLocation, sinrotzLocation, scalevalLocation;
-      let ismandelLocation, isnewtonLocation, isburningLocation, isminusoneLocation;
+      let ismandelLocation, isnewtonLocation, isburningLocation, isminusoneLocation, isconjLocation;
       let fractalindexLocation, colorschemeindexLocation, iterationLocation;
 
       function toggleEditor() {
@@ -95,6 +95,7 @@
         scalevalLocation = gl.getUniformLocation(prog, 'scaleval');
         ismandelLocation = gl.getUniformLocation(prog, 'ismandel');
         isnewtonLocation = gl.getUniformLocation(prog, 'isnewton');
+        isconjLocation = gl.getUniformLocation(prog, 'isconj');
         isburningLocation = gl.getUniformLocation(prog, 'isburning');
         isminusoneLocation = gl.getUniformLocation(prog, 'isminusone');
         fractalindexLocation = gl.getUniformLocation(prog, 'fractalindex');
@@ -177,6 +178,7 @@
       let ismandel = 1;
       let isnewton = 0;
       let isburning = 0;
+      let isconj = 0;
       let isminusone = 0;
       let fractalindex = 0;
       let multlight = 1.0;
@@ -280,6 +282,7 @@
           gl.uniform1i(ismandelLocation, ismandel);
           gl.uniform1i(isnewtonLocation, isnewton);
           gl.uniform1i(isburningLocation, isburning);
+          gl.uniform1i(isconjLocation, isconj);
           gl.uniform1i(isminusoneLocation, isminusone);
           gl.uniform1f(cxvalLocation, cxval);
           gl.uniform1f(cyvalLocation, cyval);
