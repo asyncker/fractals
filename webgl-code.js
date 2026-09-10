@@ -24,6 +24,7 @@ let uniformcode = `
   uniform int isnewton;
   uniform int isburning;
   uniform int isminusone;
+  uniform int isconj;
   uniform int colorschemeindex;
   uniform int iteration;`;
 
@@ -387,6 +388,9 @@ let mathcode = `
     vec2 tau = invert_tau(cdiv(B, A));
     return raw_wp_derv(jacobi_reduce(cmul(z, A), tau), A, tau);
   }
+  vec2 csn_derv(vec2 z, vec2 w) { float eps = 1e-5; return (csn(z + vec2(eps, 0.0), w) - csn(z - vec2(eps, 0.0), w)) / (2.0 * eps); }
+  vec2 ccn_derv(vec2 z, vec2 w) { float eps = 1e-5; return (csn(z + vec2(eps, 0.0), w) - csn(z - vec2(eps, 0.0), w)) / (2.0 * eps); }
+  vec2 cdn_derv(vec2 z, vec2 w) { float eps = 1e-5; return (csn(z + vec2(eps, 0.0), w) - csn(z - vec2(eps, 0.0), w)) / (2.0 * eps); }
 
   float qabs_sq(vec4 z) { return dot(z, z); }
   float qabs(vec4 z) { return length(z); }
@@ -471,6 +475,7 @@ let mathcode = `
   vec4 qfib(vec4 z) { return (qpow(vec4(1.61803398875, 0.0, 0.0, 0.0), z) - qpow(vec4(-0.61803398875, 0.0, 0.0, 0.0), z)) * 0.4472135955; }
   vec4 v4invmix(vec4 z, float w) { return z * (w / dot(z, z)) + (1.0 - w) * z; }
   vec4 v4abs(vec4 z) { return vec4(abs(z.x), -abs(z.y), -abs(z.z), abs(z.w)); }
+  vec4 v4conj(vec4 z) { return vec4(z.x, -z.y, -z.z, z.w); }
   vec4 qpow_derv(vec4 z, float w) { return qpow(z, w - 1.0) * w; }
   vec4 qpow_derv(vec4 z, vec4 w) { return qmul(qpow(z, w - vec4(1.0, 0.0, 0.0, 0.0)), w); }
 
@@ -560,6 +565,9 @@ let mathcode = `
   vec4 bicn(vec4 z, vec4 w) { return bifromidempotent(ccn(bitoidempotent_left(z), bitoidempotent_left(w)), ccn(bitoidempotent_right(z), bitoidempotent_right(w))); }
   vec4 bidn(vec4 z, vec4 w) { return bifromidempotent(cdn(bitoidempotent_left(z), bitoidempotent_left(w)), cdn(bitoidempotent_right(z), bitoidempotent_right(w))); }
   vec4 biwp(vec4 z, vec4 w) { return bifromidempotent(cwp(bitoidempotent_left(z), bitoidempotent_left(w)), cwp(bitoidempotent_right(z), bitoidempotent_right(w))); }
+  vec4 bisn_derv(vec4 z, vec4 w) { return bifromidempotent(csn_derv(bitoidempotent_left(z), bitoidempotent_left(w)), csn_derv(bitoidempotent_right(z), bitoidempotent_right(w))); }
+  vec4 bicn_derv(vec4 z, vec4 w) { return bifromidempotent(ccn_derv(bitoidempotent_left(z), bitoidempotent_left(w)), ccn_derv(bitoidempotent_right(z), bitoidempotent_right(w))); }
+  vec4 bidn_derv(vec4 z, vec4 w) { return bifromidempotent(cdn_derv(bitoidempotent_left(z), bitoidempotent_left(w)), cdn_derv(bitoidempotent_right(z), bitoidempotent_right(w))); }
   vec4 bipow_derv(vec4 z, float w) { return bipow(z, w - 1.0) * w; }
   vec4 bipow_derv(vec4 z, vec4 w) { return bimul(bipow(z, w - vec4(1.0, 0.0, 0.0, 0.0)), w); }
   vec4 bigamma_derv(vec4 z) { return bifromidempotent(cgamma_derv(bitoidempotent_left(z)), cgamma_derv(bitoidempotent_right(z))); }
@@ -647,6 +655,7 @@ return `void mandelbrot_calc() {
     znorm = dot(z, z);
     if (znorm > range) { n = i; break; }
     if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); }
+    if (isconj == 1) { z.x = z.x; z.y = -z.y; }
     if (isminusone == 1) { z = vec2(1.0, 0.0) - z; }
     ` + formula + `
     n += 1;
@@ -886,11 +895,14 @@ function mandelbulbshadercode(formula = "z = tpow(z, w) + c;", dervformula = "ve
       n = i;
       if (znorm > range) { break; }
       if (isburning == 1) { z = v4abs(z); }
+      if (isconj == 1) { z = v4conj(z); }
+      if (isminusone == 1) { z = vec4(1.0, 0.0, 0.0, 0.0) - z; }
       ` + dervformula + `
       dr = length(derv) * dr + 1.0;
       ` + formula + `
       //dr = pow_derv(znorm, power) * dr + 1.0;
     }
+    znorm = length(z);
     return vec2(0.5 * log(znorm) * znorm / dr, n);
   }
   ` + raymarchingsharecode("surDist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
@@ -910,10 +922,13 @@ function quaternionshadercode(formula = "z = qpow(z, w) + c;", dervformula = "ve
       n = i;
       if (znorm > range) { break; }
       if (isburning == 1) { z = v4abs(z); }
+      if (isconj == 1) { z = v4conj(z); }
+      if (isminusone == 1) { z = vec4(1.0, 0.0, 0.0, 0.0) - z; }
       ` + dervformula + `
       dr = length(derv) * dr + 1.0;
       ` + formula + `
     }
+    znorm = length(z);
     return vec2(0.5 * log(znorm) * znorm / dr, n);
   }
   ` + raymarchingsharecode("surDist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
@@ -933,10 +948,13 @@ function bicomplexshadercode(formula = "z = bipow(z, w) + c;", dervformula = "ve
       n = i;
       if (znorm > range) { break; }
       if (isburning == 1) { z = v4abs(z); }
+      if (isconj == 1) { z = v4conj(z); }
+      if (isminusone == 1) { z = vec4(1.0, 0.0, 0.0, 0.0) - z; }
       ` + dervformula + `
       dr = length(derv) * dr + 1.0;
       ` + formula + `
     }
+    znorm = length(z);
     return vec2(0.5 * log(znorm) * znorm / dr, n);
   }
   ` + raymarchingsharecode("surDist = mandel_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandel_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
@@ -1168,7 +1186,6 @@ function convertformulatowebgl(f, vecf = "vec2") {
   const T = f.match(/\d+(?:\.\d+)?|[a-zA-Z_]\w*|[()+\-/*^,]/g) || [];
   let p = 0;
   const pk = () => T[p], nx = () => T[p++];
-  
   const pE = () => { let l = pT(); while (pk() === '+' || pk() === '-') { const o = nx(); l = { t: 'b', o, l, r: pT() }; } return l; };
   const pT = () => { let l = pU(); while (pk() === '*' || pk() === '/') { const o = nx(); l = { t: 'b', o, l, r: pU() }; } return l; };
   const pU = () => { if (pk() === '-') { nx(); return { t: 'u', o: '-', c: pPow() }; } if (pk() === '+') { nx(); return pPow(); } return pPow(); };
@@ -1281,7 +1298,9 @@ function getfractal(formula, type, iteration) {
     }
     return newFormula;
   }
-  
+  if (type != "c" && formula != "z^(2 * w) + c") { iteration = parseInt(iteration > 4 ? iteration / 3 : iteration); }
+  if (type != "c" && (formula.includes("gamma") || formula.includes("eta"))) { iteration = parseInt(iteration > 2 ? iteration / 5 : iteration / 1.25) + 1; }
+  if (type != "c" && (formula.includes("eta(-z") && formula.includes("eta(z") || formula.includes("sn(") || formula.includes("dn(") || formula.includes("cn(") || formula.includes("wp("))) { iteration = parseInt(iteration > 2 ? iteration / 25 : iteration / 25) + 1; }  
   if (type == "bi") { const formulas = getformula_and_derv(formula, "vec4"); return bicomplexshadercode(convertformula("z = " + formulas[0], "bi") + ";", convertformula("derv = "  + formulas[1], "bi") + ";", iteration); }
   else if (type == "q") { const formulas = getformula_and_derv(formula, "vec4"); return quaternionshadercode(convertformula("z = " + formulas[0], "q") + ";", convertformula("derv = "  + formulas[1], "q") + ";", iteration); }
   else if (type == "t") { const formulas = getformula_and_derv(formula, "vec4"); return mandelbulbshadercode(convertformula("z = " + formulas[0], "t") + ";", convertformula("derv = "  + formulas[1], "t") + ";", iteration); }
