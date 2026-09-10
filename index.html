@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fractal</title>
+  <meta property="og:title" content="Fractal Gpu WebGL Render">
+  <meta property="og:description" content="Fast fractal mandelbrot render in browser">
+  <meta property="og:image" content="render/favicon.png">
+  <meta property="og:site_name" content="Fractal - render fractal">
+  <link rel="icon" type="image/png" sizes="32x32" href="./render/favicon.png">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Consolas',monospace; display:flex; height:100vh; background:#1e1e1e; color:#d4d4d4; overflow:hidden; }
+
+    #formula-panel {
+      width: 340px;
+      min-width: 260px;
+      display: flex;
+      flex-direction: column;
+      background: #252526;
+      border-right: 2px solid #333;
+      padding: 14px 12px;
+      gap: 12px;
+      overflow-y: auto;
+    }
+    #formula-panel h2 {
+      font-size: 13px;
+      color: #4ec9b0;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+    #formula-input {
+      width: 100%;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border: 1px solid #3c3c3c;
+      border-radius: 4px;
+      padding: 10px 12px;
+      font-family: 'Consolas', monospace;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    #formula-input:focus {
+      border-color: #0e639c;
+      box-shadow: 0 0 0 2px rgba(14,99,156,0.25);
+    }
+    #formula-input.error {
+      border-color: #f14c4c;
+      box-shadow: 0 0 0 2px rgba(241,76,76,0.25);
+    }
+    #formula-status {
+      font-size: 11px;
+      min-height: 14px;
+      color: #6a9955;
+      transition: color 0.15s;
+    }
+    #formula-status.error { color: #f14c4c; }
+
+    .var-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .var-btn {
+      flex: 1 0 auto;
+      min-width: 52px;
+      background: #2d2d30;
+      color: #d4d4d4;
+      border: 1px solid #3c3c3c;
+      border-radius: 4px;
+      padding: 7px 0;
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      text-align: center;
+      user-select: none;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .var-btn:hover { background: #3a3a3d; }
+    .var-btn.active {
+      background: #0e639c;
+      border-color: #1177bb;
+      color: #fff;
+    }
+    .var-btn small {
+      display: block;
+      font-size: 9px;
+      opacity: 0.6;
+      margin-top: 1px;
+    }
+    .var-btn.active small { opacity: 0.85; }
+
+    .extra-btn {
+      width: 100%;
+      background: #2d2d30;
+      color: #d4d4d4;
+      border: 1px solid #3c3c3c;
+      border-radius: 4px;
+      padding: 7px 0;
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      text-align: center;
+      user-select: none;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .extra-btn:hover { background: #3a3a3d; }
+    .extra-btn.active {
+      background: #0e639c;
+      border-color: #1177bb;
+      color: #fff;
+    }
+    .color-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .color-btn {
+      flex: 1 0 auto;
+      min-width: 60px;
+      background: #2d2d30;
+      color: #d4d4d4;
+      border: 1px solid #3c3c3c;
+      border-radius: 4px;
+      padding: 7px 0;
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      text-align: center;
+      user-select: none;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .color-btn:hover { background: #3a3a3d; }
+    .color-btn.active {
+      background: #0e639c;
+      border-color: #1177bb;
+      color: #fff;
+    }
+    .formula-presets {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+    }
+    .preset-btn {
+      background: #2d2d30;
+      color: #d4d4d4;
+      border: 1px solid #3c3c3c;
+      border-radius: 4px;
+      padding: 6px 2px;
+      font-family: inherit;
+      font-size: 10px;
+      cursor: pointer;
+      text-align: center;
+      user-select: none;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .preset-btn:hover { background: #3a3a3d; }
+    .preset-btn.active {
+      background: #0e639c;
+      border-color: #1177bb;
+      color: #fff;
+    }
+
+    .iter-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #9d9d9d;
+      flex-wrap: wrap;
+    }
+    .iter-row input {
+      width: 70px;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border: 1px solid #3c3c3c;
+      border-radius: 4px;
+      padding: 5px 8px;
+      font-family: inherit;
+      font-size: 12px;
+      outline: none;
+    }
+    .iter-row input:focus { border-color: #0e639c; }
+
+    .hint {
+      font-size: 10px;
+      color: #6b6b6b;
+      line-height: 1.5;
+      margin-top: auto;
+      border-top: 1px solid #333;
+      padding-top: 10px;
+    }
+    .hint b { color: #9d9d9d; font-weight: 600; }
+    #graph { flex: 1; position: relative; background: #fff; }
+    #canvas { width: 100%; height: 100%; cursor: crosshair; display: block; }
+  </style>
+</head>
+<body>
+  <div id="formula-panel">
+    <h2>FORMULA</h2>
+    <input id="formula-input" type="text" spellcheck="false" value="z^(2 * w) + c" />
+    <div id="formula-status"></div>
+
+    <div class="var-buttons">
+      <div class="var-btn" data-var="c">c<small>mandelbrot</small></div>
+      <div class="var-btn" data-var="bi">bi<small>bicomplex</small></div>
+      <div class="var-btn" data-var="t">t<small>triplex</small></div>
+      <div class="var-btn" data-var="q">q<small>quaternion</small></div>
+    </div>
+
+    <div class="extra-btn" id="burning-btn">|Re(z)| + |Im(z)| * i OFF</div>
+
+    <h2>COLOR SCHEME</h2>
+    <div class="color-buttons">
+      <div class="color-btn active" data-color="0">RGB</div>
+      <div class="color-btn" data-color="1">HSV</div>
+      <div class="color-btn" data-color="2">HUE</div>
+      <div class="color-btn" data-color="3">LITE</div>
+    </div>
+
+    <h2>FORMULA PRESETS</h2>
+    <div class="formula-presets" id="preset-container"></div>
+
+    <div class="iter-row">
+      <label for="iter-input">iteration</label>
+      <input id="iter-input" type="number" min="1" max="200" value="24" />
+    </div>
+
+    <div class="hint">
+      <b>W A S D</b> — move<br>
+      <b>Q E</b> — zoom<br>
+      <b>R T</b> — power ±<br>
+      <b>V C</b> — fractal index<br>
+      <b>U</b> — mandel/julia<br>
+      <b>B</b> — color scheme<br>
+      <b>0</b> — record toggle<br>
+      <b>H L</b> — reset / zoom
+    </div>
+  </div>
+
+  <div id="graph">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <script src="./webgl-code.js"></script>
+  <script>
+      const canvas = document.getElementById('canvas');
+      const gl = canvas.getContext('webgl', { alpha: false, antialias: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
+      let currentProgram = null;
+      let vertexBuffer = null;
+      let animFrameId = null;
+      let resolutionLocation, timeLocation, cxvalLocation, cyvalLocation, zoommandelLocation;
+      let cwvalLocation, zxvalLocation, zyvalLocation, zoomjuliaLocation, zwvalLocation;
+      let rangeLocation, powerLocation, logvalLocation, inverseLocation, multlightLocation;
+      let cosrotxLocation, sinrotxLocation, cosrotzLocation, sinrotzLocation, scalevalLocation;
+      let ismandelLocation, isnewtonLocation, isburningLocation, isminusoneLocation, isconjLocation;
+      let fractalindexLocation, colorschemeindexLocation, iterationLocation;
+      const formulaInput = document.getElementById('formula-input');
+      const formulaStatus = document.getElementById('formula-status');
+      const iterInput = document.getElementById('iter-input');
+      const varButtons = document.querySelectorAll('.var-btn');
+      const burningBtn = document.getElementById('burning-btn');
+      const colorButtons = document.querySelectorAll('.color-btn');
+      const presetContainer = document.getElementById('preset-container');
+
+      let currentVar = 'c';
+
+      let formulaDebounce = null;
+
+      function setActiveVar(v) {
+        currentVar = v;
+        varButtons.forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.var === v);
+        });
+      }
+
+      function applyFormula() {
+        const raw = formulaInput.value.trim();
+        if (!raw) return;
+        let src;
+        try {
+          src = getfractal(raw, currentVar, parseInt(iterInput.value, 10) || 24);
+        } catch (e) {
+          setFormulaError('getfractal error: ' + e.message);
+          return;
+        }
+        if (!src) {
+          setFormulaError('empty shader source');
+          return;
+        }
+        const ok = useShader(uniformcode + mathcode + src);
+        if (ok) {
+          setFormulaOk();
+        } else {
+          setFormulaError('shader compile error (см. console)');
+        }
+      }
+
+      function setFormulaError(msg) {
+        formulaInput.classList.add('error');
+        formulaStatus.classList.add('error');
+        formulaStatus.textContent = msg;
+      }
+      function setFormulaOk() {
+        formulaInput.classList.remove('error');
+        formulaStatus.classList.remove('error');
+        formulaStatus.textContent = 'ok';
+      }
+
+      formulaInput.addEventListener('input', () => {
+        clearTimeout(formulaDebounce);
+        formulaDebounce = setTimeout(applyFormula, 300);
+      });
+      formulaInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          clearTimeout(formulaDebounce);
+          applyFormula();
+        }
+      });
+
+      iterInput.addEventListener('change', () => {
+        iteration = Math.max(1, Math.min(2000, parseInt(iterInput.value, 10) || 24));
+        iterInput.value = iteration;
+        applyFormula();
+      });
+
+      varButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          setActiveVar(btn.dataset.var);
+          applyFormula();
+        });
+      });
+
+      burningBtn.addEventListener('click', () => {
+        isburning = isburning ? 0 : 1;
+        burningBtn.classList.toggle('active', isburning === 1);
+        burningBtn.textContent = '|Re(z)| + |Im(z)| * i: ' + (isburning ? 'ON' : 'OFF');
+        updateControls(true);
+      });
+
+      colorButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          colorButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          colorschemeindex = parseInt(btn.dataset.color, 10);
+          updateControls(true);
+        });
+      });
+
+      const presetFormulas = [
+        'z^(2 * w) + c',
+        'exp(z^w) + c',
+        'sinh(z^w) + c',
+        'cosh(z^w) + c',
+        'tanh(z^w) + c',
+        'tan(z^w) + c',
+        'cos(z^w) + c',
+        'sin(z^w) + c',
+        'gamma(z^w) + c',
+        'zeta(z^w) + c',
+        'zeta((z^(2 * w))^(0.5)) - 1.38629436112 + c',
+        'sn(z^w, z^w) + c',
+        'cn(z^w, z^w) + c',
+        'dn(z^w, z^w) + c',
+        'wp(z^w, z^w) + c',
+        'zeta(z^w)*zeta(-z^w) + c',
+        '((7 * z^w + 2) - exp(z^w) * (5 * z^w + 2)) * 0.25 + c',
+        '((7 * z^w + 2) - exp(cmul_i(PI * z^w)) * (5 * z^w + 2)) * 0.25 + c',
+        '((7 * z^w + 2) - cos(PI * z^w) * (5 * z^w + 2)) * 0.25 + c',
+        'w^z + c'
+      ];
+
+      for (let i = 0; i < 21; i++) {
+        const btn = document.createElement('div');
+        btn.className = 'preset-btn';
+        btn.textContent = presetFormulas[i];
+        btn.title = presetFormulas[i];
+        btn.dataset.formula = presetFormulas[i];
+        btn.addEventListener('click', () => {
+          formulaInput.value = btn.dataset.formula;
+          document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          clearTimeout(formulaDebounce);
+          applyFormula();
+        });
+        presetContainer.appendChild(btn);
+      }
+
+      function updateUniformLocations(prog) {
+        resolutionLocation = gl.getUniformLocation(prog, 'iResolution');
+        timeLocation = gl.getUniformLocation(prog, 'iTime');
+        cxvalLocation = gl.getUniformLocation(prog, 'cxval');
+        cyvalLocation = gl.getUniformLocation(prog, 'cyval');
+        zoommandelLocation = gl.getUniformLocation(prog, 'zoommandel');
+        cwvalLocation = gl.getUniformLocation(prog, 'cwval');
+        zxvalLocation = gl.getUniformLocation(prog, 'zxval');
+        zyvalLocation = gl.getUniformLocation(prog, 'zyval');
+        zoomjuliaLocation = gl.getUniformLocation(prog, 'zoomjulia');
+        zwvalLocation = gl.getUniformLocation(prog, 'zwval');
+        rangeLocation = gl.getUniformLocation(prog, 'range');
+        powerLocation = gl.getUniformLocation(prog, 'power');
+        logvalLocation = gl.getUniformLocation(prog, 'logval');
+        inverseLocation = gl.getUniformLocation(prog, 'inverse');
+        multlightLocation = gl.getUniformLocation(prog, 'multlight');
+        cosrotxLocation = gl.getUniformLocation(prog, 'cosrotx');
+        sinrotxLocation = gl.getUniformLocation(prog, 'sinrotx');
+        cosrotzLocation = gl.getUniformLocation(prog, 'cosrotz');
+        sinrotzLocation = gl.getUniformLocation(prog, 'sinrotz');
+        scalevalLocation = gl.getUniformLocation(prog, 'scaleval');
+        ismandelLocation = gl.getUniformLocation(prog, 'ismandel');
+        isnewtonLocation = gl.getUniformLocation(prog, 'isnewton');
+        isburningLocation = gl.getUniformLocation(prog, 'isburning');
+        isminusoneLocation = gl.getUniformLocation(prog, 'isminusone');
+        isconj = gl.getUniformLocation(prog, 'isconj');
+        fractalindexLocation = gl.getUniformLocation(prog, 'fractalindex');
+        colorschemeindexLocation = gl.getUniformLocation(prog, 'colorschemeindex');
+        iterationLocation = gl.getUniformLocation(prog, 'iteration');
+      }
+
+      function useShader(fsSource) {
+        function compileShader(gl, source, type) {
+          const shader = gl.createShader(type);
+          gl.shaderSource(shader, source);
+          gl.compileShader(shader);
+          if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            console.error('Error compile shader:', gl.getShaderInfoLog(shader));
+            gl.deleteShader(shader);
+            return null;
+          }
+          return shader;
+        }
+        const newProgram = gl.createProgram();
+        const vsSource = `attribute vec2 position; void main() { gl_Position = vec4(position, 0.0, 1.0); }`;
+        const vs = compileShader(gl, vsSource, gl.VERTEX_SHADER);
+        if (!vs) {
+          gl.deleteProgram(newProgram);
+          return false;
+        }
+        const fs = compileShader(gl, fsSource, gl.FRAGMENT_SHADER);
+        if (!fs) {
+          gl.deleteShader(vs);
+          gl.deleteProgram(newProgram);
+          return false;
+        }
+        gl.attachShader(newProgram, vs);
+        gl.attachShader(newProgram, fs);
+        gl.linkProgram(newProgram);
+        gl.detachShader(newProgram, vs);
+        gl.detachShader(newProgram, fs);
+        gl.deleteShader(vs);
+        gl.deleteShader(fs);
+        if (!gl.getProgramParameter(newProgram, gl.LINK_STATUS)) {
+          console.error('Error link program:', gl.getProgramInfoLog(newProgram));
+          gl.deleteProgram(newProgram);
+          return false;
+        }
+        if (currentProgram) {
+          gl.deleteProgram(currentProgram);
+        }
+        currentProgram = newProgram;
+        gl.useProgram(currentProgram);
+        if (!vertexBuffer) {
+          vertexBuffer = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([ -1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1 ]), gl.STATIC_DRAW);
+        }
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        const positionLocation = gl.getAttribLocation(currentProgram, 'position');
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+        updateUniformLocations(currentProgram);
+        gl.disable(gl.DEPTH_TEST);
+        gl.disable(gl.BLEND);
+        gl.disable(gl.STENCIL_TEST);
+        resize();
+        updateControls(true);
+        return true;
+      }
+
+      let cxval = 0.0;
+      let cyval = 0.0;
+      let zoomMandel = 3.0;
+      let cwval = 0.0;
+      let zxval = 0.0;
+      let zyval = 0.0;
+      let zoomJulia = 3.0;
+      let zwval = 0.0;
+      let power = 1.0;
+      let range = 600.0;
+      let inverse = 0.0;
+      let lastChangeTime = 0;
+      let ismandel = 1;
+      let isnewton = 0;
+      let isburning = 0;
+      let isconj = 0;
+      let isminusone = 0;
+      let fractalindex = 0;
+      let multlight = 1.0;
+      let rotx = 0.0;
+      let rotz = 0.0;
+      let rotationSpeed = 0.05;
+      let iteration = 24;
+      let hypercomplexindex = 0;
+      let colorschemeindex = 0;
+      let movespeedx = 0.025;
+      let movespeedy = 0.025 * 0.5;
+      let isRecording = 0;
+      let zoomSpeed = 0.07;
+      let scaleval = 0.0;
+      let recordedChunks = [];
+      let mediaRecorder = null;
+
+      const keysPressed = {};
+      window.addEventListener('keydown', (event) => { if (event.target.tagName === 'TEXTAREA' || event.target.tagName === 'INPUT') { return; } keysPressed[event.key.toLowerCase()] = true; });
+      window.addEventListener('keyup', (event) => { if (event.target.tagName === 'TEXTAREA' || event.target.tagName === 'INPUT') { return; } keysPressed[event.key.toLowerCase()] = false; });
+
+      function startRecording() {
+        if (typeof MediaRecorder === 'undefined' || typeof canvas.captureStream !== 'function') {
+          console.error('canvas.captureStream is not supported'); return;
+        }
+        const stream = canvas.captureStream(30);
+        const options = { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 75000000 };
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(stream, options);
+        mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) { recordedChunks.push(event.data); } };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          const timestamp = new Date().toISOString().slice(0,19).replace(/:/g, '-');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = `fractal-recording-${timestamp}.webm`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        };
+        mediaRecorder.start();
+        isRecording = true;
+        console.log('Recording started...');
+      }
+
+      function stopRecording() {
+        if (mediaRecorder && isRecording) {
+          mediaRecorder.stop();
+          isRecording = false;
+          console.log('Recording stopped.');
+        }
+      }
+
+      function updateControls(keyinit = false) {
+        let keypress = false;
+        const currentTime = Date.now();
+        if (keysPressed['w']) { if (ismandel) { cyval = cyval + zoomMandel * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } else { zyval = zyval + zoomJulia * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } keypress = true; }
+        if (keysPressed['s']) { if (ismandel) { cyval = cyval - zoomMandel * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } else { zyval = zyval - zoomJulia * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } keypress = true; }
+        if (keysPressed['d']) { if (ismandel) { cxval = cxval + zoomMandel * (hypercomplexindex == 0 ? movespeedx : movespeedy * 0.1); } else { zxval = zxval + zoomJulia * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } keypress = true; }
+        if (keysPressed['a']) { if (ismandel) { cxval = cxval - zoomMandel * (hypercomplexindex == 0 ? movespeedx : movespeedy * 0.1); } else { zxval = zxval - zoomJulia * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } keypress = true; }
+        if (keysPressed['e']) { if (ismandel) { zoomMandel /= 1.0 + (hypercomplexindex == 0 ? zoomSpeed : zoomSpeed * 0.1); } else { zoomJulia /= 1.0 + zoomSpeed; } keypress = true; }
+        if (keysPressed['q']) { if (ismandel) { zoomMandel *= 1.0 + (hypercomplexindex == 0 ? zoomSpeed : zoomSpeed * 0.1); } else { zoomJulia *= 1.0 + zoomSpeed; } keypress = true; }
+        if (keysPressed['r'] && currentTime - lastChangeTime > 200) { power = Math.floor(power + 1); lastChangeTime = currentTime; keypress = true; }
+        if (keysPressed['t'] && currentTime - lastChangeTime > 200) { power = Math.ceil(power - 1); lastChangeTime = currentTime; keypress = true; }
+        if (keysPressed['v'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 27 ? 0 : fractalindex + 1; lastChangeTime = currentTime; keypress = true; }
+        if (keysPressed['c'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 0 ? 27 : fractalindex - 1; lastChangeTime = currentTime; keypress = true; }
+        if (keysPressed['u'] && currentTime - lastChangeTime > 200) { ismandel = ismandel == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }
+        if (keysPressed['f'] && currentTime - lastChangeTime > 800) { inverse = inverse == 1.0 ? 0.0 : 1.0; lastChangeTime = currentTime; keypress = true; }
+        if (keysPressed['n'] && currentTime - lastChangeTime > 200) { hypercomplexindex = hypercomplexindex == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }
+        if (keysPressed['x']) { range *= 2.0; keypress = true; }
+        if (keysPressed['z']) { range *= 1.0 / 1.125; keypress = true; }
+        if (keysPressed['2'] && currentTime - lastChangeTime > 200) { zoomSpeed = zoomSpeed / 2.0; rotationSpeed = rotationSpeed / 2.0; movespeedx = movespeedx / 2.0; movespeedy = movespeedy / 2.0; lastChangeTime = currentTime; keypress = true; }
+        if (keysPressed['3'] && currentTime - lastChangeTime > 200) { zoomSpeed = zoomSpeed * 2.0; rotationSpeed = rotationSpeed * 2.0; movespeedx = movespeedx * 2.0; movespeedy = movespeedy * 2.0; lastChangeTime = currentTime; keypress = true; }
+        if (keysPressed['0'] && currentTime - lastChangeTime > 500) { if (isRecording) { stopRecording(); } else { startRecording(); } lastChangeTime = currentTime; keypress = true; }
+        if (keysPressed['[']) { power -= 1.0 / 128.0; keypress = true; }
+        if (keysPressed[']']) { power += 1.0 / 128.0; keypress = true; }
+        if (keysPressed['j']) { multlight *= 1.0 - (1.0 / 128.0); keypress = true; }
+        if (keysPressed['k']) { multlight *= 1.0 + (1.0 / 128.0); keypress = true; }
+        if (keysPressed['h'] && currentTime - lastChangeTime > 200) { range = 24.0; rotx = 0.0; rotz = 0.0; if (ismandel) { zoomMandel = 3.0; cxval = 0.0; cyval = 0.0; } else { zoomJulia = 3.0; zxval = 0.0; zyval = 0.0; } lastChangeTime = currentTime; keypress = true; }
+        if (keysPressed['l'] && currentTime - lastChangeTime > 200) { range = 48.0; rotx = 0.0; rotz = 0.0; if (ismandel) { zoomMandel = 60.0; cxval = 0.0; cyval = 0.0; } else { zoomJulia = 60.0; zxval = 0.0; zyval = 0.0; } lastChangeTime = currentTime; keypress = true; }
+        if (keysPressed['9']) { zoomMandel /= 1.0 + zoomSpeed; keypress = true; }
+        if (keysPressed['7']) { zoomMandel *= 1.0 + zoomSpeed; keypress = true; }
+        if (keysPressed['8']) { cyval = cyval + zoomMandel * movespeedy * 0.1; keypress = true; }
+        if (keysPressed['5']) { cyval = cyval - zoomMandel * movespeedy * 0.1; keypress = true; }
+        if (keysPressed['4']) { cxval = cxval - zoomMandel * movespeedx * 0.1; keypress = true; }
+        if (keysPressed['6']) { cxval = cxval + zoomMandel * movespeedx * 0.1; keypress = true; }
+        if (keysPressed['arrowup']) { rotx -= rotationSpeed * 0.1; keypress = true; }
+        if (keysPressed['arrowdown']) { rotx += rotationSpeed * 0.1; keypress = true; }
+        if (keysPressed['arrowleft']) { rotz += rotationSpeed * 0.1; keypress = true; }
+        if (keysPressed['arrowright']) { rotz -= rotationSpeed * 0.1; keypress = true; }
+        if (keysPressed['o']) { scaleval -= 0.01; keypress = true; }
+        if (keysPressed['p']) { scaleval += 0.01; keypress = true; }
+        if (keysPressed['b']) { colorschemeindex += 1; colorschemeindex = colorschemeindex == 4 ? 0 : colorschemeindex; keypress = true; }
+        if ((keypress || keyinit) && currentProgram) {
+          const logval = power > 2.0 ? 1.0 / Math.log(Math.abs(power)) : 1.44269504088896;
+          let rangecalc = range;
+          if (power < 0) { rangecalc = range * 8.0; }
+          gl.uniform1i(ismandelLocation, ismandel);
+          gl.uniform1i(isnewtonLocation, isnewton);
+          gl.uniform1i(isburningLocation, isburning);
+          gl.uniform1i(isminusoneLocation, isminusone);
+          gl.uniform1i(isconjLocation, isconj);
+          gl.uniform1f(cxvalLocation, cxval);
+          gl.uniform1f(cyvalLocation, cyval);
+          gl.uniform1f(cwvalLocation, cwval);
+          gl.uniform1f(zoomjuliaLocation, zoomJulia);
+          gl.uniform1f(zxvalLocation, zxval);
+          gl.uniform1f(zyvalLocation, zyval);
+          gl.uniform1f(zwvalLocation, zwval);
+          gl.uniform1f(zoommandelLocation, zoomMandel);
+          gl.uniform1f(powerLocation, power);
+          gl.uniform1f(inverseLocation, inverse);
+          gl.uniform1f(multlightLocation, multlight);
+          gl.uniform1f(cosrotxLocation, Math.cos(rotx));
+          gl.uniform1f(sinrotxLocation, Math.sin(rotx));
+          gl.uniform1f(cosrotzLocation, Math.cos(rotz));
+          gl.uniform1f(sinrotzLocation, Math.sin(rotz));
+          gl.uniform1f(scalevalLocation, scaleval);
+          gl.uniform1f(logvalLocation, logval);
+          gl.uniform1f(rangeLocation, rangecalc);
+          gl.uniform1i(colorschemeindexLocation, colorschemeindex);
+          gl.uniform1i(iterationLocation, iteration);
+        }
+      }
+
+      function render(currentTimeMs) {
+        updateControls();
+        if (currentProgram) {
+          gl.uniform1f(timeLocation, currentTimeMs * 0.001);
+          gl.clearColor(0, 0, 0, 1);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+          gl.drawArrays(gl.TRIANGLES, 0, 6);
+        }
+        animFrameId = requestAnimationFrame(render);
+      }
+
+      function resize() {
+        const graph = document.getElementById('graph');
+        const rect = graph.getBoundingClientRect();
+        const screenWidth = Math.floor(rect.width);
+        const screenHeight = Math.floor(rect.height);
+        canvas.width = Math.floor(screenWidth);
+        canvas.height = Math.floor(screenHeight);
+        canvas.style.width = `${screenWidth}px`;
+        canvas.style.height = `${screenHeight}px`;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        if (resolutionLocation) {
+          gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+        }
+      }
+
+      setActiveVar('c');
+      applyFormula();
+      animFrameId = requestAnimationFrame(render);
+      window.addEventListener('resize', () => { resize(); });
+  </script>
+</body>
+</html>
