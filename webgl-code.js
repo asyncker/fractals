@@ -66,6 +66,8 @@ let mathcode = `
   vec2 cadd(vec2 z, vec2 w) { return vec2(z.x + w.x, z.y + w.y); }
   vec2 csub(vec2 z, vec2 w) { return cadd(z, cneg(w)); }
   vec2 cmul(vec2 z, vec2 w) { return vec2(z.x * w.x - z.y * w.y, z.x * w.y + z.y * w.x); }
+  vec2 cmul(vec2 z, float w) { return z * w; }
+  vec2 cmul(float z, vec2 w) { return z * w; }
   vec2 cdiv(vec2 z, vec2 w) { return cmul(z, cinv(w)); }
   vec2 cpow(vec2 z, vec2 w) { 
     if (w.y == 0.0) { 
@@ -308,9 +310,7 @@ let mathcode = `
   float cosh_derv(float x) { return cosh(x); }
   float sinh_derv(float x) { return sinh(x); }
   float tan_derv(float x) { return sq(inv(cos(x))); }
-  vec2 ctau_derv(vec2 z, vec2 w) { 
-    return cmul(cpow(z, w * -1.0 - vec2(0.5, 0.0)), vec2(-0.5, 0.0) + w);
-  }
+  vec2 ctau_derv(vec2 z, vec2 w) { return cmul(cpow(w, vec2(0.5, 0.0) - z), clog(w)); }
   vec2 ctanh_derv(vec2 z) { return vec2(1.0, 0.0) - csq(ctanh(z)); }
   vec2 ctan_derv(vec2 z) { return csq(cinv(ccos(z))); }
   vec2 cpow_derv(vec2 z, vec2 w) { return cmul(w, cpow(z, w - vec2(1.0, 0.0))); }
@@ -406,6 +406,8 @@ let mathcode = `
   vec4 qadd(vec4 z, vec4 w) { return z + w; }
   vec4 qsub(vec4 z, vec4 w) { return z - w; }
   vec4 qmul(vec4 z, vec4 w) { return vec4(z.x * w.x - dot(z.yzw, w.yzw), z.x * w.yzw + w.x * z.yzw + cross(z.yzw, w.yzw)); }
+  vec4 qmul(vec4 z, float w) { return z * w; }
+  vec4 qmul(float z, vec4 w) { return z * w; }
   vec4 qdiv(vec4 z, vec4 w) { return qmul(z, qinv(w)); } // qmul(qinv(w), z)
   vec4 qexp(vec4 z) { float vlen = length(z.yzw), expv = exp(z.x); if (vlen < 1e-6) return vec4(expv, z.yzw); return expv * vec4(cos(vlen), sin(vlen) / vlen * z.yzw); }
   vec4 qlog(vec4 z) { float vlen = length(z.yzw), qlen = length(z); float logv = log(qlen); if (vlen < 1e-6) return vec4(logv, 0.0, 0.0, 0.0); return vec4(logv, acos(clamp(z.x / qlen, -1.0, 1.0)) / vlen * z.yzw); }
@@ -445,7 +447,8 @@ let mathcode = `
   vec4 qround(vec4 z) { return floor(z + 0.5); }
   vec4 qstep(vec4 z) { return vec4(step(0.0, z.x), 0.0, 0.0, 0.0); }
   vec4 qclamp(vec4 z, vec4 w, vec4 s) { return vec4(clamp(z.x, w.x, s.y), clamp(z.y, w.y, s.y), clamp(z.z, w.z, s.z), clamp(z.w, w.w, s.w)); }
-  vec4 qtau(vec4 z) { return vec4(1.0, 0.0, 0.0, 0.0) - qexp(vec4(0.5, 0.0, 0.0, 0.0) - z); }
+  vec4 qtau(vec4 z, vec4 w) { return vec4(1.0, 0.0, 0.0, 0.0) - qpow(z, vec4(0.5, 0.0, 0.0, 0.0) - w); }
+  vec4 qtau_derv(vec4 z, vec4 w) { return qmul(qpow(w, vec4(0.5, 0.0, 0.0, 0.0) - z), qlog(w)); }
   vec4 qgamma_right(vec4 z) {
     vec4 w = z - vec4(1.0, 0.0, 0.0, 0.0);
     vec4 t = w + vec4(7.5, 0.0, 0.0, 0.0);
@@ -483,6 +486,8 @@ let mathcode = `
   vec4 biadd(vec4 z, vec4 w) { return z + w; }
   vec4 bisub(vec4 z, vec4 w) { return z - w; }
   vec4 bimul(vec4 z, vec4 w) { return vec4(cmul(z.xy, w.xy) - cmul(z.zw, w.zw), cmul(z.xy, w.zw) + cmul(z.zw, w.xy)); }
+  vec4 bimul(vec4 z, float w) { return z * w; }
+  vec4 bimul(float z, vec4 w) { return z * w; }
   vec4 bidiv(vec4 z, vec4 w) { return bimul(z, biinv(w)); }
   vec4 biexp(vec4 z) { vec2 r = cexp(z.xy); return vec4(cmul(r, ccos(z.zw)), cmul(r, csin(z.zw))); }
   vec4 bilog(vec4 z) { vec2 logz = clog(z.xy + cmul_i(z.zw)); vec2 logw = clog(z.xy - cmul_i(z.zw)); return vec4(0.5 * (logz + logw), -0.5 * cmul_i(logz - logw)); }
@@ -522,7 +527,8 @@ let mathcode = `
   vec4 biclamp(vec4 z, vec4 w, vec4 s) { return vec4(clamp(z.x, w.x, s.y), clamp(z.y, w.y, s.y), clamp(z.z, w.z, s.z), clamp(z.w, w.w, s.w)); }
   //vec4 bi1arg(vec4 z) { vec2 u = cmul_i(bidiv(z.zw, z.xy)); vec2 arg = cmul_i(clog(bidiv(vec2(1.0, 0.0) - u, vec2(1.0, 0.0) + u))) * 0.5; return vec4(0.0, 0.0, arg.x, arg.y); }
   vec4 bifib(vec4 z) { return (bipow(vec4(1.61803398875, 0.0, 0.0, 0.0), z) - bipow(vec4(-0.61803398875, 0.0, 0.0, 0.0), z)) * 0.4472135955; }
-  vec4 bitau(vec4 z) { return vec4(1.0, 0.0, 0.0, 0.0) - biexp(vec4(0.5, 0.0, 0.0, 0.0) - z); }
+  vec4 bitau(vec4 z, vec4 w) { return vec4(1.0, 0.0, 0.0, 0.0) - bipow(z, vec4(0.5, 0.0, 0.0, 0.0) - w); }
+  vec4 bitau_derv(vec4 z, vec4 w) { return bimul(bipow(z, vec4(0.5, 0.0, 0.0, 0.0) - w), bilog(z)); }
   vec4 bigamma_right(vec4 z) {
       vec4 w = z - vec4(1.0, 0.0, 0.0, 0.0);
       vec4 t = w + vec4(7.5, 0.0, 0.0, 0.0);
@@ -577,13 +583,15 @@ let mathcode = `
   vec4 tinv(vec4 z) { return texp(-1.0 * tlog(z)); }
   vec4 tadd(vec4 z, vec4 w) { return z + w; }
   vec4 tsub(vec4 z, vec4 w) { return z - w; }
+  vec4 tmul(vec4 z, float w) { return z * w; }
+  vec4 tmul(float z, vec4 w) { return z * w; }
   vec4 tsinh(vec4 z) { return (texp(z) - texp(-z)) * 0.5; }
   vec4 tcosh(vec4 z) { return (texp(z) + texp(-z)) * 0.5; }
   vec4 texpsumlog(vec4 z, vec4 w) { return texp(tlog(z) + tlog(w)); }
   vec4 tpow(vec4 z, float w) { if (w == 1.0) { return z; } else if (w == 2.0) { return tsq(z); } return texp(w * tlog(z)); }
   vec4 troot(vec4 z, float w) { return tpow(z, 1.0 / w); }
   vec4 tsqrt(vec4 z) { return texp(0.5 * tlog(z)); }
-  vec4 ttau(vec4 z) { return vec4(1.0, 0.0, 0.0, 0.0) - texp(vec4(0.5, 0.0, 0.0, 0.0) - z); }
+  vec4 ttaue(vec4 z) { return vec4(1.0, 0.0, 0.0, 0.0) - texp(vec4(0.5, 0.0, 0.0, 0.0) - z); }
   vec4 tsign(vec4 z) { return z / length(z); }
   vec4 tmax(vec4 z, vec4 w) { return vec4(max(z.x, w.x), max(z.y, w.y), min(z.z, w.z), min(z.w, w.w)); }
   vec4 tmin(vec4 z, vec4 w) { return vec4(min(z.x, w.x), min(z.y, w.y), min(z.z, w.z), min(z.w, w.w)); }
@@ -1156,7 +1164,7 @@ function getDerivative(f, v = 'z') {
   return str(simplify(diff(parseExpr())));
 }
 
-function convertformulatowebgl(f) {
+function convertformulatowebgl(f, vecf = "vec2") {
   const T = f.match(/\d+(?:\.\d+)?|[a-zA-Z_]\w*|[()+\-/*^,]/g) || [];
   let p = 0;
   const pk = () => T[p], nx = () => T[p++];
@@ -1201,19 +1209,19 @@ function convertformulatowebgl(f) {
       return node.t === 'n' || (node.t === 'u' && node.c.t === 'n');
   };
 
-  // ctx: 'add' | 'sub' | 'mul' | 'div' | 'func' | 'top'
   const str = (n, pr = 0, ctx = 'top') => {
       if (n.t === 'v') return n.n;
-      
-      // Контекстно-зависимый вывод чисел
       if (n.t === 'n') {
-          if (ctx === 'mul' || ctx === 'div') return fmt(n.v); // Оставляем float
-          return `vec2(${fmt(n.v)}, 0.0)`; // Превращаем в vec2 для сложения/функций
+        if (ctx === 'mul' || ctx === 'div') return fmt(n.v);
+        if (vecf == "vec4") { return `vec4(${fmt(n.v)}, 0.0, 0.0, 0.0)`; }
+        if (vecf == "vec3") { return `vec3(${fmt(n.v)}, 0.0, 0.0)`; }
+        if (vecf == "vec1") { return `${fmt(n.v)}`; }
+        return `vec2(${fmt(n.v)}, 0.0)`;
       }
       
       if (n.t === 'u') {
           if ((ctx === 'mul' || ctx === 'div') && n.c.t === 'n') {
-              return `-${fmt(n.c.v)}`; // Избегаем -(vec2(...)) при умножении
+              return `-${fmt(n.c.v)}`;
           }
           return `-${str(n.c, 3, ctx)}`; 
       }
@@ -1232,13 +1240,11 @@ function convertformulatowebgl(f) {
               const rIsConst = isScalarConst(r);
               
               if (lIsConst || rIsConst) {
-                  // Один из операндов константа -> оставляем оператор *
                   const lS = str(l, 2, 'mul');
                   const rS = str(r, 2, o === '/' ? 'div' : 'mul');
                   if (o === '/') return `${lS} * inv(${rS})`;
                   return `${lS} * ${rS}`;
               } else {
-                  // Оба операнда комплексные -> используем функцию mul
                   const lS = str(l, 0, 'mul');
                   const rS = str(r, 0, o === '/' ? 'div' : 'mul');
                   if (o === '/') return `mul(${lS}, inv(${rS}))`;
@@ -1254,18 +1260,15 @@ function convertformulatowebgl(f) {
               return p < pr ? `(${s})` : s;
           }
       }
-      return 'vec2(0.0, 0.0)';
+      return vecf + '(0.0)';
   };
   
   return str(ast);
 }
 
 function getformula_and_derv(formula) {
-  const formulas = formula.split("=");
-  const expr = formulas[1].trim();
-  const dervExpr = getDerivative(expr);
-  const newformula = formulas[0] + " = " + convertformulatowebgl(expr);
-  const dervformula = formulas[0] + " = " + convertformulatowebgl(dervExpr);
+  const newformula = convertformulatowebgl(formula);
+  const dervformula = convertformulatowebgl(getDerivative(formula));
   return [newformula, dervformula];
 }
 
@@ -1281,7 +1284,8 @@ function getfractal(formula, type) {
     return newFormula;
   }
   const formulas = getformula_and_derv(formula);
-  const newformula = formulas[0];
+  const newformula = "z = " + formulas[0];
+  const newnewton = "derv = "  + formulas[1];
   if (type == "bi") { return bicomplexshadercode(convertformula(newformula, "bi") + ";"); }
   else if (type == "q") { return quaternionshadercode(convertformula(newformula, "q") + ";"); }
   else if (type == "t") { return mandelbulbshadercode(convertformula(newformula, "t") + ";"); }
