@@ -197,6 +197,42 @@
     .hint b { color: #9d9d9d; font-weight: 600; }
     #graph { flex: 1; position: relative; background: #fff; }
     #canvas { width: 100%; height: 100%; cursor: crosshair; display: block; }
+
+    .btn-row {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    .btn-row .extra-btn {
+      flex: 1 0 auto;
+      min-width: 50px;
+      width: auto;
+      padding: 6px 4px;
+      font-size: 11px;
+    }
+    .power-row .extra-btn {
+      flex: 1 0 0;
+      min-width: 38px;
+      padding: 6px 2px;
+      font-size: 11px;
+    }
+    .btn-row .extra-btn.active {
+      background: #0e639c;
+      border-color: #1177bb;
+      color: #fff;
+    }
+    #julia-btn {
+      width: 100%;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      padding: 9px 0;
+    }
+    #julia-btn.active {
+      background: #0e639c;
+      border-color: #1177bb;
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -213,6 +249,14 @@
     </div>
 
     <div class="extra-btn" id="burning-btn">|Re(z)| + |Im(z)| * i OFF</div>
+    <div class="btn-row power-row" id="power-row">
+      <div class="extra-btn" data-power="-2">-2</div>
+      <div class="extra-btn" data-power="-1">-1</div>
+      <div class="extra-btn" data-power="-0.5">-1/2</div>
+      <div class="extra-btn" data-power="1">1</div>
+      <div class="extra-btn" data-power="2">2</div>
+      <div class="extra-btn" data-power="3">3</div>
+    </div>
 
     <h2>COLOR SCHEME</h2>
     <div class="color-buttons">
@@ -224,6 +268,14 @@
 
     <h2>FORMULA PRESETS</h2>
     <div class="formula-presets" id="preset-container"></div>
+
+    <h2>FORMULA CHANGE</h2>
+    <div class="btn-row">
+      <div class="extra-btn" id="conj-btn">conj(z) OFF</div>
+      <div class="extra-btn" id="minus-btn">1 - z OFF</div>
+      <div class="extra-btn" id="inverse-btn">1 / c OFF</div>
+    </div>
+    <div class="extra-btn" id="julia-btn">Julia</div>
 
     <div class="iter-row">
       <label for="iter-input">iteration</label>
@@ -266,6 +318,11 @@
       const burningBtn = document.getElementById('burning-btn');
       const colorButtons = document.querySelectorAll('.color-btn');
       const presetContainer = document.getElementById('preset-container');
+      const conjBtn = document.getElementById('conj-btn');
+      const minusBtn = document.getElementById('minus-btn');
+      const inverseBtn = document.getElementById('inverse-btn');
+      const juliaBtn = document.getElementById('julia-btn');
+      const powerRow = document.getElementById('power-row');
 
       let currentVar = 'c';
 
@@ -338,8 +395,45 @@
       burningBtn.addEventListener('click', () => {
         isburning = isburning ? 0 : 1;
         burningBtn.classList.toggle('active', isburning === 1);
-        burningBtn.textContent = '|Re(z)| + |Im(z)| * i: ' + (isburning ? 'ON' : 'OFF');
+        burningBtn.textContent = '|Re(z)| + |Im(z)| * i ' + (isburning ? 'ON' : 'OFF');
         updateControls(true);
+      });
+
+      conjBtn.addEventListener('click', () => {
+        isconj = isconj ? 0 : 1;
+        conjBtn.classList.toggle('active', isconj === 1);
+        conjBtn.textContent = 'conj(z) ' + (isconj ? 'ON' : 'OFF');
+        updateControls(true);
+      });
+
+      minusBtn.addEventListener('click', () => {
+        isminusone = isminusone ? 0 : 1;
+        minusBtn.classList.toggle('active', isminusone === 1);
+        minusBtn.textContent = '1 - z ' + (isminusone ? 'ON' : 'OFF');
+        updateControls(true);
+      });
+
+      inverseBtn.addEventListener('click', () => {
+        inverse = inverse === 1.0 ? 0.0 : 1.0;
+        inverseBtn.classList.toggle('active', inverse === 1.0);
+        inverseBtn.textContent = '1 / c ' + (inverse === 1.0 ? 'ON' : 'OFF');
+        updateControls(true);
+      });
+
+      juliaBtn.addEventListener('click', () => {
+        ismandel = ismandel == 1 ? 0 : 1;
+        juliaBtn.classList.toggle('active', ismandel === 0);
+        juliaBtn.textContent = ismandel ? 'Julia (Mandelbrot)' : 'Julia (Julia)';
+        updateControls(true);
+      });
+
+      powerRow.querySelectorAll('.extra-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          power = parseFloat(btn.dataset.power);
+          powerRow.querySelectorAll('.extra-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          updateControls(true);
+        });
       });
 
       colorButtons.forEach(btn => {
@@ -415,7 +509,7 @@
         isnewtonLocation = gl.getUniformLocation(prog, 'isnewton');
         isburningLocation = gl.getUniformLocation(prog, 'isburning');
         isminusoneLocation = gl.getUniformLocation(prog, 'isminusone');
-        isconj = gl.getUniformLocation(prog, 'isconj');
+        isconjLocation = gl.getUniformLocation(prog, 'isconj');
         fractalindexLocation = gl.getUniformLocation(prog, 'fractalindex');
         colorschemeindexLocation = gl.getUniformLocation(prog, 'colorschemeindex');
         iterationLocation = gl.getUniformLocation(prog, 'iteration');
