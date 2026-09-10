@@ -40,6 +40,19 @@
       let isEditing = false;
       let renderPaused = false;
 
+      const canvas = document.getElementById('canvas');
+      const codeEditor = document.getElementById('code');
+      const gl = canvas.getContext('webgl', { alpha: false, antialias: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
+      let currentProgram = null;
+      let vertexBuffer = null;
+      let animFrameId = null;
+      let resolutionLocation, timeLocation, cxvalLocation, cyvalLocation, zoommandelLocation;
+      let cwvalLocation, zxvalLocation, zyvalLocation, zoomjuliaLocation, zwvalLocation;
+      let rangeLocation, powerLocation, logvalLocation, inverseLocation, multlightLocation;
+      let cosrotxLocation, sinrotxLocation, cosrotzLocation, sinrotzLocation, scalevalLocation;
+      let ismandelLocation, isnewtonLocation, isburningLocation, isminusoneLocation;
+      let fractalindexLocation, colorschemeindexLocation, iterationLocation;
+
       function toggleEditor() {
         const editor = document.getElementById('editor');
         const graph = document.getElementById('graph');
@@ -58,40 +71,6 @@
           resize();
         }
       }
-
-      const canvas = document.getElementById('canvas');
-      const codeEditor = document.getElementById('code');
-      const gl = canvas.getContext('webgl', { alpha: false, antialias: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
-      let currentProgram = null;
-      let vertexBuffer = null;
-      let animFrameId = null;
-
-      function compileShader(gl, source, type) {
-        const shader = gl.createShader(type);
-        gl.shaderSource(shader, source);
-        gl.compileShader(shader);
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-          console.error('Error compile shader:', gl.getShaderInfoLog(shader));
-          gl.deleteShader(shader);
-          return null;
-        }
-        return shader;
-      }
-
-      function initQuadBuffer() {
-        if (!vertexBuffer) {
-          vertexBuffer = gl.createBuffer();
-          gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([ -1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1 ]), gl.STATIC_DRAW);
-        }
-      }
-
-      let resolutionLocation, timeLocation, cxvalLocation, cyvalLocation, zoommandelLocation;
-      let cwvalLocation, zxvalLocation, zyvalLocation, zoomjuliaLocation, zwvalLocation;
-      let rangeLocation, powerLocation, logvalLocation, inverseLocation, multlightLocation;
-      let cosrotxLocation, sinrotxLocation, cosrotzLocation, sinrotzLocation, scalevalLocation;
-      let ismandelLocation, isnewtonLocation, isburningLocation, isminusoneLocation;
-      let fractalindexLocation, colorschemeindexLocation, iterationLocation;
 
       function updateUniformLocations(prog) {
         resolutionLocation = gl.getUniformLocation(prog, 'iResolution');
@@ -124,6 +103,17 @@
       }
 
       function useShader(fsSource) {
+        function compileShader(gl, source, type) {
+          const shader = gl.createShader(type);
+          gl.shaderSource(shader, source);
+          gl.compileShader(shader);
+          if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            console.error('Error compile shader:', gl.getShaderInfoLog(shader));
+            gl.deleteShader(shader);
+            return null;
+          }
+          return shader;
+        }
         const newProgram = gl.createProgram();
         const vsSource = `attribute vec2 position; void main() { gl_Position = vec4(position, 0.0, 1.0); }`;
         const vs = compileShader(gl, vsSource, gl.VERTEX_SHADER);
@@ -154,19 +144,19 @@
         }
         currentProgram = newProgram;
         gl.useProgram(currentProgram);
-
-        initQuadBuffer();
+        if (!vertexBuffer) {
+          vertexBuffer = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([ -1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1 ]), gl.STATIC_DRAW);
+        }
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
         const positionLocation = gl.getAttribLocation(currentProgram, 'position');
         gl.enableVertexAttribArray(positionLocation);
         gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
         updateUniformLocations(currentProgram);
-
         gl.disable(gl.DEPTH_TEST);
         gl.disable(gl.BLEND);
         gl.disable(gl.STENCIL_TEST);
-
         resize();
         updateControls(true);
         return true;
@@ -282,7 +272,6 @@
         if (keysPressed['arrowright']) { rotz -= rotationSpeed * 0.1; keypress = true; }
         if (keysPressed['o']) { scaleval -= 0.01; keypress = true; }
         if (keysPressed['p']) { scaleval += 0.01; keypress = true; }
-
         if ((keypress || keyinit) && currentProgram) {
           const logval = power > 2.0 ? 1.0 / Math.log(Math.abs(power)) : 1.44269504088896;
           let rangecalc = range;
@@ -343,17 +332,11 @@
           gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
         }
       }
+      function runCode() { useShader(uniformcode + mathcode + codeEditor.value.trim()); isEditing = false; }
 
-      codeEditor.value = getfractal("z = pow(z, power) + c", "q");
+      codeEditor.value = getfractal("pow(z, power) + c", "q");
       runCode();
       animFrameId = requestAnimationFrame(render);
-
-      function runCode() {
-        const source = uniformcode + mathcode + codeEditor.value.trim();
-        useShader(source);
-        isEditing = false;
-      }
-
       window.addEventListener('resize', () => { resize(); });
   </script>
 </body>
