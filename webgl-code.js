@@ -492,6 +492,8 @@ let mathcode = `
   vec4 biinv(vec4 z) { vec2 len = bidabs_sq(z); vec2 invlen = conj(len) / dot(len, len); return vec4(cmul(z.xy, invlen), cmul(-z.zw, invlen)); }
   vec4 biadd(vec4 z, vec4 w) { return z + w; }
   vec4 bisub(vec4 z, vec4 w) { return z - w; }
+  
+  //vec4 bimul(vec4 z, vec4 w) { return bifromidempotent(cmul(bitoidempotent_left(z), bitoidempotent_left(w)), cmul(bitoidempotent_right(z), bitoidempotent_right(w))); }
   vec4 bimul(vec4 z, vec4 w) { return vec4(cmul(z.xy, w.xy) - cmul(z.zw, w.zw), cmul(z.xy, w.zw) + cmul(z.zw, w.xy)); }
   vec4 bimul(vec4 z, float w) { return z * w; }
   vec4 bimul(float z, vec4 w) { return z * w; }
@@ -626,6 +628,9 @@ let mathcode = `
   mat4 opow(mat4 z, mat4 w) { return oexp(omul(olog(z), w)); }
 
   mat4 bqmul(mat4 z, mat4 w) { return mat4(qmul(z[0], w[0]) - qmul(z[1], w[1]), qmul(z[0], w[1]) + qmul(z[1], w[0]), vec4(0.0), vec4(0.0)); }
+  
+  // not correct but interest 6d
+  //mat4 btmul(mat4 z, mat4 w) { return mat4(tmul(z[0], w[0]) - tmul(z[1], w[1]), qmul(z[0], w[1]) + qmul(z[1], w[0]), vec4(0.0), vec4(0.0)); }
 
   float bounce(float x, float min, float max) {
     float size = max - min;
@@ -723,8 +728,9 @@ return `void newton_calc() {
   vec2 zpos = vec2(1.0, 0.0);
   for (int i = 0; i < maxiter; i++) {
     z_prev = z;
-    //z = z_prev - cdiv(ccosh(cpow(z, w)) - vec2(0.0, 0.0), cmul(csinh(z), cpow_derv(z, w))) + c;
-    //z = z_prev - cdiv(cpow(z, w) - zpos, cmul(vec2(1.0, 0.0), cpow_derv(z, w))) + c;
+    if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); }
+    if (isconj == 1) { z.x = z.x; z.y = -z.y; }
+    if (isminusone == 1) { z = vec2(1.0, 0.0) - z; }
     ` + formula + `
     n += 1;
     znorm = dot(z - z_prev, z - z_prev);
@@ -975,8 +981,6 @@ function bicomplexshadercode(formula = "z = bipow(z, w) + c;", dervformula = "ve
 }
 
 function octanionshadercode(formula = "z = opow(z, w) + c;", dervformula = "vec4 derv = opow(z_prev, power - 1.0) * power;", iteration = 12) {
-  console.log(formula);
-  console.log(dervformula);
   return `vec2 mandel_octanion(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
     int n = 0;
     float dr = 1.0, znorm = 0.0;
@@ -1349,6 +1353,7 @@ function getfractal(formula, type, iteration) {
   else if (type == "t") { const formulas = getformula_and_derv(formula, "vec4"); return mandelbulbshadercode(convertformula("z = " + formulas[0], "t") + ";", convertformula("derv = "  + formulas[1], "t") + ";", iteration); }
   else if (type == "o") { const formulas = getformula_and_derv(formula, "mat4"); return octanionshadercode(convertformula("z = " + formulas[0], "o") + ";", convertformula("derv = "  + formulas[1], "o") + ";", iteration); }
   else if (type == "bq") { const formulas = getformula_and_derv(formula, "mat4"); return octanionshadercode(convertformula("z = " + formulas[0], "bq") + ";", convertformula("derv = "  + formulas[1], "bq") + ";", iteration); }
+  else if (type == "cn") { const formulas = getformula_and_derv(formula, "vec2"); const newton_iter = `z = z_prev - cdiv(${formulas[0]}, ${formulas[1]})`; let newformula = convertformula(newton_iter);  return newtonshadercode(newformula + " + c;", "c"); }
   const formulas = getformula_and_derv(formula);
   return mandelbrotshadercode(convertformula("z = " + formulas[0], "c") + ";");
 }
