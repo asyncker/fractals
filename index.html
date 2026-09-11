@@ -29,6 +29,35 @@
       letter-spacing: 0.5px;
       margin-bottom: 2px;
     }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    #fullscreen-btn {
+      width: 26px;
+      height: 26px;
+      background: #2d2d30;
+      color: #d4d4d4;
+      border: 1px solid #3c3c3c;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    #fullscreen-btn:hover { background: #3a3a3d; }
+    #fullscreen-btn.active {
+      background: #0e639c;
+      border-color: #1177bb;
+      color: #fff;
+    }
+
     #formula-input {
       width: 100%;
       background: #1e1e1e;
@@ -195,7 +224,7 @@
       padding-top: 10px;
     }
     .hint b { color: #9d9d9d; font-weight: 600; }
-    #graph { flex: 1; position: relative; background: #fff; }
+    #graph { flex: 1; position: relative; background: #fff; min-width: 0; }
     #canvas { width: 100%; height: 100%; cursor: crosshair; display: block; }
 
     .btn-row {
@@ -233,11 +262,18 @@
       border-color: #1177bb;
       color: #fff;
     }
+    body.fullscreen-mode #formula-panel { display: none; }
+    body.fullscreen-mode #graph { flex: 1; }
+    #graph:fullscreen { width: 100vw; height: 100vh; }
+    #graph:-webkit-full-screen { width: 100vw; height: 100vh; }
   </style>
 </head>
 <body>
   <div id="formula-panel">
-    <h2>FORMULA</h2>
+    <div class="panel-header">
+      <h2>FORMULA</h2>
+      <div id="fullscreen-btn" onclick="toggleFullscreen();" title="Fullscreen (ESC - escape)">⛶</div>
+    </div>
     <input id="formula-input" type="text" spellcheck="false" value="z^(2 * w) + c" />
     <div id="formula-status"></div>
 
@@ -301,6 +337,7 @@
   <script src="./webgl-code.js"></script>
   <script>
       const canvas = document.getElementById('canvas');
+      const graph = document.getElementById('graph');
       const gl = canvas.getContext('webgl', { alpha: false, antialias: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
       let currentProgram = null;
       let vertexBuffer = null;
@@ -323,9 +360,9 @@
       const inverseBtn = document.getElementById('inverse-btn');
       const juliaBtn = document.getElementById('julia-btn');
       const powerRow = document.getElementById('power-row');
+      const fullscreenBtn = document.getElementById('fullscreen-btn');
 
       let currentVar = 'c';
-
       let formulaDebounce = null;
 
       function setActiveVar(v) {
@@ -731,20 +768,56 @@
       }
 
       function resize() {
-        const graph = document.getElementById('graph');
         const rect = graph.getBoundingClientRect();
-        const screenWidth = Math.floor(rect.width);
-        const screenHeight = Math.floor(rect.height);
-        canvas.width = Math.floor(screenWidth);
-        canvas.height = Math.floor(screenHeight);
-        canvas.style.width = `${screenWidth}px`;
-        canvas.style.height = `${screenHeight}px`;
-        gl.viewport(0, 0, canvas.width, canvas.height);
+        const w = Math.max(1, Math.floor(rect.width));
+        const h = Math.max(1, Math.floor(rect.height));
+        canvas.width = w;
+        canvas.height = h;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        gl.viewport(0, 0, w, h);
         if (resolutionLocation) {
-          gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+          gl.uniform2f(resolutionLocation, w, h);
         }
       }
 
+      function toggleFullscreen() {
+        const isFs = document.body.classList.contains('fullscreen-mode');
+        const fsEl = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+        if (isFs) {
+          document.body.classList.remove('fullscreen-mode');
+          fullscreenBtn.classList.remove('active');
+          if (fsEl) {
+            const exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+            if (exit) exit.call(document).catch(() => {});
+          }
+          canvas.style.width = '';
+          canvas.style.height = '';
+        } else {
+          document.body.classList.add('fullscreen-mode');
+          fullscreenBtn.classList.add('active');
+          const req = graph.requestFullscreen || graph.webkitRequestFullscreen || graph.msRequestFullscreen;
+          if (req) req.call(graph).catch(() => {});
+        }
+        requestAnimationFrame(() => { resize(); requestAnimationFrame(resize); });
+      }
+
+      document.addEventListener('fullscreenchange', () => {
+        const fsEl = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+        if (!fsEl && document.body.classList.contains('fullscreen-mode')) {
+          toggleFullscreen();
+        } else {
+          requestAnimationFrame(() => { resize(); requestAnimationFrame(resize); });
+        }
+      });
+      document.addEventListener('webkitfullscreenchange', () => {
+        const fsEl = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+        if (!fsEl && document.body.classList.contains('fullscreen-mode')) {
+          toggleFullscreen();
+        } else {
+          requestAnimationFrame(() => { resize(); requestAnimationFrame(resize); });
+        }
+      });
       setActiveVar('c');
       applyFormula();
       animFrameId = requestAnimationFrame(render);
