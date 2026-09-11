@@ -282,6 +282,7 @@
       <div class="var-btn" data-var="bi">bi<small>bicomplex</small></div>
       <div class="var-btn" data-var="t">t<small>triplex</small></div>
       <div class="var-btn" data-var="q">q<small>quaternion</small></div>
+      <div class="var-btn" data-var="cn">n<small>newton</small></div>
       <!--<div class="var-btn" data-var="o">o<small>octanion</small></div>-->
       <!--<div class="var-btn" data-var="bq">o<small>biquaternion</small></div>-->
     </div>
@@ -504,8 +505,13 @@
         '((7 * z^w + 2) - exp(z^w) * (5 * z^w + 2)) * 0.25 + c',
         '((7 * z^w + 2) - exp(cmul_i(PI * z^w)) * (5 * z^w + 2)) * 0.25 + c',
         '((7 * z^w + 2) - cos(PI * z^w) * (5 * z^w + 2)) * 0.25 + c',
-        'w^z + c'
+        '1 - (1+w)^(0.5-z) + c',
+        '(w+1)^z + c'
       ];
+
+      function getFormulaForCurrentVar(f) {
+        return currentVar === 'cn' ? f.replace(/\+\s*c\s*$/i, '- 1') : f;
+      }
 
       for (let i = 0; i < 21; i++) {
         const btn = document.createElement('div');
@@ -514,7 +520,7 @@
         btn.title = presetFormulas[i];
         btn.dataset.formula = presetFormulas[i];
         btn.addEventListener('click', () => {
-          formulaInput.value = btn.dataset.formula;
+          formulaInput.value = getFormulaForCurrentVar(btn.dataset.formula);
           document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           clearTimeout(formulaDebounce);
