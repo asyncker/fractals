@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Fractal</title>
+  <title>Fractal by formula</title>
   <meta property="og:title" content="Fractal Gpu WebGL Render">
-  <meta property="og:description" content="Fast fractal mandelbrot render in browser">
+  <meta property="og:description" content="Fast fractal quaternion, bicomplex by math formula render in browser (newton fractal, mandelbrot fractal)">
   <meta property="og:image" content="render/favicon.png">
   <meta property="og:site_name" content="Fractal - render fractal">
   <link rel="icon" type="image/png" sizes="32x32" href="./render/favicon.png">
@@ -319,12 +319,14 @@
     <div class="iter-row">
       <label for="iter-input">iteration</label>
       <input id="iter-input" type="number" min="1" max="200" value="24" />
+      <label for="range-input">range</label>
+      <input id="range-input" type="number" min="1" max="100000" step="1" value="300" />
     </div>
 
     <div class="hint">
       <b>WASD</b> — move. | QE</b> — zoom<br>
       <b>RT</b> — +1/-1 w | H</b> — reset<br>
-      <b>Arrow</b> — rotate 3d
+      <b>XR</b> — +1/-1 r | Arrow</b> — rotate 3d
     </div>
   </div>
 
@@ -349,6 +351,7 @@
       const formulaInput = document.getElementById('formula-input');
       const formulaStatus = document.getElementById('formula-status');
       const iterInput = document.getElementById('iter-input');
+      const rangeInput = document.getElementById('range-input');
       const varButtons = document.querySelectorAll('.var-btn');
       const burningBtn = document.getElementById('burning-btn');
       const colorButtons = document.querySelectorAll('.color-btn');
@@ -360,7 +363,7 @@
       const powerRow = document.getElementById('power-row');
       const fullscreenBtn = document.getElementById('fullscreen-btn');
 
-      let currentVar = 'c';
+      let currentVar = 'q';
       let formulaDebounce = null;
 
       function setActiveVar(v) {
@@ -418,6 +421,12 @@
         iteration = Math.max(1, Math.min(2000, parseInt(iterInput.value, 10) || 24));
         iterInput.value = iteration;
         applyFormula();
+      });
+
+      rangeInput.addEventListener('change', () => {
+        range = Math.max(1, Math.min(100000, parseFloat(rangeInput.value) || 300));
+        rangeInput.value = range;
+        updateControls(true);
       });
 
       varButtons.forEach(btn => {
@@ -703,8 +712,8 @@
         if (keysPressed['u'] && currentTime - lastChangeTime > 200) { ismandel = ismandel == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }
         if (keysPressed['f'] && currentTime - lastChangeTime > 800) { inverse = inverse == 1.0 ? 0.0 : 1.0; lastChangeTime = currentTime; keypress = true; }
         if (keysPressed['n'] && currentTime - lastChangeTime > 200) { hypercomplexindex = hypercomplexindex == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }
-        if (keysPressed['x']) { range *= 2.0; keypress = true; }
-        if (keysPressed['z']) { range *= 1.0 / 1.125; keypress = true; }
+        if (keysPressed['x']) { range *= 2.0; keypress = true; rangeInput.value = range; }
+        if (keysPressed['z']) { range *= 1.0 / 1.125; keypress = true; rangeInput.value = range; }
         if (keysPressed['2'] && currentTime - lastChangeTime > 200) { zoomSpeed = zoomSpeed / 2.0; rotationSpeed = rotationSpeed / 2.0; movespeedx = movespeedx / 2.0; movespeedy = movespeedy / 2.0; lastChangeTime = currentTime; keypress = true; }
         if (keysPressed['3'] && currentTime - lastChangeTime > 200) { zoomSpeed = zoomSpeed * 2.0; rotationSpeed = rotationSpeed * 2.0; movespeedx = movespeedx * 2.0; movespeedy = movespeedy * 2.0; lastChangeTime = currentTime; keypress = true; }
         if (keysPressed['0'] && currentTime - lastChangeTime > 500) { if (isRecording) { stopRecording(); } else { startRecording(); } lastChangeTime = currentTime; keypress = true; }
@@ -712,8 +721,8 @@
         if (keysPressed[']']) { power += 1.0 / 128.0; keypress = true; }
         if (keysPressed['j']) { multlight *= 1.0 - (1.0 / 128.0); keypress = true; }
         if (keysPressed['k']) { multlight *= 1.0 + (1.0 / 128.0); keypress = true; }
-        if (keysPressed['h'] && currentTime - lastChangeTime > 200) { range = 24.0; rotx = 0.0; rotz = 0.0; if (ismandel) { zoomMandel = 3.0; cxval = 0.0; cyval = 0.0; } else { zoomJulia = 3.0; zxval = 0.0; zyval = 0.0; } lastChangeTime = currentTime; keypress = true; }
-        if (keysPressed['l'] && currentTime - lastChangeTime > 200) { range = 48.0; rotx = 0.0; rotz = 0.0; if (ismandel) { zoomMandel = 60.0; cxval = 0.0; cyval = 0.0; } else { zoomJulia = 60.0; zxval = 0.0; zyval = 0.0; } lastChangeTime = currentTime; keypress = true; }
+        if (keysPressed['h'] && currentTime - lastChangeTime > 200) { range = 24.0; rotx = 0.0; rotz = 0.0; if (ismandel) { zoomMandel = 3.0; cxval = 0.0; cyval = 0.0; } else { zoomJulia = 3.0; zxval = 0.0; zyval = 0.0; } lastChangeTime = currentTime; keypress = true; rangeInput.value = range; }
+        if (keysPressed['l'] && currentTime - lastChangeTime > 200) { range = 48.0; rotx = 0.0; rotz = 0.0; if (ismandel) { zoomMandel = 60.0; cxval = 0.0; cyval = 0.0; } else { zoomJulia = 60.0; zxval = 0.0; zyval = 0.0; } lastChangeTime = currentTime; keypress = true; rangeInput.value = range; }
         if (keysPressed['9']) { zoomMandel /= 1.0 + zoomSpeed; keypress = true; }
         if (keysPressed['7']) { zoomMandel *= 1.0 + zoomSpeed; keypress = true; }
         if (keysPressed['8']) { cyval = cyval + zoomMandel * movespeedy * 0.1; keypress = true; }
@@ -821,7 +830,7 @@
           requestAnimationFrame(() => { resize(); requestAnimationFrame(resize); });
         }
       });
-      setActiveVar('c');
+      setActiveVar(currentVar);
       applyFormula();
       animFrameId = requestAnimationFrame(render);
       window.addEventListener('resize', () => { resize(); });
