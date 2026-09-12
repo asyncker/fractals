@@ -320,6 +320,7 @@ let mathcode = `
   vec2 cgamma_derv(vec2 z) { return cmul(cgamma(z), cdigamma(z)); }
   vec2 czeta_derv(vec2 z) { vec2 dz = vec2(0.0, 0.001); return cmul(czeta(z + dz) - czeta(z - dz), cinv(2.0 * dz)); }
   vec2 ceta_derv(vec2 z) { vec2 dz = vec2(0.0, 0.001); return cmul(ceta(z + dz) - ceta(z - dz), cinv(2.0 * dz)); }
+  vec2 cmul_i_derv(vec2 z) { return vec2(0.0, 1.0); }
   vec2 cdzsinh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czsinh(z + dz, t) - czsinh(z - dz, t), cinv(2.0 * dz)); }
   vec2 cdzcosh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czcosh(z + dz, t) - czcosh(z - dz, t), cinv(2.0 * dz)); }
   vec2 cdlogzeta(vec2 z) { return cdiv(czeta(z), czeta_derv(z)); }
@@ -558,6 +559,7 @@ let mathcode = `
   vec4 bisqrt(vec4 z) { return bifromidempotent(csqrt(bitoidempotent_left(z)), csqrt(bitoidempotent_right(z))); }
   vec4 bidot(vec4 z, vec4 w) { return bimul(z, biconj(w)); }
   vec4 bisop(vec4 z, vec4 w) { return bidiv(z, biconj(w)); }
+  vec4 bimul_i(vec4 z) { return bifromidempotent(cmul_i(bitoidempotent_left(z)), cmul_i(bitoidempotent_right(z))); }
   vec4 bigamma(vec4 z) { return bifromidempotent(cgamma(bitoidempotent_left(z)), cgamma(bitoidempotent_right(z))); }
   vec4 bidigamma(vec4 z) { return bifromidempotent(cdigamma(bitoidempotent_left(z)), cdigamma(bitoidempotent_right(z))); }
   vec4 bigammasi(vec4 z) { return bifromidempotent(cgammasi(bitoidempotent_left(z)), cgammasi(bitoidempotent_right(z))); }
@@ -577,6 +579,7 @@ let mathcode = `
   vec4 bizeta_derv(vec4 z) { return bifromidempotent(czeta_derv(bitoidempotent_left(z)), czeta_derv(bitoidempotent_right(z))); }
   vec4 bieta_derv(vec4 z) { return bifromidempotent(ceta_derv(bitoidempotent_left(z)), ceta_derv(bitoidempotent_right(z))); }
   vec4 biwp_derv(vec4 z, vec4 w) { return bifromidempotent(cwp_derv(bitoidempotent_left(z), bitoidempotent_left(w)), cwp_derv(bitoidempotent_right(z), bitoidempotent_right(w))); }
+  vec4 bimul_i_derv(vec4 z) { return bifromidempotent(cmul_i_derv(bitoidempotent_left(z)), cmul_i_derv(bitoidempotent_right(z))); }
 
   float tabs(vec4 z) { return length(z); }
   vec4 tneg(vec4 z) { return z * -1.0; }
@@ -1008,6 +1011,7 @@ function octanionshadercode(formula = "z = opow(z, w) + c;", dervformula = "vec4
 
 let bicomplexnewtonshader = `vec2 newton_bicomplex(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
   int n = 0;
+  float dr = 1.0, znorm = 0.0;
   vec4 z = vec4(zx, zy, zz, zw);
   vec4 w = vec4(power, 0.0, 0.0, 0.0);
   vec4 w_minus_1 = vec4(power - 1.0, 0.0, 0.0, 0.0);
@@ -1021,6 +1025,7 @@ let bicomplexnewtonshader = `vec2 newton_bicomplex(float zx, float zy, float zz,
     vec4 df_inv = biinv(df_z);
     vec4 delta = bimul(df_inv, f_z);
     dz = bimul(dz, bimul(bimul(f_z, ddf_z), bimul(df_inv, df_inv)));
+    //"mul(mul(w, w - vec2(1.0, 0.0)), pow(z, w - vec2(1.0, 0.0) - vec2(1.0, 0.0)))"
     z = z - delta;
     if (length(delta) < 0.001) { break; }
   }
@@ -1031,8 +1036,8 @@ let bicomplexnewtonshader = `vec2 newton_bicomplex(float zx, float zy, float zz,
 ` + raymarchingsharecode("surDist = newton_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = newton_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
 
 function getDerivative(f, v = 'z') {
-  const F = ["add","sub","mul","div","pow","root","neg","inv","log","exp","gamma","zeta","eta","beta","sinh","cosh","tanh","coth","sin","cos","tan","cot","tau","gammasi","fib","sn","cn","dn","wp","abs","arg","conj","sign","floor","ceil","round","max","min","relumax","relumin","step","clamp","sq","sqrt","dot","sop"];
-  const D = ["gamma","zeta","eta","beta","tau","gammasi","fib","sn","cn","dn","wp"];
+  const F = ["add","sub","mul","div","pow","root","neg","mul_i","inv","log","exp","gamma","zeta","eta","beta","sinh","cosh","tanh","coth","sin","cos","tan","cot","tau","gammasi","fib","sn","cn","dn","wp","abs","arg","conj","sign","floor","ceil","round","max","min","relumax","relumin","step","clamp","sq","sqrt","dot","sop"];
+  const D = ["gamma","zeta","eta","beta","tau","gammasi","fib","sn","cn","dn","wp","mul_i"];
   const T = f.match(/\d+(?:\.\d+)?|[a-zA-Z_]\w*|[()+\-/*^,]/g) || [];
   let p = 0;
   const pk = () => T[p];
@@ -1257,7 +1262,7 @@ function convertformulatowebgl(f, vecf = "vec2") {
   };
 
   const glslFuncs = {
-      'sin': 'sin', 'cos': 'cos', 'tan': 'tan', 'exp': 'exp', 'log': 'log', 
+      'sin': 'sin', 'cos': 'cos', 'tan': 'tan', 'exp': 'exp', 'log': 'log',
       'sqrt': 'sqrt', 'abs': 'abs', 'pow': 'pow',
       'sinh': 'sinh', 'cosh': 'cosh', 'tanh': 'tanh',
       'inv': 'inv', 'neg': 'neg',
@@ -1331,13 +1336,14 @@ function convertformulatowebgl(f, vecf = "vec2") {
 function getformula_and_derv(formula, vecf) {
   const newformula = convertformulatowebgl(formula, vecf);
   const dervformula = convertformulatowebgl(getDerivative(formula), vecf);
-  return [newformula, dervformula];
+  const derv2formula = convertformulatowebgl(getDerivative(getDerivative(formula)), vecf);
+  return [newformula, dervformula, derv2formula];
 }
 
 function getfractal(formula, type, iteration) {
   function convertformula(formula, addtag = "c") {
-    const functionlist = ["add", "sub", "mul", "div", "pow", "root", "neg", "inv", "log", "exp", "gamma", "zeta", "eta", "beta", "sinh", "cosh", "tanh", "coth", "sin", "cos", "tan", "cot", "tau", "gammasi", "fib", "sn", "cn", "dn", "wp", "abs", "arg", "conj", "sign", "floor", "ceil", "round", "max", "min", "relumax", "relumin", "step", "clamp", "sq", "sqrt", "dot", "sop",
-     "gamma_derv", "zeta_derv", "eta_derv", "beta_derv", "tau_derv", "gammasi_derv", "fib_derv", "sn_derv", "cn_derv", "dn_derv", "wp_derv" ];
+    const functionlist = ["add", "sub", "mul", "div", "pow", "root", "neg", "mul_i", "inv", "log", "exp", "gamma", "zeta", "eta", "beta", "sinh", "cosh", "tanh", "coth", "sin", "cos", "tan", "cot", "tau", "gammasi", "fib", "sn", "cn", "dn", "wp", "abs", "arg", "conj", "sign", "floor", "ceil", "round", "max", "min", "relumax", "relumin", "step", "clamp", "sq", "sqrt", "dot", "sop",
+     "gamma_derv", "zeta_derv", "eta_derv", "beta_derv", "tau_derv", "gammasi_derv", "fib_derv", "sn_derv", "cn_derv", "dn_derv", "wp_derv", "mul_i_derv" ];
     let newFormula = formula;
     for (let i = 0; i < functionlist.length; i++) {
       const func = functionlist[i];
@@ -1348,12 +1354,13 @@ function getfractal(formula, type, iteration) {
   if (type != "c" && formula != "z^(2 * w) + c") { iteration = parseInt(iteration > 4 ? iteration / 3 : iteration); }
   if (type != "c" && (formula.includes("gamma") || formula.includes("eta"))) { iteration = parseInt(iteration > 2 ? iteration / 5 : iteration / 1.25) + 1; }
   if (type != "c" && (formula.includes("eta(-z") && formula.includes("eta(z") || formula.includes("sn(") || formula.includes("dn(") || formula.includes("cn(") || formula.includes("wp("))) { iteration = parseInt(iteration > 2 ? iteration / 25 : iteration / 25) + 1; }  
-  if (type == "bi") { const formulas = getformula_and_derv(formula, "vec4"); return bicomplexshadercode(convertformula("z = " + formulas[0], "bi") + ";", convertformula("derv = "  + formulas[1], "bi") + ";", iteration); }
-  else if (type == "q") { const formulas = getformula_and_derv(formula, "vec4"); return quaternionshadercode(convertformula("z = " + formulas[0], "q") + ";", convertformula("derv = "  + formulas[1], "q") + ";", iteration); }
-  else if (type == "t") { const formulas = getformula_and_derv(formula, "vec4"); return mandelbulbshadercode(convertformula("z = " + formulas[0], "t") + ";", convertformula("derv = "  + formulas[1], "t") + ";", iteration); }
-  else if (type == "o") { const formulas = getformula_and_derv(formula, "mat4"); return octanionshadercode(convertformula("z = " + formulas[0], "o") + ";", convertformula("derv = "  + formulas[1], "o") + ";", iteration); }
-  else if (type == "bq") { const formulas = getformula_and_derv(formula, "mat4"); return octanionshadercode(convertformula("z = " + formulas[0], "bq") + ";", convertformula("derv = "  + formulas[1], "bq") + ";", iteration); }
-  else if (type == "cn") { const formulas = getformula_and_derv(formula, "vec2"); const newton_iter = `z = z_prev - cdiv(${formulas[0]}, ${formulas[1]})`; let newformula = convertformula(newton_iter);  return newtonshadercode(newformula + " + c;", "c"); }
+  if (type == "bi") { const formulas = getformula_and_derv(formula, "vec4"); console.log(formulas); return bicomplexshadercode(convertformula("z = " + formulas[0], "bi") + ";", convertformula("derv = "  + formulas[1], "bi") + ";", iteration); }
+  else if (type == "q") { const formulas = getformula_and_derv(formula, "vec4"); console.log(formulas); return quaternionshadercode(convertformula("z = " + formulas[0], "q") + ";", convertformula("derv = "  + formulas[1], "q") + ";", iteration); }
+  else if (type == "t") { const formulas = getformula_and_derv(formula, "vec4"); console.log(formulas); return mandelbulbshadercode(convertformula("z = " + formulas[0], "t") + ";", convertformula("derv = "  + formulas[1], "t") + ";", iteration); }
+  else if (type == "o") { const formulas = getformula_and_derv(formula, "mat4"); console.log(formulas); return octanionshadercode(convertformula("z = " + formulas[0], "o") + ";", convertformula("derv = "  + formulas[1], "o") + ";", iteration); }
+  else if (type == "bq") { const formulas = getformula_and_derv(formula, "mat4"); console.log(formulas); return octanionshadercode(convertformula("z = " + formulas[0], "bq") + ";", convertformula("derv = "  + formulas[1], "bq") + ";", iteration); }
+  else if (type == "cn") { const formulas = getformula_and_derv(formula, "vec2"); console.log(formulas); const newton_iter = `z = z_prev - cdiv(${formulas[0]}, ${formulas[1]})`; let newformula = convertformula(newton_iter);  return newtonshadercode(newformula + " + c;", "c"); }
   const formulas = getformula_and_derv(formula);
+  console.log(formulas);
   return mandelbrotshadercode(convertformula("z = " + formulas[0], "c") + ";");
 }
