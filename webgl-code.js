@@ -874,6 +874,32 @@ function raymarchingsharecode(func1, func2) {
 }`;
 }
 
+function quaternionshadercode(formula = "z = qpow(z, w) + c;", dervformula = "vec4 derv = qpow(z_prev, power - 1.0) * power;", iteration = 12) {
+  return `vec2 mandel_quaternion(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
+    int n = 0;
+    float dr = 1.0, znorm = 0.0;
+    vec4 z = vec4(zx, zy, zz, zw);
+    vec4 c = vec4(cx, cy, cz, cw);
+    vec4 w = vec4(power, 0.0, 0.0, 0.0);
+    vec4 z0 = z, z_prev = z, derv = z;
+    for (int i = 0; i < ` + iteration + `; i++) {
+      z_prev = z;
+      znorm = length(z);
+      n = i;
+      if (znorm > range) { break; }
+      if (isburning == 1) { z = v4abs(z); }
+      if (isconj == 1) { z = v4conj(z); }
+      if (isminusone == 1) { z = vec4(1.0, 0.0, 0.0, 0.0) - z; }
+      ` + dervformula + `
+      dr = length(derv) * dr + 1.0;
+      ` + formula + `
+    }
+    znorm = length(z);
+    return vec2(0.5 * log(znorm) * znorm / dr, n);
+  }
+  ` + raymarchingsharecode("surDist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
+}
+
 let mandelboxshader = `vec2 mandelbox(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
   int n = 0;
   float dr = 1.0, znorm = 0.0, scale = -2.0, fixedRadius = 1.0, minRadius = 0.5, foldingLimit = 1.0, p = -0.5;
@@ -929,32 +955,6 @@ function mandelbulbshadercode(formula = "z = tpow(z, w) + c;", dervformula = "ve
     return vec2(0.5 * log(znorm) * znorm / dr, n);
   }
   ` + raymarchingsharecode("surDist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
-}
-
-function quaternionshadercode(formula = "z = qpow(z, w) + c;", dervformula = "vec4 derv = qpow(z_prev, power - 1.0) * power;", iteration = 12) {
-  return `vec2 mandel_quaternion(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
-    int n = 0;
-    float dr = 1.0, znorm = 0.0;
-    vec4 z = vec4(zx, zy, zz, zw);
-    vec4 c = vec4(cx, cy, cz, cw);
-    vec4 w = vec4(power, 0.0, 0.0, 0.0);
-    vec4 z0 = z, z_prev = z, derv = z;
-    for (int i = 0; i < ` + iteration + `; i++) {
-      z_prev = z;
-      znorm = length(z);
-      n = i;
-      if (znorm > range) { break; }
-      if (isburning == 1) { z = v4abs(z); }
-      if (isconj == 1) { z = v4conj(z); }
-      if (isminusone == 1) { z = vec4(1.0, 0.0, 0.0, 0.0) - z; }
-      ` + dervformula + `
-      dr = length(derv) * dr + 1.0;
-      ` + formula + `
-    }
-    znorm = length(z);
-    return vec2(0.5 * log(znorm) * znorm / dr, n);
-  }
-  ` + raymarchingsharecode("surDist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
 }
 
 function bicomplexshadercode(formula = "z = bipow(z, w) + c;", dervformula = "vec4 derv = bipow(z_prev, power - 1.0) * power;", iteration = 12) {
