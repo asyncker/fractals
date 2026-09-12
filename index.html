@@ -266,6 +266,79 @@
     body.fullscreen-mode #graph { flex: 1; }
     #graph:fullscreen { width: 100vw; height: 100vh; }
     #graph:-webkit-full-screen { width: 100vw; height: 100vh; }
+
+    #fs-ui {
+      display: none;
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      z-index: 10;
+      width: 260px;
+      flex-direction: column;
+      gap: 8px;
+    }
+    body.fullscreen-mode #fs-ui { display: flex; }
+
+    #fs-formula-input {
+      width: 100%;
+      background: rgba(30, 30, 30, 0.55);
+      color: #e6e6e6;
+      border: 1px solid rgba(78, 201, 176, 0.35);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-family: 'Consolas', monospace;
+      font-size: 13px;
+      letter-spacing: 0.3px;
+      outline: none;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35),
+                  inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+    }
+    #fs-formula-input::placeholder {
+      color: rgba(212, 212, 212, 0.4);
+      font-style: italic;
+    }
+    #fs-formula-input.error {
+      border-color: #f14c4c;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35),
+                  0 0 0 2px rgba(241, 76, 76, 0.22);
+    }
+
+    #fs-var-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    .fs-var-btn {
+      flex: 1 0 0;
+      background: rgba(30, 30, 30, 0.55);
+      color: #e6e6e6;
+      border: 1px solid rgba(78, 201, 176, 0.35);
+      border-radius: 8px;
+      padding: 7px 0;
+      font-family: inherit;
+      font-size: 12px;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      text-align: center;
+      user-select: none;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35),
+                  inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+    }
+    .fs-var-btn small {
+      display: block;
+      font-size: 9px;
+      opacity: 0.6;
+      margin-top: 1px;
+    }
+    .fs-var-btn.active {
+      background: rgba(14, 99, 156, 0.85);
+      border-color: #1177bb;
+      color: #fff;
+    }
+    .fs-var-btn.active small { opacity: 0.85; }
   </style>
 </head>
 <body>
@@ -331,6 +404,13 @@
   </div>
 
   <div id="graph">
+    <div id="fs-ui">
+      <input id="fs-formula-input" type="text" spellcheck="false" value="" />
+      <div id="fs-var-buttons">
+        <div class="fs-var-btn" data-var="bi">bi<small>bicomplex</small></div>
+        <div class="fs-var-btn" data-var="q">q<small>quaternion</small></div>
+      </div>
+    </div>
     <canvas id="canvas"></canvas>
   </div>
 
@@ -362,6 +442,8 @@
       const juliaBtn = document.getElementById('julia-btn');
       const powerRow = document.getElementById('power-row');
       const fullscreenBtn = document.getElementById('fullscreen-btn');
+      const fsFormulaInput = document.getElementById('fs-formula-input');
+      const fsVarButtons = document.querySelectorAll('.fs-var-btn');
 
       let currentVar = 'q';
       let formulaDebounce = null;
@@ -369,6 +451,9 @@
       function setActiveVar(v) {
         currentVar = v;
         varButtons.forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.var === v);
+        });
+        fsVarButtons.forEach(btn => {
           btn.classList.toggle('active', btn.dataset.var === v);
         });
       }
@@ -399,14 +484,17 @@
         formulaInput.classList.add('error');
         formulaStatus.classList.add('error');
         formulaStatus.textContent = msg;
+        fsFormulaInput.classList.add('error');
       }
       function setFormulaOk() {
         formulaInput.classList.remove('error');
         formulaStatus.classList.remove('error');
         formulaStatus.textContent = 'ok';
+        fsFormulaInput.classList.remove('error');
       }
 
       formulaInput.addEventListener('input', () => {
+        fsFormulaInput.value = formulaInput.value;
         clearTimeout(formulaDebounce);
         formulaDebounce = setTimeout(applyFormula, 300);
       });
@@ -415,6 +503,27 @@
           clearTimeout(formulaDebounce);
           applyFormula();
         }
+      });
+
+      fsFormulaInput.addEventListener('input', () => {
+        formulaInput.value = fsFormulaInput.value;
+        clearTimeout(formulaDebounce);
+        formulaDebounce = setTimeout(applyFormula, 300);
+      });
+
+      fsFormulaInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          clearTimeout(formulaDebounce);
+          formulaInput.value = fsFormulaInput.value;
+          applyFormula();
+        }
+      });
+
+      fsVarButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          setActiveVar(btn.dataset.var);
+          applyFormula();
+        });
       });
 
       iterInput.addEventListener('change', () => {
@@ -525,6 +634,7 @@
         btn.dataset.formula = presetFormulas[i];
         btn.addEventListener('click', () => {
           formulaInput.value = getFormulaForCurrentVar(btn.dataset.formula);
+          fsFormulaInput.value = formulaInput.value;
           document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           clearTimeout(formulaDebounce);
@@ -808,6 +918,7 @@
         } else {
           document.body.classList.add('fullscreen-mode');
           fullscreenBtn.classList.add('active');
+          fsFormulaInput.value = formulaInput.value;
           const req = graph.requestFullscreen || graph.webkitRequestFullscreen || graph.msRequestFullscreen;
           if (req) req.call(graph).catch(() => {});
         }
@@ -831,6 +942,7 @@
         }
       });
       setActiveVar(currentVar);
+      fsFormulaInput.value = formulaInput.value;
       applyFormula();
       animFrameId = requestAnimationFrame(render);
       window.addEventListener('resize', () => { resize(); });
