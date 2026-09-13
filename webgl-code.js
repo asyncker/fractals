@@ -603,10 +603,12 @@ let mathcode = `
   vec4 tsinh(vec4 z) { return (texp(z) - texp(-z)) * 0.5; }
   vec4 tcosh(vec4 z) { return (texp(z) + texp(-z)) * 0.5; }
   vec4 tmul(vec4 z, vec4 w) { return texp(tlog(z) + tlog(w)); }
+  vec4 tdiv(vec4 z, vec4 w) { return texp(tlog(z) - tlog(w)); }
   vec4 tpow(vec4 z, float w) { if (w == 1.0) { return z; } else if (w == 2.0) { return tsq(z); } return texp(w * tlog(z)); }
   vec4 tpow(vec4 z, vec4 w) { return tpow(z, w.x); }
   vec4 troot(vec4 z, float w) { return tpow(z, 1.0 / w); }
   vec4 tsqrt(vec4 z) { return texp(0.5 * tlog(z)); }
+  vec4 ttanh(vec4 z) { return tdiv(tsinh(z), tcosh(z)); }
   vec4 ttaue(vec4 z) { return vec4(1.0, 0.0, 0.0, 0.0) - texp(vec4(0.5, 0.0, 0.0, 0.0) - z); }
   vec4 tsign(vec4 z) { return z / length(z); }
   vec4 tmax(vec4 z, vec4 w) { return vec4(max(z.x, w.x), max(z.y, w.y), min(z.z, w.z), min(z.w, w.w)); }
