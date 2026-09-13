@@ -35,18 +35,18 @@ let mathcode = `
   float sinh(float x) { float ex = exp(x); return (ex - 1.0 / ex) * 0.5; }
   float cosh(float x) { float ex = exp(x); return (ex + 1.0 / ex) * 0.5; }
   float fast_pow(float x, float y) {
-      if (y > 0.0) {
-          if (y == 1.0) return x;
-          if (y == 2.0) return x * x;
-          if (y == 3.0) return x * x * x;
-          return pow(x, y);
-      }
-      if (y == 0.0) return 1.0;
-      if (y == -1.0) return 1.0 / x;
-      if (y == -2.0) return 1.0 / (x * x);
-      if (y == -0.5) return 1.0 / sqrt(x);
-      if (y == -1.5) return 1.0 / x * (1.0 / sqrt(x));
-      return 1.0 / pow(x, -y);
+    if (y > 0.0) {
+      if (y == 1.0) return x;
+      if (y == 2.0) return x * x;
+      if (y == 3.0) return x * x * x;
+      return pow(x, y);
+    }
+    if (y == 0.0) return 1.0;
+    if (y == -1.0) return 1.0 / x;
+    if (y == -2.0) return 1.0 / (x * x);
+    if (y == -0.5) return 1.0 / sqrt(x);
+    if (y == -1.5) return 1.0 / x * (1.0 / sqrt(x));
+    return 1.0 / pow(x, -y);
   }
 
   float cabs_sq(vec2 z) { return dot(z, z); }
@@ -135,73 +135,73 @@ let mathcode = `
   vec2 carccos(vec2 z) { return vec2(0.5 * PI, 0.0) - carcsin(z); }
   vec2 cfib(vec2 z) { return (cpow(vec2(1.61803398875, 0.0), z) - cpow(vec2(-0.61803398875, 0.0), z)) * 0.4472135955; }
   vec2 cgamma_right(vec2 z) {
-      vec2 w = z - vec2(1.0, 0.0);
-      vec2 t = w + vec2(7.5, 0.0);
-      vec2 x = vec2(0.99999999999980993, 0.0);
-      x += 676.5203681218851 * cinv(w + vec2(1.0, 0.0));
-      x -= 1259.1392167224028 * cinv(w + vec2(2.0, 0.0));
-      x += 771.32342877765313 * cinv(w + vec2(3.0, 0.0));
-      x -= 176.61502916214059 * cinv(w + vec2(4.0, 0.0));
-      x += 12.507343278686905 * cinv(w + vec2(5.0, 0.0));
-      x -= 0.13857109526572012 * cinv(w + vec2(6.0, 0.0));
-      x += 9.9843695780195716e-6 * cinv(w + vec2(7.0, 0.0));
-      x += 1.5056327351493116e-7 * cinv(w + vec2(8.0, 0.0));
-      return 2.50662827463 * cmul(x, cexp(cmul(clog(t), w + vec2(0.5, 0.0)) - t));
+    vec2 w = z - vec2(1.0, 0.0);
+    vec2 t = w + vec2(7.5, 0.0);
+    vec2 x = vec2(0.99999999999980993, 0.0);
+    x += 676.5203681218851 * cinv(w + vec2(1.0, 0.0));
+    x -= 1259.1392167224028 * cinv(w + vec2(2.0, 0.0));
+    x += 771.32342877765313 * cinv(w + vec2(3.0, 0.0));
+    x -= 176.61502916214059 * cinv(w + vec2(4.0, 0.0));
+    x += 12.507343278686905 * cinv(w + vec2(5.0, 0.0));
+    x -= 0.13857109526572012 * cinv(w + vec2(6.0, 0.0));
+    x += 9.9843695780195716e-6 * cinv(w + vec2(7.0, 0.0));
+    x += 1.5056327351493116e-7 * cinv(w + vec2(8.0, 0.0));
+    return 2.50662827463 * cmul(x, cexp(cmul(clog(t), w + vec2(0.5, 0.0)) - t));
   }
   vec2 cgamma_left(vec2 z) { return PI * cinv(cmul(csin(z * PI), cgamma_right(vec2(1.0, 0.0) - z))); }
   vec2 cgamma(vec2 z) { return z.x < 0.5 ? cgamma_left(z) : cgamma_right(z); }
   vec2 cinvgamma(vec2 z) {
-      vec2 result = cmul(z, cexp(EULER_GAMMA * z));
-      for (int n = 1; n <= 32; n++) {
-          float invn = 1.0 / float(n);
-          result = cmul(result, cmul(vec2(1.0, 0.0) + z * invn, cexp(-z * invn)));
-      }
-      return result;
+    vec2 result = cmul(z, cexp(EULER_GAMMA * z));
+    for (int n = 1; n <= 32; n++) {
+      float invn = 1.0 / float(n);
+      result = cmul(result, cmul(vec2(1.0, 0.0) + z * invn, cexp(-z * invn)));
+    }
+    return result;
   }
   vec2 cinvpgamma(vec2 z) { // calc with log
-      vec2 result = cmul(z, cexp(EULER_GAMMA * z));
-      mat4 prime16 = mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
-      mat4 prime32 = mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
-      for (int col = 0; col < 4; col++) {
-          for (int row = 0; row < 4; row++) {
-              float invn = 1.0 / float(prime16[row][col]);
-              result = cmul(result, cmul(vec2(1.0, 0.0) + z * invn, cexp(-z * invn)));
-          }
+    vec2 result = cmul(z, cexp(EULER_GAMMA * z));
+    mat4 prime16 = mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
+    mat4 prime32 = mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
+    for (int col = 0; col < 4; col++) {
+      for (int row = 0; row < 4; row++) {
+        float invn = 1.0 / float(prime16[row][col]);
+        result = cmul(result, cmul(vec2(1.0, 0.0) + z * invn, cexp(-z * invn)));
       }
-      for (int col = 0; col < 4; col++) {
-          for (int row = 0; row < 4; row++) {
-              float invn = 1.0 / float(prime32[row][col]);
-              result = cmul(result, cmul(vec2(1.0, 0.0) + z * invn, cexp(-z * invn)));
-          }
+    }
+    for (int col = 0; col < 4; col++) {
+      for (int row = 0; row < 4; row++) {
+        float invn = 1.0 / float(prime32[row][col]);
+        result = cmul(result, cmul(vec2(1.0, 0.0) + z * invn, cexp(-z * invn)));
       }
-      return result;
+    }
+    return result;
   }
   vec2 cpgamma(vec2 z) { return cinv(cinvpgamma(z)); }
   vec2 cbeta(vec2 z, vec2 w) { return cmul(cmul(cgamma(z), cgamma(w)), cinv(cgamma(z + w))); }
-  vec2 cdigamma(vec2 z) {
-      vec2 s = vec2(0.0, 0.0);
-      for (int k = 0; k < 32; ++k) {
-          s -= cinv(z);
-          z += vec2(1.0, 0.0);
-      }
-      vec2 inv1 = cinv(z);
-      vec2 inv2 = csq(inv1);
-      vec2 inv4 = csq(inv2);
-      vec2 inv6 = cmul(inv4, inv2);
-      vec2 inv8 = csq(inv4);
-      vec2 inv10 = cmul(inv8, inv2);
-      vec2 inv12 = cmul(inv10, inv2);
-      vec2 inv14 = cmul(inv12, inv2);
-      vec2 result = clog(z);
-      result -= inv1 * (1.0 / 2.0);
-      result -= inv2 * (1.0 / 12.0);
-      result += inv4 * (1.0 / 120.0);
-      result -= inv6 * (1.0 / 252.0);
-      result += inv8 * (1.0 / 240.0);
-      result -= inv10 * (5.0 / 660.0);
-      result += inv12 * (691.0 / 32760.0);
-      result -= inv14 * (1.0 / 12.0);
-      return result + s;
+  vec2 cdigamma(vec2 z) { // zeta, gamma, digamma,  high connect
+    vec2 s = vec2(0.0, 0.0);
+    for (int k = 0; k < 32; ++k) {
+      s -= cinv(z);
+      z += vec2(1.0, 0.0);
+    }
+    vec2 inv1 = cinv(z);
+    vec2 inv2 = csq(inv1);
+    vec2 inv4 = csq(inv2);
+    vec2 inv6 = cmul(inv4, inv2);
+    vec2 inv8 = csq(inv4);
+    vec2 inv10 = cmul(inv8, inv2);
+    vec2 inv12 = cmul(inv10, inv2);
+    vec2 inv14 = cmul(inv12, inv2);
+    vec2 result = clog(z);
+    result -= inv1 * (1.0 / 2.0);
+    result -= inv2 * (1.0 / 12.0);
+    result += inv4 * (1.0 / 120.0);
+    result -= inv6 * (1.0 / 252.0);
+    result += inv8 * (1.0 / 240.0);
+    result -= inv10 * (5.0 / 660.0);
+    result += inv12 * (691.0 / 32760.0);
+    result -= inv14 * (1.0 / 12.0);
+    return result + s;
   }
 
   vec2 cgammaphi(vec2 z) { return cexp(cmul(z, vec2(-3.53102424697, 1.57079632679) + clog(vec2(1.0, 0.0) - 2.0 * z)) - 0.5 * clog(z) + vec2(1.4189385332, 0.0)); }
@@ -209,82 +209,82 @@ let mathcode = `
   vec2 czeta_left(vec2 z) { return cmul(cpow(vec2(2.0 * PI, 0.0), z - vec2(1.0, 0.0)) * 2.0, cmul(csin(z * PI * 0.5), cgamma(vec2(1.0, 0.0) - z))); }
 
   vec4 czeta_helper_4(vec2 z, mat4 bases, mat4 ns) {
-      mat4 phases = z.y * bases;
-      float cutoff = sqrt(z.y * 0.159154943092) + 100.0 * step(z.y, 120.0);
-      float cutoffscale = 0.884 * cutoff + 0.442;
-      vec4 res = vec4(0.0, 0.0, 0.0, 0.0);
-      for (int row = 0; row < 4; row++) {
-          vec4 mags = exp(z.x * bases[row]);
-          vec4 cutoffv = clamp(cutoffscale - 0.884 * ns[row], 0.0, 1.0);
-          vec4 mags2 = cutoffv / (ns[row] * mags);
-          mags *= cutoffv;
-          vec4 re = cos(phases[row]);
-          vec4 im = sin(phases[row]);
-          res += vec4(dot(mags, re), dot(mags, im), dot(mags2, re), -dot(mags2, im));
-      }
-      return res;
+    mat4 phases = z.y * bases;
+    float cutoff = sqrt(z.y * 0.159154943092) + 100.0 * step(z.y, 120.0);
+    float cutoffscale = 0.884 * cutoff + 0.442;
+    vec4 res = vec4(0.0, 0.0, 0.0, 0.0);
+    for (int row = 0; row < 4; row++) {
+      vec4 mags = exp(z.x * bases[row]);
+      vec4 cutoffv = clamp(cutoffscale - 0.884 * ns[row], 0.0, 1.0);
+      vec4 mags2 = cutoffv / (ns[row] * mags);
+      mags *= cutoffv;
+      vec4 re = cos(phases[row]);
+      vec4 im = sin(phases[row]);
+      res += vec4(dot(mags, re), dot(mags, im), dot(mags2, re), -dot(mags2, im));
+    }
+    return res;
   }
 
   vec2 czeta_helper_2(vec2 z, mat4 bases, mat4 coeffs) {
-      mat4 phases = z.y * bases;
-      vec2 res = vec2(0.0, 0.0);
-      for (int row = 0; row < 4; row++) {
-          vec4 mags = exp(z.x * bases[row]) * coeffs[row];
-          vec4 re = cos(phases[row]);
-          vec4 im = sin(phases[row]);
-          res += vec2(dot(mags, re), dot(mags, im));
-      }
-      return res;
+    mat4 phases = z.y * bases;
+    vec2 res = vec2(0.0, 0.0);
+    for (int row = 0; row < 4; row++) {
+      vec4 mags = exp(z.x * bases[row]) * coeffs[row];
+      vec4 re = cos(phases[row]);
+      vec4 im = sin(phases[row]);
+      res += vec2(dot(mags, re), dot(mags, im));
+    }
+    return res;
   }
 
   vec2 czeta_strip(vec2 z) {
-      vec4 zeta_est = vec4(1.0, 0.0, 1.0, 0.0);
-      zeta_est += czeta_helper_4(z,
-      mat4(-0.69314718056,-1.09861228866811,-1.38629436111989,-1.6094379124341,-1.79175946922805,-1.94591014905531,-2.07944154167984,-2.19722457733622,-2.30258509299405,-2.39789527279837,-2.48490664978800,-2.56494935746154,-2.63905732961526,-2.70805020110221,-2.77258872223978,-2.83321334405622),
-      mat4(2.,3.,4.,5.,6.,7.,8.,9.,10.,11.,12.,13.,14.,15.,16.,17.));
-      zeta_est += czeta_helper_4(z,
-      mat4(-2.89037175789616,-2.94443897916644,-2.99573227355399,-3.04452243772342,-3.09104245335832,-3.13549421592915,-3.17805383034795,-3.21887582486820,-3.25809653802148,-3.29583686600433,-3.33220451017520,-3.36729582998647,-3.40119738166216,-3.43398720448515,-3.46573590279973,-3.49650756146648),
-      mat4(18.,19.,20.,21.,22.,23.,24.,25.,26.,27.,28.,29.,30.,31.,32.,33.));
-      vec2 zetaA = zeta_est.xy;
-      vec2 zetaB = cmul(zeta_est.zw, conj(cgammaphi(vec2(1.0, 0.0) - conj(z))));
-      if (z.y < 120.0) {
-          float t = 1.0 - min(z.x, 1.0);
-          float alpha = t * t * (3.0 - 2.0 * t);
-          return mix(zetaA, zetaB, alpha);
-      }
-      return zetaA + zetaB;
+    vec4 zeta_est = vec4(1.0, 0.0, 1.0, 0.0);
+    zeta_est += czeta_helper_4(z,
+    mat4(-0.69314718056,-1.09861228866811,-1.38629436111989,-1.6094379124341,-1.79175946922805,-1.94591014905531,-2.07944154167984,-2.19722457733622,-2.30258509299405,-2.39789527279837,-2.48490664978800,-2.56494935746154,-2.63905732961526,-2.70805020110221,-2.77258872223978,-2.83321334405622),
+    mat4(2.,3.,4.,5.,6.,7.,8.,9.,10.,11.,12.,13.,14.,15.,16.,17.));
+    zeta_est += czeta_helper_4(z,
+    mat4(-2.89037175789616,-2.94443897916644,-2.99573227355399,-3.04452243772342,-3.09104245335832,-3.13549421592915,-3.17805383034795,-3.21887582486820,-3.25809653802148,-3.29583686600433,-3.33220451017520,-3.36729582998647,-3.40119738166216,-3.43398720448515,-3.46573590279973,-3.49650756146648),
+    mat4(18.,19.,20.,21.,22.,23.,24.,25.,26.,27.,28.,29.,30.,31.,32.,33.));
+    vec2 zetaA = zeta_est.xy;
+    vec2 zetaB = cmul(zeta_est.zw, conj(cgammaphi(vec2(1.0, 0.0) - conj(z))));
+    if (z.y < 120.0) {
+      float t = 1.0 - min(z.x, 1.0);
+      float alpha = t * t * (3.0 - 2.0 * t);
+      return mix(zetaA, zetaB, alpha);
+    }
+    return zetaA + zetaB;
   }
 
   vec2 ceta_strip(vec2 z) { return cmul(czeta_strip(z), vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z)); }
   vec2 ceta_right(vec2 z) {
-      if (z.x < 3.0 && z.y > 54.0) { return ceta_strip(z); }
-      vec2 result = vec2(1.0, 0.0);
-      result += czeta_helper_2(z,
-      mat4(-0.69314718056,-1.09861228866811,-1.38629436111989,-1.6094379124341,-1.79175946922805,-1.94591014905531,-2.07944154167984,-2.19722457733622,-2.30258509299405,-2.39789527279837,-2.48490664978800,-2.56494935746154,-2.63905732961526,-2.70805020110221,-2.77258872223978,-2.83321334405622),
-      mat4(-1.00000000000000,1.00000000000000,-1.00000000000000,1.00000000000000,-0.99999999999995,0.99999999999847,-0.99999999996425,0.99999999937104,-0.99999999142280,0.99999990708781,-0.99999918494666,0.99999411949279,-0.99996466193028,0.99982127062071,-0.99923254216349,0.99718148818347));
-      result += czeta_helper_2(z,
-      mat4(-2.89037175789616,-2.94443897916644,-2.99573227355399,-3.04452243772342,-3.09104245335832,-3.13549421592915,-3.17805383034795,-3.21887582486820,-3.25809653802148,-3.29583686600433,-3.33220451017520,-3.36729582998647,-3.40119738166216,-3.43398720448515,-3.46573590279973,-3.49650756146648),
-      mat4(-0.99109047939434,0.97562125072353,-0.94195422388664,0.87910910712444,-0.77852772396727,0.64073335549827,-0.47964042231228,0.31968999219853,-0.18572334624203,0.09196690020310,-0.03784892366350,0.01254701255408,-0.00320994916827,0.00059346134942,-0.00007044051625,0.00000402517236));
-      return result;
+    if (z.x < 3.0 && z.y > 54.0) { return ceta_strip(z); }
+    vec2 result = vec2(1.0, 0.0);
+    result += czeta_helper_2(z,
+    mat4(-0.69314718056,-1.09861228866811,-1.38629436111989,-1.6094379124341,-1.79175946922805,-1.94591014905531,-2.07944154167984,-2.19722457733622,-2.30258509299405,-2.39789527279837,-2.48490664978800,-2.56494935746154,-2.63905732961526,-2.70805020110221,-2.77258872223978,-2.83321334405622),
+    mat4(-1.00000000000000,1.00000000000000,-1.00000000000000,1.00000000000000,-0.99999999999995,0.99999999999847,-0.99999999996425,0.99999999937104,-0.99999999142280,0.99999990708781,-0.99999918494666,0.99999411949279,-0.99996466193028,0.99982127062071,-0.99923254216349,0.99718148818347));
+    result += czeta_helper_2(z,
+    mat4(-2.89037175789616,-2.94443897916644,-2.99573227355399,-3.04452243772342,-3.09104245335832,-3.13549421592915,-3.17805383034795,-3.21887582486820,-3.25809653802148,-3.29583686600433,-3.33220451017520,-3.36729582998647,-3.40119738166216,-3.43398720448515,-3.46573590279973,-3.49650756146648),
+    mat4(-0.99109047939434,0.97562125072353,-0.94195422388664,0.87910910712444,-0.77852772396727,0.64073335549827,-0.47964042231228,0.31968999219853,-0.18572334624203,0.09196690020310,-0.03784892366350,0.01254701255408,-0.00320994916827,0.00059346134942,-0.00007044051625,0.00000402517236));
+    return result;
   }
 
   vec2 ceta_left(vec2 z) {
-      z.x = -z.x;
-      vec2 component_a;
-      float log_r = log(length(z));
-      if (z.y > 200.0) {
-          component_a = 1.2533141373155001 * cmul_i(cexp(vec2(z.x, 0.0) + (log_r - 1.0) * z - vec2(log_r * 0.5, 0.785398163397)));
-      } else if (z.y > 20.0) {
-          float theta = atan(z.y, z.x);
-          component_a = 1.2533141373155001 * cmul_i(cexp((theta - 1.57079632679) * cmul_i(z) + (log_r - 1.0) * z - 0.5 * vec2(log_r, theta)));
-      } else {
-          component_a = cmul(cgamma(z), csin(z * 1.57079632679));
-      }
-      vec2 zadd1 = z + vec2(1.0, 0.0);
-      vec2 two_neg_z = cexp(-0.69314718056 * z);
-      vec2 multiplier = cmul(cexp(-1.14472988585 * zadd1), cmul(vec2(1.0, 0.0) - 0.5 * two_neg_z, cinv(vec2(1.0, 0.0) - two_neg_z)));
-      vec2 component_b = cmul(z, ceta_right(zadd1));
-      return 2.0 * conj(cmul(cmul(component_a, component_b), multiplier));
+    z.x = -z.x;
+    vec2 component_a;
+    float log_r = log(length(z));
+    if (z.y > 200.0) {
+      component_a = 1.2533141373155001 * cmul_i(cexp(vec2(z.x, 0.0) + (log_r - 1.0) * z - vec2(log_r * 0.5, 0.785398163397)));
+    } else if (z.y > 20.0) {
+      float theta = atan(z.y, z.x);
+      component_a = 1.2533141373155001 * cmul_i(cexp((theta - 1.57079632679) * cmul_i(z) + (log_r - 1.0) * z - 0.5 * vec2(log_r, theta)));
+    } else {
+      component_a = cmul(cgamma(z), csin(z * 1.57079632679));
+    }
+    vec2 zadd1 = z + vec2(1.0, 0.0);
+    vec2 two_neg_z = cexp(-0.69314718056 * z);
+    vec2 multiplier = cmul(cexp(-1.14472988585 * zadd1), cmul(vec2(1.0, 0.0) - 0.5 * two_neg_z, cinv(vec2(1.0, 0.0) - two_neg_z)));
+    vec2 component_b = cmul(z, ceta_right(zadd1));
+    return 2.0 * conj(cmul(cmul(component_a, component_b), multiplier));
   }
 
   vec2 ceta(vec2 z) {
@@ -540,19 +540,19 @@ let mathcode = `
   vec4 bitau(vec4 z, vec4 w) { return vec4(1.0, 0.0, 0.0, 0.0) - bipow(z, vec4(0.5, 0.0, 0.0, 0.0) - w); }
   vec4 bitau_derv(vec4 z, vec4 w) { return bimul(bipow(z, vec4(0.5, 0.0, 0.0, 0.0) - w), bilog(z)); }
   vec4 bigamma_right(vec4 z) {
-      vec4 w = z - vec4(1.0, 0.0, 0.0, 0.0);
-      vec4 t = w + vec4(7.5, 0.0, 0.0, 0.0);
-      vec4 x = vec4(0.99999999999980993, 0.0, 0.0, 0.0);
-      x += 676.5203681218851 * biinv(w + vec4(1.0, 0.0, 0.0, 0.0));
-      x -= 1259.1392167224028 * biinv(w + vec4(2.0, 0.0, 0.0, 0.0));
-      x += 771.32342877765313 * biinv(w + vec4(3.0, 0.0, 0.0, 0.0));
-      x -= 176.61502916214059 * biinv(w + vec4(4.0, 0.0, 0.0, 0.0));
-      x += 12.507343278686905 * biinv(w + vec4(5.0, 0.0, 0.0, 0.0));
-      x -= 0.13857109526572012 * biinv(w + vec4(6.0, 0.0, 0.0, 0.0));
-      x += 9.9843695780195716e-6 * biinv(w + vec4(7.0, 0.0, 0.0, 0.0));
-      x += 1.5056327351493116e-7 * biinv(w + vec4(8.0, 0.0, 0.0, 0.0));
-      vec4 logterm = bimul(bilog(t), w + vec4(0.5, 0.0, 0.0, 0.0)) - t;
-      return 2.50662827463 * bimul(x, biexp(logterm));
+    vec4 w = z - vec4(1.0, 0.0, 0.0, 0.0);
+    vec4 t = w + vec4(7.5, 0.0, 0.0, 0.0);
+    vec4 x = vec4(0.99999999999980993, 0.0, 0.0, 0.0);
+    x += 676.5203681218851 * biinv(w + vec4(1.0, 0.0, 0.0, 0.0));
+    x -= 1259.1392167224028 * biinv(w + vec4(2.0, 0.0, 0.0, 0.0));
+    x += 771.32342877765313 * biinv(w + vec4(3.0, 0.0, 0.0, 0.0));
+    x -= 176.61502916214059 * biinv(w + vec4(4.0, 0.0, 0.0, 0.0));
+    x += 12.507343278686905 * biinv(w + vec4(5.0, 0.0, 0.0, 0.0));
+    x -= 0.13857109526572012 * biinv(w + vec4(6.0, 0.0, 0.0, 0.0));
+    x += 9.9843695780195716e-6 * biinv(w + vec4(7.0, 0.0, 0.0, 0.0));
+    x += 1.5056327351493116e-7 * biinv(w + vec4(8.0, 0.0, 0.0, 0.0));
+    vec4 logterm = bimul(bilog(t), w + vec4(0.5, 0.0, 0.0, 0.0)) - t;
+    return 2.50662827463 * bimul(x, biexp(logterm));
   }
   vec4 bigamma_left(vec4 z) { return PI * biinv(bimul(bisin(z * PI), bigamma_right(vec4(1.0, 0.0, 0.0, 0.0) - z))); }
   vec4 bigamma1(vec4 z) { return z.x < 0.5 ? bigamma_left(z) : bigamma_right(z); }
@@ -1042,194 +1042,182 @@ function getDerivative(f, v = 'z') {
   let p = 0;
   const pk = () => T[p];
   const nx = () => T[p++];
-
   const parseExpr = () => {
-      let l = parseTerm();
-      while (pk() === '+' || pk() === '-') {
-          const o = nx();
-          l = { t: 'b', o, l, r: parseTerm() };
-      }
-      return l;
+    let l = parseTerm();
+    while (pk() === '+' || pk() === '-') {
+      const o = nx();
+      l = { t: 'b', o, l, r: parseTerm() };
+    }
+    return l;
   };
   const parseTerm = () => {
-      let l = parseUnary();
-      while (pk() === '*' || pk() === '/') {
-          const o = nx();
-          l = { t: 'b', o, l, r: parseUnary() };
-      }
-      return l;
+    let l = parseUnary();
+    while (pk() === '*' || pk() === '/') {
+      const o = nx();
+      l = { t: 'b', o, l, r: parseUnary() };
+    }
+    return l;
   };
   const parseUnary = () => {
-      if (pk() === '-') { nx(); return { t: 'u', o: '-', c: parsePower() }; }
-      if (pk() === '+') { nx(); return parsePower(); }
-      return parsePower();
+    if (pk() === '-') { nx(); return { t: 'u', o: '-', c: parsePower() }; }
+    if (pk() === '+') { nx(); return parsePower(); }
+    return parsePower();
   };
   const parsePower = () => {
-      let l = parsePrim();
-      if (pk() === '^') {
-          nx();
-          const r = parsePower(); 
-          l = { t: 'f', n: 'pow', a: [l, r] };
-      }
-      return l;
+    let l = parsePrim();
+    if (pk() === '^') {
+      nx();
+      const r = parsePower(); 
+      l = { t: 'f', n: 'pow', a: [l, r] };
+    }
+    return l;
   };
   const parsePrim = () => {
-      const tk = nx();
-      if (tk === '(') { const e = parseExpr(); nx(); return e; }
-      if (/^\d/.test(tk)) return { t: 'n', v: tk };
-      if (F.includes(tk) && pk() === '(') {
-          nx();
-          const a = [parseExpr()];
-          while (pk() === ',') { nx(); a.push(parseExpr()); }
-          nx();
-          return { t: 'f', n: tk, a };
-      }
-      return { t: 'v', n: tk };
+    const tk = nx();
+    if (tk === '(') { const e = parseExpr(); nx(); return e; }
+    if (/^\d/.test(tk)) return { t: 'n', v: tk };
+    if (F.includes(tk) && pk() === '(') {
+      nx();
+      const a = [parseExpr()];
+      while (pk() === ',') { nx(); a.push(parseExpr()); }
+      nx();
+      return { t: 'f', n: tk, a };
+    }
+    return { t: 'v', n: tk };
   };
-
   const isConst = (node) => {
-      if (node.t === 'n' || (node.t === 'v' && node.n !== v)) return true;
-      if (node.t === 'b') return isConst(node.l) && isConst(node.r);
-      if (node.t === 'u') return isConst(node.c);
-      if (node.t === 'f') return node.a.every(isConst);
-      return false;
+    if (node.t === 'n' || (node.t === 'v' && node.n !== v)) return true;
+    if (node.t === 'b') return isConst(node.l) && isConst(node.r);
+    if (node.t === 'u') return isConst(node.c);
+    if (node.t === 'f') return node.a.every(isConst);
+    return false;
   };
-
   const simplify = (node) => {
-      if (!node) return { t: 'n', v: '0' };
-      if (node.t === 'n' || node.t === 'v') return node;
-
-      if (node.t === 'u') {
-          let c = simplify(node.c);
-          if (c.t === 'n') return { t: 'n', v: String(-parseFloat(c.v)) };
-          if (c.t === 'u' && c.o === '-') return c.c;
-          return { t: 'u', o: '-', c };
+    if (!node) return { t: 'n', v: '0' };
+    if (node.t === 'n' || node.t === 'v') return node;
+    if (node.t === 'u') {
+      let c = simplify(node.c);
+      if (c.t === 'n') return { t: 'n', v: String(-parseFloat(c.v)) };
+      if (c.t === 'u' && c.o === '-') return c.c;
+      return { t: 'u', o: '-', c };
+    }
+    if (node.t === 'f') {
+      let args = node.a.map(simplify);
+      if (args.every(a => a.t === 'n')) {
+        let val = parseFloat(args[0].v);
+        let res = 0;
+        try {
+          if (node.n === 'sin') res = Math.sin(val);
+          else if (node.n === 'cos') res = Math.cos(val);
+          else if (node.n === 'exp') res = Math.exp(val);
+          else if (node.n === 'log') res = Math.log(val);
+          else if (node.n === 'sqrt') res = Math.sqrt(val);
+          else if (node.n === 'sq') res = val * val;
+          else if (node.n === 'inv') res = 1 / val;
+          else if (node.n === 'neg') res = -val;
+          else if (node.n === 'abs') res = Math.abs(val);
+          if (isFinite(res)) return { t: 'n', v: String(res) };
+        } catch(e) {}
       }
-
-      if (node.t === 'f') {
-          let args = node.a.map(simplify);
-          if (args.every(a => a.t === 'n')) {
-              let val = parseFloat(args[0].v);
-              let res = 0;
-              try {
-                  if (node.n === 'sin') res = Math.sin(val);
-                  else if (node.n === 'cos') res = Math.cos(val);
-                  else if (node.n === 'exp') res = Math.exp(val);
-                  else if (node.n === 'log') res = Math.log(val);
-                  else if (node.n === 'sqrt') res = Math.sqrt(val);
-                  else if (node.n === 'sq') res = val * val;
-                  else if (node.n === 'inv') res = 1 / val;
-                  else if (node.n === 'neg') res = -val;
-                  else if (node.n === 'abs') res = Math.abs(val);
-                  if (isFinite(res)) return { t: 'n', v: String(res) };
-              } catch(e) {}
-          }
-          return { t: 'f', n: node.n, a: args };
+      return { t: 'f', n: node.n, a: args };
+    }
+    if (node.t === 'b') {
+      let l = simplify(node.l);
+      let r = simplify(node.r);
+      let o = node.o;
+      if (l.t === 'n' && r.t === 'n') {
+        let lv = parseFloat(l.v), rv = parseFloat(r.v);
+        let res = o==='+' ? lv+rv : o==='-' ? lv-rv : o==='*' ? lv*rv : lv/rv;
+        if (isFinite(res)) return { t: 'n', v: String(res) };
       }
-      if (node.t === 'b') {
-          let l = simplify(node.l);
-          let r = simplify(node.r);
-          let o = node.o;
-          if (l.t === 'n' && r.t === 'n') {
-              let lv = parseFloat(l.v), rv = parseFloat(r.v);
-              let res = o==='+' ? lv+rv : o==='-' ? lv-rv : o==='*' ? lv*rv : lv/rv;
-              if (isFinite(res)) return { t: 'n', v: String(res) };
-          }
-          if (o === '+') {
-              if (l.t === 'n' && parseFloat(l.v) === 0) return r;
-              if (r.t === 'n' && parseFloat(r.v) === 0) return l;
-          }
-          if (o === '-') {
-              if (r.t === 'n' && parseFloat(r.v) === 0) return l;
-              if (l.t === 'n' && parseFloat(l.v) === 0) return { t: 'u', o: '-', c: r };
-          }
-          if (o === '*') {
-              if ((l.t === 'n' && parseFloat(l.v) === 0) || (r.t === 'n' && parseFloat(r.v) === 0)) return { t: 'n', v: '0' };
-              if (l.t === 'n' && parseFloat(l.v) === 1) return r;
-              if (r.t === 'n' && parseFloat(r.v) === 1) return l;
-              if (l.t === 'n' && parseFloat(l.v) === -1) return { t: 'u', o: '-', c: r };
-              if (r.t === 'n' && parseFloat(r.v) === -1) return { t: 'u', o: '-', c: l };
-              if (JSON.stringify(l) === JSON.stringify(r)) return { t: 'f', n: 'sq', a: [l] };
-          }
-          if (o === '/') {
-              if (l.t === 'n' && parseFloat(l.v) === 0) return { t: 'n', v: '0' };
-              if (r.t === 'n' && parseFloat(r.v) === 1) return l;
-              if (r.t === 'n' && parseFloat(r.v) === -1) return { t: 'u', o: '-', c: l };
-              if (l.t === 'n' && parseFloat(l.v) === 1) return { t: 'f', n: 'inv', a: [r] };
-              if (l.t === 'u' && l.o === '-' && l.c.t === 'n' && parseFloat(l.c.v) === 1) {
-                  return { t: 'f', n: 'neg', a: [{ t: 'f', n: 'inv', a: [r] }] };
-              }
-              if (JSON.stringify(l) === JSON.stringify(r)) return { t: 'n', v: '1' };
-          }
-          return { t: 'b', o, l, r };
+      if (o === '+') {
+        if (l.t === 'n' && parseFloat(l.v) === 0) return r;
+        if (r.t === 'n' && parseFloat(r.v) === 0) return l;
       }
-      return node;
+      if (o === '-') {
+        if (r.t === 'n' && parseFloat(r.v) === 0) return l;
+        if (l.t === 'n' && parseFloat(l.v) === 0) return { t: 'u', o: '-', c: r };
+      }
+      if (o === '*') {
+        if ((l.t === 'n' && parseFloat(l.v) === 0) || (r.t === 'n' && parseFloat(r.v) === 0)) return { t: 'n', v: '0' };
+        if (l.t === 'n' && parseFloat(l.v) === 1) return r;
+        if (r.t === 'n' && parseFloat(r.v) === 1) return l;
+        if (l.t === 'n' && parseFloat(l.v) === -1) return { t: 'u', o: '-', c: r };
+        if (r.t === 'n' && parseFloat(r.v) === -1) return { t: 'u', o: '-', c: l };
+        if (JSON.stringify(l) === JSON.stringify(r)) return { t: 'f', n: 'sq', a: [l] };
+      }
+      if (o === '/') {
+        if (l.t === 'n' && parseFloat(l.v) === 0) return { t: 'n', v: '0' };
+        if (r.t === 'n' && parseFloat(r.v) === 1) return l;
+        if (r.t === 'n' && parseFloat(r.v) === -1) return { t: 'u', o: '-', c: l };
+        if (l.t === 'n' && parseFloat(l.v) === 1) return { t: 'f', n: 'inv', a: [r] };
+        if (l.t === 'u' && l.o === '-' && l.c.t === 'n' && parseFloat(l.c.v) === 1) { return { t: 'f', n: 'neg', a: [{ t: 'f', n: 'inv', a: [r] }] }; }
+        if (JSON.stringify(l) === JSON.stringify(r)) return { t: 'n', v: '1' };
+      }
+      return { t: 'b', o, l, r };
+    }
+    return node;
   };
 
   const diff = (node) => {
-      if (node.t === 'n') return { t: 'n', v: '0' };
-      if (node.t === 'v') return { t: 'n', v: node.n === v ? '1' : '0' };
-      if (node.t === 'u') return simplify({ t: 'u', o: '-', c: diff(node.c) });
-      
-      if (node.t === 'b') {
-          const { o, l, r } = node;
-          const dl = diff(l), dr = diff(r);
-          if (o === '+') return simplify({ t: 'b', o: '+', l: dl, r: dr });
-          if (o === '-') return simplify({ t: 'b', o: '-', l: dl, r: dr });
-          if (o === '*') return simplify({ t: 'b', o: '+', l: { t: 'b', o: '*', l: dl, r }, r: { t: 'b', o: '*', l, r: dr } });
-          if (o === '/') return simplify({ t: 'b', o: '/', l: { t: 'b', o: '-', l: { t: 'b', o: '*', l: dl, r }, r: { t: 'b', o: '*', l, r: dr } }, r: { t: 'b', o: '*', l: r, r } });
+    if (node.t === 'n') return { t: 'n', v: '0' };
+    if (node.t === 'v') return { t: 'n', v: node.n === v ? '1' : '0' };
+    if (node.t === 'u') return simplify({ t: 'u', o: '-', c: diff(node.c) });
+    if (node.t === 'b') {
+      const { o, l, r } = node;
+      const dl = diff(l), dr = diff(r);
+      if (o === '+') return simplify({ t: 'b', o: '+', l: dl, r: dr });
+      if (o === '-') return simplify({ t: 'b', o: '-', l: dl, r: dr });
+      if (o === '*') return simplify({ t: 'b', o: '+', l: { t: 'b', o: '*', l: dl, r }, r: { t: 'b', o: '*', l, r: dr } });
+      if (o === '/') return simplify({ t: 'b', o: '/', l: { t: 'b', o: '-', l: { t: 'b', o: '*', l: dl, r }, r: { t: 'b', o: '*', l, r: dr } }, r: { t: 'b', o: '*', l: r, r } });
+    }
+    if (node.t === 'f') {
+      const { n, a } = node;
+      const f = a[0], df = diff(f);
+      const m = (o, l, r) => ({ t: 'b', o, l, r });
+      const c = (val) => ({ t: 'n', v: val });
+      const fn = (name, args) => ({ t: 'f', n: name, a: args });
+      let od = null;
+      if (n === 'pow') {
+        if (isConst(a[1])) od = m('*', m('*', a[1], fn('pow', [a[0], m('-', a[1], c('1'))])), df);
+        else if (isConst(a[0])) od = m('*', m('*', fn('pow', a), fn('log', [a[0]])), diff(a[1]));
+        else od = m('*', fn('pow', a), m('+', m('*', diff(a[1]), fn('log', [a[0]])), m('/', m('*', a[1], diff(a[0])), a[0])));
       }
-      
-      if (node.t === 'f') {
-          const { n, a } = node;
-          const f = a[0], df = diff(f);
-          const m = (o, l, r) => ({ t: 'b', o, l, r });
-          const c = (val) => ({ t: 'n', v: val });
-          const fn = (name, args) => ({ t: 'f', n: name, a: args });
-          let od = null;
-
-          if (n === 'pow') {
-              if (isConst(a[1])) od = m('*', m('*', a[1], fn('pow', [a[0], m('-', a[1], c('1'))])), df);
-              else if (isConst(a[0])) od = m('*', m('*', fn('pow', a), fn('log', [a[0]])), diff(a[1]));
-              else od = m('*', fn('pow', a), m('+', m('*', diff(a[1]), fn('log', [a[0]])), m('/', m('*', a[1], diff(a[0])), a[0])));
-          }
-          else if (n === 'inv') od = simplify(m('/', fn('neg', [df]), fn('sq', [a[0]])));
-          else if (n === 'sqrt') od = m('/', df, m('*', c('2'), fn('sqrt', [a[0]])));
-          else if (n === 'sq') od = m('*', c('2'), m('*', a[0], df));
-          else if (n === 'exp') od = m('*', fn('exp', [a[0]]), df);
-          else if (n === 'log') od = m('/', df, a[0]);
-          else if (n === 'sin') od = m('*', fn('cos', [a[0]]), df);
-          else if (n === 'cos') od = fn('neg', [m('*', fn('sin', [a[0]]), df)]);
-          else if (n === 'tan') od = m('/', df, fn('sq', [fn('cos', [a[0]])]));
-          else if (n === 'cot') od = fn('neg', [m('/', df, fn('sq', [fn('sin', [a[0]])]))]);
-          else if (n === 'sinh') od = m('*', fn('cosh', [a[0]]), df);
-          else if (n === 'cosh') od = m('*', fn('sinh', [a[0]]), df);
-          else if (n === 'tanh') od = m('*', m('-', c('1'), fn('sq', [fn('tanh', [a[0]])])), df);
-          else if (n === 'coth') od = fn('neg', [m('*', m('-', c('1'), fn('sq', [fn('coth', [a[0]])])), df)]);
-          else if (n === 'abs') od = m('*', fn('sign', [a[0]]), df);
-          else if (D.includes(n)) od = m('*', fn(n + '_derv', a), df);
-          else od = c('0');
-
-          return simplify(od);
-      }
-      return { t: 'n', v: '0' };
+      else if (n === 'inv') od = simplify(m('/', fn('neg', [df]), fn('sq', [a[0]])));
+      else if (n === 'sqrt') od = m('/', df, m('*', c('2'), fn('sqrt', [a[0]])));
+      else if (n === 'sq') od = m('*', c('2'), m('*', a[0], df));
+      else if (n === 'exp') od = m('*', fn('exp', [a[0]]), df);
+      else if (n === 'log') od = m('/', df, a[0]);
+      else if (n === 'sin') od = m('*', fn('cos', [a[0]]), df);
+      else if (n === 'cos') od = fn('neg', [m('*', fn('sin', [a[0]]), df)]);
+      else if (n === 'tan') od = m('/', df, fn('sq', [fn('cos', [a[0]])]));
+      else if (n === 'cot') od = fn('neg', [m('/', df, fn('sq', [fn('sin', [a[0]])]))]);
+      else if (n === 'sinh') od = m('*', fn('cosh', [a[0]]), df);
+      else if (n === 'cosh') od = m('*', fn('sinh', [a[0]]), df);
+      else if (n === 'tanh') od = m('*', m('-', c('1'), fn('sq', [fn('tanh', [a[0]])])), df);
+      else if (n === 'coth') od = fn('neg', [m('*', m('-', c('1'), fn('sq', [fn('coth', [a[0]])])), df)]);
+      else if (n === 'abs') od = m('*', fn('sign', [a[0]]), df);
+      else if (D.includes(n)) od = m('*', fn(n + '_derv', a), df);
+      else od = c('0');
+      return simplify(od);
+    }
+    return { t: 'n', v: '0' };
   };
 
   const str = (node, pr = 0) => {
-      if (node.t === 'n') return node.v;
-      if (node.t === 'v') return node.n;
-      if (node.t === 'u') return `-${str(node.c, 3)}`;
-      if (node.t === 'b') {
-          const p = node.o === '*' || node.o === '/' ? 2 : 1;
-          const l = str(node.l, p);
-          const r = str(node.r, p + (node.o === '-' || node.o === '/' ? 0.5 : 0));
-          const s = `${l} ${node.o} ${r}`;
-          return p < pr ? `(${s})` : s;
-      }
-      if (node.t === 'f') return `${node.n}(${node.a.map(x => str(x, 0)).join(', ')})`;
-      return '0';
+    if (node.t === 'n') return node.v;
+    if (node.t === 'v') return node.n;
+    if (node.t === 'u') return `-${str(node.c, 3)}`;
+    if (node.t === 'b') {
+      const p = node.o === '*' || node.o === '/' ? 2 : 1;
+      const l = str(node.l, p);
+      const r = str(node.r, p + (node.o === '-' || node.o === '/' ? 0.5 : 0));
+      const s = `${l} ${node.o} ${r}`;
+      return p < pr ? `(${s})` : s;
+    }
+    if (node.t === 'f') return `${node.n}(${node.a.map(x => str(x, 0)).join(', ')})`;
+    return '0';
   };
-
   return str(simplify(diff(parseExpr())));
 }
 
@@ -1242,94 +1230,87 @@ function convertformulatowebgl(f, vecf = "vec2") {
   const pU = () => { if (pk() === '-') { nx(); return { t: 'u', o: '-', c: pPow() }; } if (pk() === '+') { nx(); return pPow(); } return pPow(); };
   const pPow = () => { let l = pP(); if (pk() === '^') { nx(); l = { t: 'f', n: 'pow', a: [l, pPow()] }; } return l; };
   const pP = () => {
-      const tk = nx();
-      if (tk === '(') { const e = pE(); nx(); return e; }
-      if (/^\d/.test(tk)) return { t: 'n', v: parseFloat(tk) };
-      if (pk() === '(') {
-          nx(); const a = [pE()];
-          while (pk() === ',') { nx(); a.push(pE()); }
-          nx(); return { t: 'f', n: tk, a };
-      }
-      return { t: 'v', n: tk };
+    const tk = nx();
+    if (tk === '(') { const e = pE(); nx(); return e; }
+    if (/^\d/.test(tk)) return { t: 'n', v: parseFloat(tk) };
+    if (pk() === '(') {
+      nx(); const a = [pE()];
+      while (pk() === ',') { nx(); a.push(pE()); }
+      nx(); return { t: 'f', n: tk, a };
+    }
+    return { t: 'v', n: tk };
   };
 
   let ast = pE();
   
   const fmt = (v) => {
-      let n = parseFloat(v);
-      if (Number.isInteger(n)) return n.toFixed(1);
-      return String(n);
+    let n = parseFloat(v);
+    if (Number.isInteger(n)) return n.toFixed(1);
+    return String(n);
   };
 
   const glslFuncs = {
-      'sin': 'sin', 'cos': 'cos', 'tan': 'tan', 'exp': 'exp', 'log': 'log',
-      'sqrt': 'sqrt', 'abs': 'abs', 'pow': 'pow',
-      'sinh': 'sinh', 'cosh': 'cosh', 'tanh': 'tanh',
-      'inv': 'inv', 'neg': 'neg',
-      'sq': (args) => `mul(${args[0]}, ${args[0]})`, 
-      'cot': (args) => `inv(tan(${args[0]}))`, 
-      'coth': (args) => `inv(tanh(${args[0]}))`
+    'sin': 'sin', 'cos': 'cos', 'tan': 'tan', 'exp': 'exp', 'log': 'log',
+    'sqrt': 'sqrt', 'abs': 'abs', 'pow': 'pow',
+    'sinh': 'sinh', 'cosh': 'cosh', 'tanh': 'tanh',
+    'inv': 'inv', 'neg': 'neg',
+    'sq': (args) => `mul(${args[0]}, ${args[0]})`, 
+    'cot': (args) => `inv(tan(${args[0]}))`, 
+    'coth': (args) => `inv(tanh(${args[0]}))`
   };
 
   const isScalarConst = (node) => {
-      return node.t === 'n' || (node.t === 'u' && node.c.t === 'n');
+    return node.t === 'n' || (node.t === 'u' && node.c.t === 'n');
   };
 
   const str = (n, pr = 0, ctx = 'top') => {
-      if (n.t === 'v') return n.n;
-      if (n.t === 'n') {
-        if (ctx === 'mul' || ctx === 'div') return fmt(n.v);
-        if (vecf == "mat4") { return `mat4(vec4(${fmt(n.v)}, 0.0, 0.0, 0.0), vec4(0.0), vec4(0.0), vec4(0.0))`; }
-        if (vecf == "vec4") { return `vec4(${fmt(n.v)}, 0.0, 0.0, 0.0)`; }
-        if (vecf == "vec3") { return `vec3(${fmt(n.v)}, 0.0, 0.0)`; }
-        if (vecf == "vec1") { return `${fmt(n.v)}`; }
-        return `vec2(${fmt(n.v)}, 0.0)`;
+    if (n.t === 'v') return n.n;
+    if (n.t === 'n') {
+      if (ctx === 'mul' || ctx === 'div') return fmt(n.v);
+      if (vecf == "mat4") { return `mat4(vec4(${fmt(n.v)}, 0.0, 0.0, 0.0), vec4(0.0), vec4(0.0), vec4(0.0))`; }
+      if (vecf == "vec4") { return `vec4(${fmt(n.v)}, 0.0, 0.0, 0.0)`; }
+      if (vecf == "vec3") { return `vec3(${fmt(n.v)}, 0.0, 0.0)`; }
+      if (vecf == "vec1") { return `${fmt(n.v)}`; }
+      return `vec2(${fmt(n.v)}, 0.0)`;
+    }
+    if (n.t === 'u') {
+      if ((ctx === 'mul' || ctx === 'div') && n.c.t === 'n') {
+        return `-${fmt(n.c.v)}`;
       }
-      
-      if (n.t === 'u') {
-          if ((ctx === 'mul' || ctx === 'div') && n.c.t === 'n') {
-              return `-${fmt(n.c.v)}`;
-          }
-          return `-${str(n.c, 3, ctx)}`; 
+      return `-${str(n.c, 3, ctx)}`; 
+    }
+    if (n.t === 'f') {
+      let args = n.a.map(x => str(x, 0, 'func'));
+      if (typeof glslFuncs[n.n] === 'function') return glslFuncs[n.n](args);
+      return `${glslFuncs[n.n] || n.n}(${args.join(', ')})`;
+    }
+    if (n.t === 'b') {
+      const { o, l, r } = n;
+      if (o === '*' || o === '/') {
+        const lIsConst = isScalarConst(l);
+        const rIsConst = isScalarConst(r);
+        if (lIsConst || rIsConst) {
+          const lS = str(l, 2, 'mul');
+          const rS = str(r, 2, o === '/' ? 'div' : 'mul');
+          if (o === '/') return `${lS} * inv(${rS})`;
+          return `${lS} * ${rS}`;
+        } else {
+          const lS = str(l, 0, 'mul');
+          const rS = str(r, 0, o === '/' ? 'div' : 'mul');
+          if (o === '/') return `mul(${lS}, inv(${rS}))`;
+          return `mul(${lS}, ${rS})`;
+        }
       }
-      
-      if (n.t === 'f') {
-          let args = n.a.map(x => str(x, 0, 'func'));
-          if (typeof glslFuncs[n.n] === 'function') return glslFuncs[n.n](args);
-          return `${glslFuncs[n.n] || n.n}(${args.join(', ')})`;
+      if (o === '+' || o === '-') {
+        const p = 1;
+        const lS = str(l, p, 'add');
+        const rS = str(r, p + (o === '-' ? 0.5 : 0), 'add');
+        const s = `${lS} ${o} ${rS}`;
+        return p < pr ? `(${s})` : s;
       }
-      
-      if (n.t === 'b') {
-          const { o, l, r } = n;
-          
-          if (o === '*' || o === '/') {
-              const lIsConst = isScalarConst(l);
-              const rIsConst = isScalarConst(r);
-              
-              if (lIsConst || rIsConst) {
-                  const lS = str(l, 2, 'mul');
-                  const rS = str(r, 2, o === '/' ? 'div' : 'mul');
-                  if (o === '/') return `${lS} * inv(${rS})`;
-                  return `${lS} * ${rS}`;
-              } else {
-                  const lS = str(l, 0, 'mul');
-                  const rS = str(r, 0, o === '/' ? 'div' : 'mul');
-                  if (o === '/') return `mul(${lS}, inv(${rS}))`;
-                  return `mul(${lS}, ${rS})`;
-              }
-          }
-          
-          if (o === '+' || o === '-') {
-              const p = 1;
-              const lS = str(l, p, 'add');
-              const rS = str(r, p + (o === '-' ? 0.5 : 0), 'add');
-              const s = `${lS} ${o} ${rS}`;
-              return p < pr ? `(${s})` : s;
-          }
-      }
-      return vecf + '(0.0)';
+    }
+    return vecf + '(0.0)';
   };
-  
   return str(ast);
 }
 
@@ -1360,7 +1341,6 @@ function getfractal(formula, type, iteration) {
   else if (type == "o") { const formulas = getformula_and_derv(formula, "mat4"); console.log(formulas); return octanionshadercode(convertformula("z = " + formulas[0], "o") + ";", convertformula("derv = "  + formulas[1], "o") + ";", iteration); }
   else if (type == "bq") { const formulas = getformula_and_derv(formula, "mat4"); console.log(formulas); return octanionshadercode(convertformula("z = " + formulas[0], "bq") + ";", convertformula("derv = "  + formulas[1], "bq") + ";", iteration); }
   else if (type == "cn") { const formulas = getformula_and_derv(formula, "vec2"); console.log(formulas); const newton_iter = `z = z_prev - cdiv(${formulas[0]}, ${formulas[1]})`; let newformula = convertformula(newton_iter);  return newtonshadercode(newformula + " + c;", "c"); }
-  const formulas = getformula_and_derv(formula);
-  console.log(formulas);
+  const formulas = getformula_and_derv(formula); console.log(formulas);
   return mandelbrotshadercode(convertformula("z = " + formulas[0], "c") + ";");
 }
