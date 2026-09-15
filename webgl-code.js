@@ -95,7 +95,7 @@ let mathcode = `
   vec2 cceil(vec2 z) { return ceil(z); }
   vec2 cround(vec2 z) { return floor(z + 0.5); }
   vec2 cstep(vec2 z) { return vec2(step(0.0, z.x), 0.0); }
-  vec2 cclamp(vec2 z, vec2 w, vec2 s) { return vec2(clamp(z.x, w.x, s.y), clamp(z.y, w.y, s.y)); }
+  vec2 cclamp(vec2 z, vec2 w, vec2 s) { return vec2(clamp(z.x, w.x, s.x), clamp(z.y, w.y, s.y)); }
   vec2 ccomp_dotre(vec2 z, vec2 w) { return cre(z) * cre(w) + cim(z) * cim(w); }
   vec2 ccomp_dotim(vec2 z, vec2 w) { return cre(w) * cim(z) - cim(w) * cre(z); }
   // vec2 ccomp_dim(vec2 z, vec2 w) { return cre(z) * cim(w) - cim(w) * cre(z); }
@@ -441,7 +441,7 @@ let mathcode = `
     if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) { return qpow(z, w.x); }
     return qexp(qmul(w, qlog(z))); // qexp(qmul(qlog(z), w))
   }
-  vec4 qsqrt(vec4 z) { return qpow(z, 0.5); }
+  vec4 qsqrt(vec4 z) { return qexp(0.5 * qlog(z)); }
   vec4 qroot(vec4 z, vec4 w) { return qpow(z, qinv(w)); }
   vec4 qsign(vec4 z) { return z / length(z); }
   vec4 qmax(vec4 z, vec4 w) { return vec4(max(z.x, w.x), max(z.y, w.y), max(z.z, w.z), max(z.w, w.w)); }
@@ -452,7 +452,7 @@ let mathcode = `
   vec4 qceil(vec4 z) { return ceil(z); }
   vec4 qround(vec4 z) { return floor(z + 0.5); }
   vec4 qstep(vec4 z) { return vec4(step(0.0, z.x), 0.0, 0.0, 0.0); }
-  vec4 qclamp(vec4 z, vec4 w, vec4 s) { return vec4(clamp(z.x, w.x, s.y), clamp(z.y, w.y, s.y), clamp(z.z, w.z, s.z), clamp(z.w, w.w, s.w)); }
+  vec4 qclamp(vec4 z, vec4 w, vec4 s) { return vec4(clamp(z.x, w.x, s.x), clamp(z.y, w.y, s.y), clamp(z.z, w.z, s.z), clamp(z.w, w.w, s.w)); }
   vec4 qtau(vec4 z, vec4 w) { return vec4(1.0, 0.0, 0.0, 0.0) - qpow(z, vec4(0.5, 0.0, 0.0, 0.0) - w); }
   vec4 qtau_derv(vec4 z, vec4 w) { return qmul(qpow(w, vec4(0.5, 0.0, 0.0, 0.0) - z), qlog(w)); }
   vec4 qgamma_right(vec4 z) {
@@ -534,7 +534,7 @@ let mathcode = `
   vec4 biceil(vec4 z) { return ceil(z); }
   vec4 biround(vec4 z) { return floor(z + 0.5); }
   vec4 bistep(vec4 z) { return vec4(step(0.0, z.x), 0.0, 0.0, 0.0); }
-  vec4 biclamp(vec4 z, vec4 w, vec4 s) { return vec4(clamp(z.x, w.x, s.y), clamp(z.y, w.y, s.y), clamp(z.z, w.z, s.z), clamp(z.w, w.w, s.w)); }
+  vec4 biclamp(vec4 z, vec4 w, vec4 s) { return vec4(clamp(z.x, w.x, s.x), clamp(z.y, w.y, s.y), clamp(z.z, w.z, s.z), clamp(z.w, w.w, s.w)); }
   //vec4 bi1arg(vec4 z) { vec2 u = cmul_i(bidiv(z.zw, z.xy)); vec2 arg = cmul_i(clog(bidiv(vec2(1.0, 0.0) - u, vec2(1.0, 0.0) + u))) * 0.5; return vec4(0.0, 0.0, arg.x, arg.y); }
   vec4 bifib(vec4 z) { return (bipow(vec4(1.61803398875, 0.0, 0.0, 0.0), z) - bipow(vec4(-0.61803398875, 0.0, 0.0, 0.0), z)) * 0.4472135955; }
   vec4 bitau(vec4 z, vec4 w) { return vec4(1.0, 0.0, 0.0, 0.0) - bipow(z, vec4(0.5, 0.0, 0.0, 0.0) - w); }
@@ -1062,7 +1062,7 @@ function quaternionnewtonshadercode(f_code = "", df_code = "", ddf_code = "", it
       ` + f_code + `
       ` + df_code + `
       ` + ddf_code + `
-      vec4 df_inv = biinv(df_z);
+      vec4 df_inv = qinv(df_z);
       vec4 delta = qmul(df_inv, f_z);
       dz = qmul(dz, qmul(qmul(f_z, ddf_z), qmul(df_inv, df_inv)));
       z = z - delta;
