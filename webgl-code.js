@@ -428,7 +428,8 @@ let mathcode = `
   vec4 qtanh(vec4 z) { return qdiv(qsinh(z), qcosh(z)); }
   vec4 qcoth(vec4 z) { return qdiv(qcosh(z), qsinh(z)); }
   vec4 qpow(vec4 z, float w) {
-    if (w == 2.0) return qsq(z);
+    if (w == 3.0) return qmul(qsq(z), z);
+    else if (w == 2.0) return qsq(z);
     else if (w == 1.0) return z;
     else if (w == 0.0) return vec4(1.0, 0.0, 0.0, 0.0);
     else if (w ==-1.0) return qinv(z);
@@ -1032,7 +1033,7 @@ function bicomplexnewtonshadercode(f_code = "", df_code = "", ddf_code = "", ite
       ` + ddf_code + `
       vec4 df_inv = biinv(df_z);
       vec4 delta = bimul(df_inv, f_z);
-      dz = bimul(dz, bimul(bimul(f_z, ddf_z), bimul(df_inv, df_inv)));
+      dz = bimul(dz, bimul(bimul(f_z, ddf_z), bisq(df_inv)));
       z = z - delta;
       if (length(delta) < rangeval) { break; }
     }
@@ -1064,7 +1065,7 @@ function quaternionnewtonshadercode(f_code = "", df_code = "", ddf_code = "", it
       ` + ddf_code + `
       vec4 df_inv = qinv(df_z);
       vec4 delta = qmul(df_inv, f_z);
-      dz = qmul(dz, qmul(qmul(f_z, ddf_z), qmul(df_inv, df_inv)));
+      dz = qmul(dz, qmul(qmul(f_z, ddf_z), qsq(df_inv)));
       z = z - delta;
       if (length(delta) < rangeval) { break; }
     }
