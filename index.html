@@ -17,7 +17,7 @@
       flex-direction: column;
       background: #252526;
       border-right: 2px solid #333;
-      padding: 14px 12px;
+      padding: 8px 12px;
       gap: 12px;
       overflow-y: auto;
     }
@@ -209,16 +209,13 @@
       outline: none;
     }
     .iter-row input:focus { border-color: #0e639c; }
-
     .hint {
       font-size: 10px;
       color: #6b6b6b;
-      line-height: 1.5;
       margin-top: auto;
       border-top: 1px solid #333;
-      padding-top: 10px;
+      padding-top: 6px;
     }
-    .hint b { color: #9d9d9d; font-weight: 600; }
     #graph { flex: 1; position: relative; background: #fff; min-width: 0; }
     #canvas { width: 100%; height: 100%; cursor: crosshair; display: block; }
     .btn-row {
@@ -259,8 +256,7 @@
     body.fullscreen-mode #formula-panel { display: none; }
     body.fullscreen-mode #graph { flex: 1; }
     #graph:fullscreen { width: 100vw; height: 100vh; }
-    #graph:-webkit-full-screen { width: 100vw; height: 100vh; }
-
+    /*#graph:-webkit-full-screen { width: 100vw; height: 100vh; }*/
     #fs-ui {
       display: none;
       position: absolute;
@@ -444,22 +440,20 @@
   function applyFormula() {
     const raw = formulaInput.value.trim();
     if (!raw) return;
-    let src;
     try {
-      src = getfractal(raw, currentVar, parseInt(iterInput.value, 10) || 24);
+      const src = getfractal(raw, currentVar, parseInt(iterInput.value, 10) || 24);
+      if (!src) {
+        setFormulaError('empty shader source');
+        return;
+      }
+      const ok = useShader(uniformcode + mathcode + src);
+      if (ok) {
+        setFormulaOk();
+      } else {
+        setFormulaError('shader compile error (см. console)');
+      }
     } catch (e) {
       setFormulaError('getfractal error: ' + e.message);
-      return;
-    }
-    if (!src) {
-      setFormulaError('empty shader source');
-      return;
-    }
-    const ok = useShader(uniformcode + mathcode + src);
-    if (ok) {
-      setFormulaOk();
-    } else {
-      setFormulaError('shader compile error (см. console)');
     }
   }
 
@@ -497,6 +491,13 @@
     });
   });
 
+  varButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      setActiveVar(btn.dataset.var);
+      applyFormula();
+    });
+  });
+
   iterInput.addEventListener('change', () => {
     iteration = Math.max(1, Math.min(2000, parseInt(iterInput.value, 10) || 24));
     iterInput.value = iteration;
@@ -507,13 +508,6 @@
     range = Math.max(1, Math.min(100000, parseFloat(rangeInput.value) || 300));
     rangeInput.value = range;
     updateControls(true);
-  });
-
-  varButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      setActiveVar(btn.dataset.var);
-      applyFormula();
-    });
   });
 
   burningBtn.addEventListener('click', () => {
