@@ -910,9 +910,14 @@ let mandelboxshader = `vec2 mandelbox(float zx, float zy, float zz, float zw, fl
   vec4 z = vec4(zx, zy, zz, zw);
   vec4 c = vec4(cx, cy, cz, cw);
   vec4 z0 = z, z_prev = z;
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < 21; i++) {
     z_prev = z;
+    znorm = dot(z, z);
+    //znorm = dot(z, z) * 1.0/140.0;
+    //znorm = length(z);
+    if (znorm * 140.0 > range) { break; }
     n = i;
+
     z = clamp(z, -foldingLimit, foldingLimit) * 2.0 - z;
     float r2 = dot(z, z);
     if (r2 < minRadius2) {
@@ -924,10 +929,10 @@ let mandelboxshader = `vec2 mandelbox(float zx, float zy, float zz, float zw, fl
       z *= temp;
       dr *= temp;
     }
+
+    float derv = scale;
+    dr = length(derv) * dr + 1.0;
     z = z * scale + c;
-    float derv = abs(scale);
-    dr = derv * dr + 1.0;
-    if (dot(z, z) > range * 140.0) { break; }
   }
   return vec2(length(z) / abs(dr) * 0.25, n);
 }
