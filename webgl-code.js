@@ -911,6 +911,9 @@ function quaternionshadercode(formula = "z = qpow(z, w) + c;", dervformula = "ve
       ` + dervformula + `
       dr = length(derv) * dr + 1.0;
       ` + formula + `
+      //float derv = -2.0;
+      //dr = length(derv) * dr + 1.0;
+      //z = z * derv + c;
     }
     znorm = length(z);
     //return vec2(znorm / abs(dr) * 0.5, n);
@@ -918,41 +921,6 @@ function quaternionshadercode(formula = "z = qpow(z, w) + c;", dervformula = "ve
   }
   ` + raymarchingsharecode("surDist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
 }
-
-let mandelboxshader = `vec2 mandelbox(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
-  int n = 0;
-  float dr = 1.0, znorm = 0.0;
-  vec4 z = vec4(zx, zy, zz, zw);
-  vec4 c = vec4(cx, cy, cz, cw);
-  vec4 z0 = z, z_prev = z;
-  for (int i = 0; i < 21; i++) {
-    z_prev = z;
-    znorm = length(z);
-    n = i;
-    if (znorm > range) { break; }
-    if (1 == 1) {
-      float foldingLimit = 1.0, fixedRadius = 1.0, minRadius = 0.5;
-      float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
-      z = clamp(z, -foldingLimit, foldingLimit) * 2.0 - z;
-      float r2 = dot(z, z);
-      if (r2 < minRadius2) {
-        float temp = fixedRadius2 / minRadius2; // float temp = fixedRadius2 / minRadius;
-        z *= temp;
-        dr *= temp;
-      } else if (r2 < fixedRadius2) {
-        float temp = fixedRadius2 / r2;
-        z *= temp;
-        dr *= temp;
-      }
-    }
-    float derv = -2.0;
-    dr = length(derv) * dr + 1.0;
-    z = z * derv + c;
-  }
-  znorm = length(z);
-  return vec2(znorm / abs(dr) * 0.5, n);
-}
-` + raymarchingsharecode("surDist = mandelbox(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandelbox(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
 
 function mandelbulbshadercode(formula = "z = tpow(z, w) + c;", dervformula = "vec4 derv = tpow(z_prev, power - 1.0) * power;", iteration = 12) {
   return `vec2 mandelbulb(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
