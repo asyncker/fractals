@@ -21,7 +21,8 @@ let uniformcode = `
   uniform float multlight;
   uniform float scaleval;
   uniform int ismandel;
-  uniform int isnewton;
+  uniform int isminus;
+  uniform int ismandelbox;
   uniform int isburning;
   uniform int isminusone;
   uniform int isconj;
@@ -31,7 +32,6 @@ let uniformcode = `
 let mathcode = `
   #define PI 3.14159265359
   #define EULER_GAMMA 0.5772156649015329
-  #define ismandelbox 0
 
   float sinh(float x) { float ex = exp(x); return (ex - 1.0 / ex) * 0.5; }
   float cosh(float x) { float ex = exp(x); return (ex + 1.0 / ex) * 0.5; }
