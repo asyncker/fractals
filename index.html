@@ -356,6 +356,7 @@
       <div class="extra-btn" id="conj-btn">conj(z) OFF</div>
       <div class="extra-btn" id="minus-btn">1 - z OFF</div>
       <div class="extra-btn" id="inverse-btn">1 / c OFF</div>
+      <div class="extra-btn" id="mandelbox-btn" title="insert formula in 3d: z * -2 + c (with 90 iteration)">mandelbox OFF</div>
     </div>
     <div class="extra-btn" id="julia-btn">Julia</div>
     <div class="iter-row">
@@ -396,7 +397,7 @@
   let rangeLocation, powerLocation, logvalLocation, inverseLocation, multlightLocation;
   let cosrotxLocation, sinrotxLocation, cosrotzLocation, sinrotzLocation, scalevalLocation;
   let ismandelLocation, isminusLocation, isburningLocation, isminusoneLocation, isconjLocation;
-  let fractalindexLocation, colorschemeindexLocation, iterationLocation;
+  let fractalindexLocation, colorschemeindexLocation, iterationLocation, ismandelboxLocation;
   const formulaInput = document.getElementById('formula-input');
   const formulaStatus = document.getElementById('formula-status');
   const iterInput = document.getElementById('iter-input');
@@ -407,6 +408,7 @@
   const presetContainer = document.getElementById('preset-container');
   const conjBtn = document.getElementById('conj-btn');
   const minusBtn = document.getElementById('minus-btn');
+  const mandelboxBtn = document.getElementById('mandelbox-btn');
   const inverseBtn = document.getElementById('inverse-btn');
   const juliaBtn = document.getElementById('julia-btn');
   const powerRow = document.getElementById('power-row');
@@ -531,6 +533,13 @@
     updateControls(true);
   });
 
+  mandelboxBtn.addEventListener('click', () => {
+    ismandelbox = ismandelbox ? 0 : 1;
+    mandelboxBtn.classList.toggle('active', ismandelbox === 1);
+    mandelboxBtn.textContent = 'mandelbox ' + (ismandelbox ? 'ON' : 'OFF');
+    updateControls(true);
+  });
+
   inverseBtn.addEventListener('click', () => {
     inverse = inverse === 1.0 ? 0.0 : 1.0;
     inverseBtn.classList.toggle('active', inverse === 1.0);
@@ -629,7 +638,8 @@
     sinrotzLocation = gl.getUniformLocation(prog, 'sinrotz');
     scalevalLocation = gl.getUniformLocation(prog, 'scaleval');
     ismandelLocation = gl.getUniformLocation(prog, 'ismandel');
-    isminusLocation = gl.getUniformLocation(prog, 'isnewton');
+    isminusLocation = gl.getUniformLocation(prog, 'isminus');
+    ismandelboxLocation = gl.getUniformLocation(prog, 'ismandelbox');
     isburningLocation = gl.getUniformLocation(prog, 'isburning');
     isminusoneLocation = gl.getUniformLocation(prog, 'isminusone');
     isconjLocation = gl.getUniformLocation(prog, 'isconj');
@@ -713,6 +723,7 @@
   let ismandel = 1;
   let isminus = 0;
   let isburning = 0;
+  let ismandelbox = 0;
   let isconj = 0;
   let isminusone = 0;
   let fractalindex = 0;
@@ -816,6 +827,7 @@
       if (power < 0) { rangecalc = range * 8.0; }
       gl.uniform1i(ismandelLocation, ismandel);
       gl.uniform1i(isminusLocation, isminus);
+      gl.uniform1i(ismandelboxLocation, ismandelbox);
       gl.uniform1i(isburningLocation, isburning);
       gl.uniform1i(isminusoneLocation, isminusone);
       gl.uniform1i(isconjLocation, isconj);
