@@ -31,6 +31,7 @@ let uniformcode = `
 let mathcode = `
   #define PI 3.14159265359
   #define EULER_GAMMA 0.5772156649015329
+  #define ismandelbox 0
 
   float sinh(float x) { float ex = exp(x); return (ex - 1.0 / ex) * 0.5; }
   float cosh(float x) { float ex = exp(x); return (ex + 1.0 / ex) * 0.5; }
@@ -682,6 +683,14 @@ return `void mandelbrot_calc() {
     if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); }
     if (isconj == 1) { z.x = z.x; z.y = -z.y; }
     if (isminusone == 1) { z = vec2(1.0, 0.0) - z; }
+    if (ismandelbox == 1) {
+      float foldingLimit = 1.0, fixedRadius = 1.0, minRadius = 0.5;
+      float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
+      z = clamp(z, -foldingLimit, foldingLimit) * 2.0 - z;
+      float r2 = dot(z, z);
+      if (r2 < minRadius2) { float temp = fixedRadius2 / minRadius2; z *= temp; }
+      else if (r2 < fixedRadius2) { float temp = fixedRadius2 / r2; z *= temp; }
+    }
     ` + formula + `
     n += 1;
     if (n >= maxn) { n = iter; break; }
@@ -737,6 +746,14 @@ return `void newton_calc() {
     if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); }
     if (isconj == 1) { z.x = z.x; z.y = -z.y; }
     if (isminusone == 1) { z = vec2(1.0, 0.0) - z; }
+    if (ismandelbox == 1) {
+      float foldingLimit = 1.0, fixedRadius = 1.0, minRadius = 0.5;
+      float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
+      z = clamp(z, -foldingLimit, foldingLimit) * 2.0 - z;
+      float r2 = dot(z, z);
+      if (r2 < minRadius2) { float temp = fixedRadius2 / minRadius2; z *= temp; }
+      else if (r2 < fixedRadius2) { float temp = fixedRadius2 / r2; z *= temp;}
+    }
     ` + formula + `
     n += 1;
     znorm = dot(z - z_prev, z - z_prev);
@@ -893,30 +910,20 @@ function quaternionshadercode(formula = "z = qpow(z, w) + c;", dervformula = "ve
       if (isburning == 1) { z = v4abs(z); }
       if (isconj == 1) { z = v4conj(z); }
       if (isminusone == 1) { z = vec4(1.0, 0.0, 0.0, 0.0) - z; }
-      if (0 == 1) {
+      if (ismandelbox == 1) {
         float foldingLimit = 1.0, fixedRadius = 1.0, minRadius = 0.5;
         float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
         z = clamp(z, -foldingLimit, foldingLimit) * 2.0 - z;
         float r2 = dot(z, z);
-        if (r2 < minRadius2) {
-          float temp = fixedRadius2 / minRadius2; // float temp = fixedRadius2 / minRadius;
-          z *= temp;
-          dr *= temp;
-        } else if (r2 < fixedRadius2) {
-          float temp = fixedRadius2 / r2;
-          z *= temp;
-          dr *= temp;
-        }
+        if (r2 < minRadius2) { float temp = fixedRadius2 / minRadius2; z *= temp; dr *= temp; }
+        else if (r2 < fixedRadius2) { float temp = fixedRadius2 / r2;  z *= temp; dr *= temp; }
       }
       ` + dervformula + `
       dr = length(derv) * dr + 1.0;
-      ` + formula + `
-      //float derv = -2.0;
-      //dr = length(derv) * dr + 1.0;
-      //z = z * derv + c;
+      ` + formula + `      
     }
     znorm = length(z);
-    //return vec2(znorm / abs(dr) * 0.5, n);
+    if (ismandelbox == 1) { return vec2(znorm / abs(dr) * 0.5, n); }
     return vec2(0.5 * log(znorm) * znorm / dr, n);
   }
   ` + raymarchingsharecode("surDist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
@@ -938,12 +945,20 @@ function mandelbulbshadercode(formula = "z = tpow(z, w) + c;", dervformula = "ve
       if (isburning == 1) { z = v4abs(z); }
       if (isconj == 1) { z = v4conj(z); }
       if (isminusone == 1) { z = vec4(1.0, 0.0, 0.0, 0.0) - z; }
+      if (ismandelbox == 1) {
+        float foldingLimit = 1.0, fixedRadius = 1.0, minRadius = 0.5;
+        float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
+        z = clamp(z, -foldingLimit, foldingLimit) * 2.0 - z;
+        float r2 = dot(z, z);
+        if (r2 < minRadius2) { float temp = fixedRadius2 / minRadius2; z *= temp; dr *= temp; }
+        else if (r2 < fixedRadius2) { float temp = fixedRadius2 / r2;  z *= temp; dr *= temp; }
+      }
       ` + dervformula + `
       dr = length(derv) * dr + 1.0;
       ` + formula + `
-      //dr = pow_derv(znorm, power) * dr + 1.0;
     }
     znorm = length(z);
+    if (ismandelbox == 1) { return vec2(znorm / abs(dr) * 0.5, n); }
     return vec2(0.5 * log(znorm) * znorm / dr, n);
   }
   ` + raymarchingsharecode("surDist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandelbulb(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
@@ -965,11 +980,20 @@ function bicomplexshadercode(formula = "z = bipow(z, w) + c;", dervformula = "ve
       if (isburning == 1) { z = v4abs(z); }
       if (isconj == 1) { z = v4conj(z); }
       if (isminusone == 1) { z = vec4(1.0, 0.0, 0.0, 0.0) - z; }
+      if (ismandelbox == 1) {
+        float foldingLimit = 1.0, fixedRadius = 1.0, minRadius = 0.5;
+        float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
+        z = clamp(z, -foldingLimit, foldingLimit) * 2.0 - z;
+        float r2 = dot(z, z);
+        if (r2 < minRadius2) { float temp = fixedRadius2 / minRadius2; z *= temp; dr *= temp; } // float temp = fixedRadius2 / minRadius;
+        else if (r2 < fixedRadius2) { float temp = fixedRadius2 / r2;  z *= temp; dr *= temp; }
+      }
       ` + dervformula + `
       dr = length(derv) * dr + 1.0;
       ` + formula + `
     }
     znorm = length(z);
+    if (ismandelbox == 1) { return vec2(znorm / abs(dr) * 0.5, n); }
     return vec2(0.5 * log(znorm) * znorm / dr, n);
   }
   ` + raymarchingsharecode("surDist = mandel_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandel_bicomplex(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
