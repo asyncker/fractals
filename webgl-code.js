@@ -893,11 +893,27 @@ function quaternionshadercode(formula = "z = qpow(z, w) + c;", dervformula = "ve
       if (isburning == 1) { z = v4abs(z); }
       if (isconj == 1) { z = v4conj(z); }
       if (isminusone == 1) { z = vec4(1.0, 0.0, 0.0, 0.0) - z; }
+      if (0 == 1) {
+        float foldingLimit = 1.0, fixedRadius = 1.0, minRadius = 0.5;
+        float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
+        z = clamp(z, -foldingLimit, foldingLimit) * 2.0 - z;
+        float r2 = dot(z, z);
+        if (r2 < minRadius2) {
+          float temp = fixedRadius2 / minRadius2; // float temp = fixedRadius2 / minRadius;
+          z *= temp;
+          dr *= temp;
+        } else if (r2 < fixedRadius2) {
+          float temp = fixedRadius2 / r2;
+          z *= temp;
+          dr *= temp;
+        }
+      }
       ` + dervformula + `
       dr = length(derv) * dr + 1.0;
       ` + formula + `
     }
     znorm = length(z);
+    //return vec2(znorm / abs(dr) * 0.5, n);
     return vec2(0.5 * log(znorm) * znorm / dr, n);
   }
   ` + raymarchingsharecode("surDist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandel_quaternion(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
@@ -905,36 +921,36 @@ function quaternionshadercode(formula = "z = qpow(z, w) + c;", dervformula = "ve
 
 let mandelboxshader = `vec2 mandelbox(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
   int n = 0;
-  float dr = 1.0, znorm = 0.0, scale = -2.0, fixedRadius = 1.0, minRadius = 0.5, foldingLimit = 1.0, p = -0.5;
-  float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
+  float dr = 1.0, znorm = 0.0;
   vec4 z = vec4(zx, zy, zz, zw);
   vec4 c = vec4(cx, cy, cz, cw);
   vec4 z0 = z, z_prev = z;
   for (int i = 0; i < 21; i++) {
     z_prev = z;
-    znorm = dot(z, z);
-    //znorm = dot(z, z) * 1.0/140.0;
-    //znorm = length(z);
-    if (znorm * 140.0 > range) { break; }
+    znorm = length(z);
     n = i;
-
-    z = clamp(z, -foldingLimit, foldingLimit) * 2.0 - z;
-    float r2 = dot(z, z);
-    if (r2 < minRadius2) {
-      float temp = fixedRadius2 / minRadius2; // float temp = fixedRadius2 / minRadius;
-      z *= temp;
-      dr *= temp;
-    } else if (r2 < fixedRadius2) {
-      float temp = fixedRadius2 / r2;
-      z *= temp;
-      dr *= temp;
+    if (znorm > range) { break; }
+    if (1 == 1) {
+      float foldingLimit = 1.0, fixedRadius = 1.0, minRadius = 0.5;
+      float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
+      z = clamp(z, -foldingLimit, foldingLimit) * 2.0 - z;
+      float r2 = dot(z, z);
+      if (r2 < minRadius2) {
+        float temp = fixedRadius2 / minRadius2; // float temp = fixedRadius2 / minRadius;
+        z *= temp;
+        dr *= temp;
+      } else if (r2 < fixedRadius2) {
+        float temp = fixedRadius2 / r2;
+        z *= temp;
+        dr *= temp;
+      }
     }
-
-    float derv = scale;
+    float derv = -2.0;
     dr = length(derv) * dr + 1.0;
-    z = z * scale + c;
+    z = z * derv + c;
   }
-  return vec2(length(z) / abs(dr) * 0.25, n);
+  znorm = length(z);
+  return vec2(znorm / abs(dr) * 0.5, n);
 }
 ` + raymarchingsharecode("surDist = mandelbox(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandelbox(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
 
