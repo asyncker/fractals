@@ -264,29 +264,22 @@
     #fs-ui {
       display: none;
       position: absolute;
-      bottom: 16px;
-      left: 16px;
+      bottom: 14px;
+      left: 14px;
       z-index: 10;
-      width: 260px;
+      width: 240px;
       flex-direction: column;
       gap: 8px;
     }
     body.fullscreen-mode #fs-ui { display: flex; }
-
     #fs-formula-input {
       width: 100%;
       background: rgba(30, 30, 30, 0.55);
       color: #e6e6e6;
-      border: 1px solid rgba(78, 201, 176, 0.35);
+      border: 1px solid rgba(47, 47, 47, 0.35);
       border-radius: 8px;
       padding: 8px 12px;
       font-family: 'Consolas', monospace;
-      font-size: 13px;
-      letter-spacing: 0.3px;
-      outline: none;
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
     }
     #fs-formula-input::placeholder {
       color: rgba(212, 212, 212, 0.4);
@@ -294,7 +287,6 @@
     }
     #fs-formula-input.error {
       border-color: #f14c4c;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(241, 76, 76, 0.22);
     }
     #fs-var-buttons {
       display: flex;
@@ -304,18 +296,14 @@
       flex: 1 0 0;
       background: rgba(30, 30, 30, 0.55);
       color: #e6e6e6;
-      border: 1px solid rgba(78, 201, 176, 0.35);
+      border: 1px solid rgba(47, 47, 47, 0.35);
       border-radius: 8px;
-      padding: 7px 0;
+      padding: 6px 0;
       font-family: inherit;
       font-size: 12px;
       letter-spacing: 0.3px;
       cursor: pointer;
       text-align: center;
-      user-select: none;
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
     }
     .fs-var-btn small {
       display: block;
@@ -325,7 +313,6 @@
     }
     .fs-var-btn.active {
       background: rgba(14, 99, 156, 0.85);
-      border-color: #1177bb;
       color: #fff;
     }
     .fs-var-btn.active small { opacity: 0.85; }
