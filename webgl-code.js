@@ -907,17 +907,16 @@ let mandelboxshader = `vec2 mandelbox(float zx, float zy, float zz, float zw, fl
   int n = 0;
   float dr = 1.0, znorm = 0.0, scale = -2.0, fixedRadius = 1.0, minRadius = 0.5, foldingLimit = 1.0, p = -0.5;
   float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
-  vec3 z = vec3(zx, zy, zz);
-  vec3 c = vec3(cx, cy, cz);
-  vec3 z0 = z, z_prev = z;
+  vec4 z = vec4(zx, zy, zz, zw);
+  vec4 c = vec4(cx, cy, cz, cw);
+  vec4 z0 = z, z_prev = z;
   for (int i = 0; i < 20; i++) {
     z_prev = z;
     n = i;
-    if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); z.z = -abs(z.z); }
-    z = (clamp(z, -foldingLimit, foldingLimit) * 2.0 - z); //z = clamp(z, -foldingLimit, foldingLimit); z = z * 2.0 - z;
+    z = clamp(z, -foldingLimit, foldingLimit) * 2.0 - z;
     float r2 = dot(z, z);
     if (r2 < minRadius2) {
-      float temp = fixedRadius2 / minRadius2; // float temp = fixedRadius2 / minRadius
+      float temp = fixedRadius2 / minRadius2; // float temp = fixedRadius2 / minRadius;
       z *= temp;
       dr *= temp;
     } else if (r2 < fixedRadius2) {
@@ -926,10 +925,11 @@ let mandelboxshader = `vec2 mandelbox(float zx, float zy, float zz, float zw, fl
       dr *= temp;
     }
     z = z * scale + c;
-    dr = dr * abs(scale) + 1.0;
+    float derv = abs(scale);
+    dr = derv * dr + 1.0;
     if (dot(z, z) > range * 140.0) { break; }
   }
-  return vec2(length(z) / abs(dr) * 0.25, float(n));
+  return vec2(length(z) / abs(dr) * 0.25, n);
 }
 ` + raymarchingsharecode("surDist = mandelbox(zx, zy, zz, zw, cx, cy, cz, cw).x * 0.001;", "dist = mandelbox(zx, zy, zz, zw, cx, cy, cz, cw);") + ' void main() { mandel3d_calc(); }';
 
