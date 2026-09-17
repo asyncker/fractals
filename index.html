@@ -10,355 +10,144 @@
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family:'Consolas',monospace; display:flex; height:100vh; background:#1e1e1e; color:#d4d4d4; overflow:hidden; }
+    .btn {
+      background:#2d2d30; color:#d4d4d4; border:1px solid #3c3c3c;
+      border-radius:4px; font-family:inherit; cursor:pointer;
+      user-select:none; text-align:center;
+      transition:background .12s, border-color .12s, color .12s;
+    }
+    .btn:hover { background:#3a3a3d; }
+    .btn.active { background:#0e639c; border-color:#1177bb; color:#fff; }
     #formula-panel {
-      width: 340px;
-      min-width: 260px;
-      display: flex;
-      flex-direction: column;
-      background: #252526;
-      border-right: 2px solid #333;
-      padding: 8px 12px;
-      gap: 12px;
-      overflow-y: auto;
+      width:340px; min-width:260px; display:flex; flex-direction:column;
+      background:#252526; border-right:2px solid #333;
+      padding:8px 12px; gap:12px; overflow-y:auto;
     }
     #formula-panel h2 {
-      font-size: 13px;
-      color: #4ec9b0;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      margin-bottom: 2px;
+      font-size:13px; color:#4ec9b0; font-weight:600; letter-spacing:.5px;
+      margin-bottom:2px;
     }
-    .panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
+    .panel-header { display:flex; align-items:center; justify-content:space-between; }
     #fullscreen-btn {
-      width: 26px;
-      height: 26px;
-      background: #2d2d30;
-      color: #d4d4d4;
-      border: 1px solid #3c3c3c;
-      border-radius: 4px;
-      font-family: inherit;
-      font-size: 14px;
-      line-height: 1;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      transition: background 0.12s, border-color 0.12s, color 0.12s;
-    }
-    #fullscreen-btn:hover { background: #3a3a3d; }
-    #fullscreen-btn.active {
-      background: #0e639c;
-      border-color: #1177bb;
-      color: #fff;
+      width:26px; height:26px; font-size:14px; line-height:1;
+      display:flex; align-items:center; justify-content:center;
     }
     #formula-input {
-      width: 100%;
-      background: #1e1e1e;
-      color: #d4d4d4;
-      border: 1px solid #3c3c3c;
-      border-radius: 4px;
-      padding: 10px 12px;
-      font-family: 'Consolas', monospace;
-      font-size: 16px;
-      outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
+      width:100%; background:#1e1e1e; color:#d4d4d4;
+      border:1px solid #3c3c3c; border-radius:4px;
+      padding:10px 12px; font-family:inherit; font-size:16px; outline:none;
+      transition:border-color .15s, box-shadow .15s;
     }
-    #formula-input:focus {
-      border-color: #0e639c;
-      box-shadow: 0 0 0 2px rgba(14,99,156,0.25);
-    }
-    #formula-input.error {
-      border-color: #f14c4c;
-      box-shadow: 0 0 0 2px rgba(241,76,76,0.25);
-    }
-    #formula-status {
-      font-size: 11px;
-      min-height: 14px;
-      color: #6a9955;
-      transition: color 0.15s;
-    }
-    #formula-status.error { color: #f14c4c; }
-    .var-buttons {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .var-btn {
-      flex: 1 0 auto;
-      min-width: 52px;
-      background: #2d2d30;
-      color: #d4d4d4;
-      border: 1px solid #3c3c3c;
-      border-radius: 4px;
-      padding: 7px 0;
-      font-family: inherit;
-      font-size: 13px;
-      cursor: pointer;
-      text-align: center;
-      user-select: none;
-      transition: background 0.12s, border-color 0.12s, color 0.12s;
-    }
-    .var-btn:hover { background: #3a3a3d; }
-    .var-btn.active {
-      background: #0e639c;
-      border-color: #1177bb;
-      color: #fff;
-    }
-    .var-btn small {
-      display: block;
-      font-size: 9px;
-      opacity: 0.6;
-      margin-top: 1px;
-    }
-    .var-btn.active small { opacity: 0.85; }
-    .extra-btn {
-      width: 100%;
-      background: #2d2d30;
-      color: #d4d4d4;
-      border: 1px solid #3c3c3c;
-      border-radius: 4px;
-      padding: 7px 0;
-      font-family: inherit;
-      font-size: 12px;
-      cursor: pointer;
-      text-align: center;
-      user-select: none;
-      transition: background 0.12s, border-color 0.12s, color 0.12s;
-    }
-    .extra-btn:hover { background: #3a3a3d; }
-    .extra-btn.active {
-      background: #0e639c;
-      border-color: #1177bb;
-      color: #fff;
-    }
-    .color-buttons {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .color-btn {
-      flex: 1 0 auto;
-      min-width: 60px;
-      background: #2d2d30;
-      color: #d4d4d4;
-      border: 1px solid #3c3c3c;
-      border-radius: 4px;
-      padding: 7px 0;
-      font-family: inherit;
-      font-size: 12px;
-      cursor: pointer;
-      text-align: center;
-      user-select: none;
-      transition: background 0.12s, border-color 0.12s, color 0.12s;
-    }
-    .color-btn:hover { background: #3a3a3d; }
-    .color-btn.active {
-      background: #0e639c;
-      border-color: #1177bb;
-      color: #fff;
-    }
-    .formula-presets {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 5px;
-    }
+    #formula-input:focus { border-color:#0e639c; box-shadow:0 0 0 2px rgba(14,99,156,.25); }
+    #formula-input.error { border-color:#f14c4c; box-shadow:0 0 0 2px rgba(241,76,76,.25); }
+    #formula-status { font-size:11px; min-height:14px; color:#6a9955; transition:color .15s; }
+    #formula-status.error { color:#f14c4c; }
+    .var-buttons { display:flex; gap:6px; flex-wrap:wrap; }
+    .var-btn { flex:1 0 auto; min-width:52px; padding:7px 0; font-size:13px; }
+    .var-btn small { display:block; font-size:9px; opacity:.6; margin-top:1px; }
+    .var-btn.active small { opacity:.85; }
+    .extra-btn { width:100%; padding:7px 0; font-size:12px; }
+    .color-buttons { display:flex; gap:6px; flex-wrap:wrap; }
+    .color-btn { flex:1 0 auto; min-width:60px; padding:7px 0; font-size:12px; }
+    .formula-presets { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; }
     .preset-btn {
-      background: #2d2d30;
-      color: #d4d4d4;
-      border: 1px solid #3c3c3c;
-      border-radius: 4px;
-      padding: 6px 2px;
-      font-family: inherit;
-      font-size: 10px;
-      cursor: pointer;
-      text-align: center;
-      user-select: none;
-      transition: background 0.12s, border-color 0.12s, color 0.12s;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .preset-btn:hover { background: #3a3a3d; }
-    .preset-btn.active {
-      background: #0e639c;
-      border-color: #1177bb;
-      color: #fff;
+      padding:6px 2px; font-size:10px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
     .iter-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      color: #9d9d9d;
-      flex-wrap: wrap;
+      display:flex; align-items:center; gap:8px;
+      font-size:12px; color:#9d9d9d; flex-wrap:wrap;
     }
     .iter-row input {
-      width: 70px;
-      background: #1e1e1e;
-      color: #d4d4d4;
-      border: 1px solid #3c3c3c;
-      border-radius: 4px;
-      padding: 5px 8px;
-      font-family: inherit;
-      font-size: 12px;
-      outline: none;
+      width:70px; background:#1e1e1e; color:#d4d4d4;
+      border:1px solid #3c3c3c; border-radius:4px;
+      padding:5px 8px; font-family:inherit; font-size:12px; outline:none;
     }
-    .iter-row input:focus { border-color: #0e639c; }
+    .iter-row input:focus { border-color:#0e639c; }
     .hint {
-      font-size: 10px;
-      color: #6b6b6b;
-      margin-top: auto;
-      border-top: 1px solid #333;
-      padding-top: 6px;
+      font-size:10px; color:#6b6b6b; margin-top:auto;
+      border-top:1px solid #333; padding-top:6px;
     }
-    #graph { flex: 1; position: relative; background: #fff; min-width: 0; }
-    #canvas { width: 100%; height: 100%; cursor: crosshair; display: block; }
-    .btn-row {
-      display: flex;
-      gap: 5px;
-      flex-wrap: wrap;
-    }
-    .btn-row .extra-btn {
-      flex: 1 0 auto;
-      min-width: 50px;
-      width: auto;
-      padding: 6px 4px;
-      font-size: 11px;
-    }
-    .power-row .extra-btn {
-      flex: 1 0 0;
-      min-width: 38px;
-      padding: 6px 2px;
-      font-size: 11px;
-    }
-    .btn-row .extra-btn.active {
-      background: #0e639c;
-      border-color: #1177bb;
-      color: #fff;
-    }
-    #julia-btn {
-      width: 100%;
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      padding: 9px 0;
-    }
-    #julia-btn.active {
-      background: #0e639c;
-      border-color: #1177bb;
-      color: #fff;
-    }
-    body.fullscreen-mode #formula-panel { display: none; }
-    body.fullscreen-mode #graph { flex: 1; }
-    #graph:fullscreen { width: 100vw; height: 100vh; }
-    /*#graph:-webkit-full-screen { width: 100vw; height: 100vh; }*/
+    #graph { flex:1; position:relative; background:#fff; min-width:0; }
+    #canvas { width:100%; height:100%; cursor:crosshair; display:block; }
+    .btn-row { display:flex; gap:5px; flex-wrap:wrap; }
+    .btn-row .extra-btn { flex:1 0 auto; min-width:50px; width:auto; padding:6px 4px; font-size:11px; }
+    .btn-row .extra-btn.active { background:#0e639c; border-color:#1177bb; color:#fff; }
+    .power-row .extra-btn { flex:1 0 0; min-width:38px; padding:6px 2px; font-size:11px; }
+    #julia-btn { width:100%; font-size:13px; font-weight:600; letter-spacing:.5px; padding:9px 0; }
+    #julia-btn.active { background:#0e639c; border-color:#1177bb; color:#fff; }
+    body.fullscreen-mode #formula-panel { display:none; }
+    body.fullscreen-mode #graph { flex:1; }
+    #graph:fullscreen { width:100vw; height:100vh; }
     #fs-ui {
-      display: none;
-      position: absolute;
-      bottom: 14px;
-      left: 14px;
-      z-index: 10;
-      width: 240px;
-      flex-direction: column;
-      gap: 8px;
+      display:none; position:absolute; bottom:14px; left:14px;
+      z-index:10; width:240px; flex-direction:column; gap:8px;
     }
-    body.fullscreen-mode #fs-ui { display: flex; }
+    body.fullscreen-mode #fs-ui { display:flex; }
     #fs-formula-input {
-      width: 100%;
-      background: rgba(30, 30, 30, 0.55);
-      color: #e6e6e6;
-      border: 1px solid rgba(47, 47, 47, 0.35);
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-family: 'Consolas', monospace;
+      width:100%; background:rgba(30,30,30,.55); color:#e6e6e6;
+      border:1px solid rgba(47,47,47,.35); border-radius:8px;
+      padding:8px 12px; font-family:inherit;
     }
-    #fs-formula-input::placeholder {
-      color: rgba(212, 212, 212, 0.4);
-      font-style: italic;
-    }
-    #fs-formula-input.error {
-      border-color: #f14c4c;
-    }
-    #fs-var-buttons {
-      display: flex;
-      gap: 8px;
-    }
+    #fs-formula-input::placeholder { color:rgba(212,212,212,.4); font-style:italic; }
+    #fs-formula-input.error { border-color:#f14c4c; }
+    #fs-var-buttons { display:flex; gap:8px; }
     .fs-var-btn {
-      flex: 1 0 0;
-      background: rgba(30, 30, 30, 0.55);
-      color: #e6e6e6;
-      border: 1px solid rgba(47, 47, 47, 0.35);
-      border-radius: 8px;
-      padding: 6px 0;
-      font-family: inherit;
-      font-size: 12px;
-      letter-spacing: 0.3px;
-      cursor: pointer;
-      text-align: center;
+      flex:1 0 0; background:rgba(30,30,30,.55); color:#e6e6e6;
+      border:1px solid rgba(47,47,47,.35); border-radius:8px;
+      padding:6px 0; font-family:inherit; font-size:12px;
+      letter-spacing:.3px; cursor:pointer; text-align:center;
     }
-    .fs-var-btn small {
-      display: block;
-      font-size: 9px;
-      opacity: 0.6;
-      margin-top: 1px;
-    }
-    .fs-var-btn.active {
-      background: rgba(14, 99, 156, 0.85);
-      color: #fff;
-    }
-    .fs-var-btn.active small { opacity: 0.85; }
+    .fs-var-btn small { display:block; font-size:9px; opacity:.6; margin-top:1px; }
+    .fs-var-btn.active { background:rgba(14,99,156,.85); color:#fff; }
+    .fs-var-btn.active small { opacity:.85; }
   </style>
 </head>
 <body>
   <div id="formula-panel">
     <div class="panel-header">
       <h2>FORMULA</h2>
-      <div id="fullscreen-btn" onclick="toggleFullscreen();" title="Fullscreen (ESC - escape)">⛶</div>
+      <div id="fullscreen-btn" class="btn" onclick="toggleFullscreen();" title="Fullscreen (ESC - escape)">⛶</div>
     </div>
     <input id="formula-input" type="text" spellcheck="false" value="z^(2 * w) + c" />
     <div id="formula-status"></div>
     <div class="var-buttons">
-      <div class="var-btn" data-var="c">c<small>mandelbrot</small></div>
-      <div class="var-btn" data-var="bi">bi<small>bicomplex</small></div>
-      <div class="var-btn" data-var="t">t<small>triplex</small></div>
-      <div class="var-btn" data-var="q">q<small>quaternion</small></div>
-      <div class="var-btn" data-var="cn">n<small>newton</small></div>
-      <div class="var-btn" data-var="bn">bn<small>bicomplex newton</small></div>
-      <div class="var-btn" data-var="qn">qn<small>quaternion newton (beta)</small></div>
-      <!--<div class="var-btn" data-var="o">o<small>octanion</small></div>-->
-      <!--<div class="var-btn" data-var="bq">o<small>biquaternion</small></div>-->
+      <div class="var-btn btn" data-var="c">c<small>mandelbrot</small></div>
+      <div class="var-btn btn" data-var="bi">bi<small>bicomplex</small></div>
+      <div class="var-btn btn" data-var="t">t<small>triplex</small></div>
+      <div class="var-btn btn" data-var="q">q<small>quaternion</small></div>
+      <div class="var-btn btn" data-var="cn">n<small>newton</small></div>
+      <div class="var-btn btn" data-var="bn">bn<small>bicomplex newton</small></div>
+      <div class="var-btn btn" data-var="qn">qn<small>quaternion newton (beta)</small></div>
+      <!--<div class="var-btn btn" data-var="o">o<small>octanion</small></div>-->
+      <!--<div class="var-btn btn" data-var="bq">o<small>biquaternion</small></div>-->
     </div>
-    <div class="extra-btn" id="burning-btn">|Re(z)| + |Im(z)| * i OFF</div>
+    <div class="extra-btn btn" id="burning-btn">|Re(z)| + |Im(z)| * i OFF</div>
     <div class="btn-row power-row" id="power-row">
-      <div class="extra-btn" data-power="-2">-2</div>
-      <div class="extra-btn" data-power="-1">-1</div>
-      <div class="extra-btn" data-power="-0.5">-1/2</div>
-      <div class="extra-btn" data-power="1">1</div>
-      <div class="extra-btn" data-power="2">2</div>
-      <div class="extra-btn" data-power="3">3</div>
+      <div class="extra-btn btn" data-power="-2">-2</div>
+      <div class="extra-btn btn" data-power="-1">-1</div>
+      <div class="extra-btn btn" data-power="-0.5">-1/2</div>
+      <div class="extra-btn btn" data-power="1">1</div>
+      <div class="extra-btn btn" data-power="2">2</div>
+      <div class="extra-btn btn" data-power="3">3</div>
     </div>
     <h2>COLOR SCHEME</h2>
     <div class="color-buttons">
-      <div class="color-btn active" data-color="0">RGB</div>
-      <div class="color-btn" data-color="1">HSV</div>
-      <div class="color-btn" data-color="2">HUE</div>
-      <div class="color-btn" data-color="3">LITE</div>
+      <div class="color-btn btn active" data-color="0">RGB</div>
+      <div class="color-btn btn" data-color="1">HSV</div>
+      <div class="color-btn btn" data-color="2">HUE</div>
+      <div class="color-btn btn" data-color="3">LITE</div>
     </div>
     <h2>FORMULA PRESETS</h2>
     <div class="formula-presets" id="preset-container"></div>
     <h2>FORMULA CHANGE</h2>
     <div class="btn-row">
-      <div class="extra-btn" id="conj-btn">conj(z) OFF</div>
-      <div class="extra-btn" id="minus-btn">1 - z OFF</div>
-      <div class="extra-btn" id="inverse-btn">1 / c OFF</div>
-      <div class="extra-btn" id="mandelbox-btn" title="insert formula in 3d: z * -2 + c (with 90 iteration)">mandelbox OFF</div>
+      <div class="extra-btn btn" id="conj-btn">conj(z) OFF</div>
+      <div class="extra-btn btn" id="minus-btn">1 - z OFF</div>
+      <div class="extra-btn btn" id="inverse-btn">1 / c OFF</div>
+      <div class="extra-btn btn" id="mandelbox-btn" title="insert formula in 3d: z * -2 + c (with 90 iteration)">mandelbox OFF</div>
     </div>
-    <div class="extra-btn" id="julia-btn">Julia</div>
+    <div class="extra-btn btn" id="julia-btn">Julia</div>
     <div class="iter-row">
       <label for="iter-input">iteration</label>
       <input id="iter-input" type="number" min="1" max="200" value="24" />
@@ -601,7 +390,7 @@
 
   for (let i = 0; i < 21; i++) {
     const btn = document.createElement('div');
-    btn.className = 'preset-btn';
+    btn.className = 'preset-btn btn';
     btn.textContent = presetFormulas[i];
     btn.title = presetFormulas[i];
     btn.dataset.formula = presetFormulas[i];
