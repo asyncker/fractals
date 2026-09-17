@@ -566,6 +566,34 @@
     }
   }
 
+  function codeEditor() {
+    document.getElementById('formula-panel').style.display='none';
+    document.getElementById('fs-ui').style.display='none';
+    document.getElementById('graph').style.marginLeft='0';
+    var box=document.createElement('div');
+    box.id='code-editor-box';
+    box.style.cssText='position:fixed;left:0;top:0;width:600px;height:100vh;background:#1e1e1e;z-index:9999;display:flex;flex-direction:column;padding:8px;gap:8px;box-sizing:border-box;transition:transform .2s';
+    var ta=document.createElement('textarea');
+    ta.style.cssText='flex:1;background:#252526;color:#d4d4d4;border:1px solid #3c3c3c;border-radius:4px;padding:8px;font-family:Consolas,monospace;font-size:13px;resize:none;outline:none';
+    ta.value=getfractal(formulaInput.value.trim(),currentVar,iteration);
+    var run=document.createElement('button');
+    run.textContent='RUN';
+    run.style.cssText='padding:10px;background:#0e639c;color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:600';
+    run.onclick=function(){useShader(uniformcode+mathcode+ta.value)?setFormulaOk():setFormulaError('shader error');};
+    var toggle=document.createElement('button');
+    toggle.id='toggle-editor';
+    toggle.textContent='◀';
+    toggle.style.cssText='position:absolute;top:10px;right:-40px;background:rgba(255,255,255,.95);border:1px solid #ccc;padding:4px 10px;cursor:pointer;border-radius:3px;font-family:inherit;font-size:12px;z-index:10';
+    toggle.onclick=function(){
+      var hidden=box.style.transform==='translateX(-100%)';
+      box.style.transform=hidden?'translateX(0)':'translateX(-100%)';
+      toggle.textContent=hidden?'◀':'▶';
+    };
+    box.appendChild(toggle);box.appendChild(ta);box.appendChild(run);
+    document.body.appendChild(box);
+    requestAnimationFrame(resize);
+  }
+
   function updateControls(keyinit = false) {
     let keypress = false;
     const currentTime = Date.now();
