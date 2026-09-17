@@ -628,13 +628,13 @@ let mathcode = `
   vec4 biconj(vec4 z) { return vec4(z.x, -z.y, -z.z, z.w); }
   vec4 bisq(vec4 z) { return vec4(z.x * z.x - z.y * z.y - z.z * z.z + z.w * z.w, 2.0 * (z.x * z.y - z.z * z.w), 2.0 * (z.x * z.z - z.y * z.w), 2.0 * (z.x * z.w + z.y * z.z)); }
   vec2 bidabs_sq(vec4 z) { return cmul(z.xy, z.xy) + cmul(z.zw, z.zw); }
-  vec2 bitoidempotent_left(vec4 z) { return vec2(z.x - z.w, z.y + z.z); }
-  vec2 bitoidempotent_right(vec4 z) { return vec2(z.x + z.w, z.y - z.z); }
-  vec4 bifromidempotent(vec2 z, vec2 w) { return 0.5 * vec4(w.x + z.x, z.y + w.y, z.y - w.y, w.x - z.x); }
+  vec2 bitoid_left(vec4 z) { return vec2(z.x - z.w, z.y + z.z); }
+  vec2 bitoid_right(vec4 z) { return vec2(z.x + z.w, z.y - z.z); }
+  vec4 bifromid(vec2 z, vec2 w) { return 0.5 * vec4(w.x + z.x, z.y + w.y, z.y - w.y, w.x - z.x); }
   vec4 biinv(vec4 z) { vec2 len = bidabs_sq(z); vec2 invlen = conj(len) / dot(len, len); return vec4(cmul(z.xy, invlen), cmul(-z.zw, invlen)); }
   vec4 biadd(vec4 z, vec4 w) { return z + w; }
   vec4 bisub(vec4 z, vec4 w) { return z - w; }
-  //vec4 bimul(vec4 z, vec4 w) { return bifromidempotent(cmul(bitoidempotent_left(z), bitoidempotent_left(w)), cmul(bitoidempotent_right(z), bitoidempotent_right(w))); }
+  //vec4 bimul(vec4 z, vec4 w) { return bifromid(cmul(bitoid_left(z), bitoid_left(w)), cmul(bitoid_right(z), bitoid_right(w))); }
   vec4 bimul(vec4 z, vec4 w) { return vec4(cmul(z.xy, w.xy) - cmul(z.zw, w.zw), cmul(z.xy, w.zw) + cmul(z.zw, w.xy)); }
   vec4 bimul(vec4 z, float w) { return z * w; }
   vec4 bimul(float z, vec4 w) { return z * w; }
@@ -696,30 +696,30 @@ let mathcode = `
   }
   vec4 bigamma_left(vec4 z) { return PI * biinv(bimul(bisin(z * PI), bigamma_right(vec4(1.0, 0.0, 0.0, 0.0) - z))); }
   vec4 bigamma1(vec4 z) { return z.x < 0.5 ? bigamma_left(z) : bigamma_right(z); }
-  vec4 bisqrt(vec4 z) { return bifromidempotent(csqrt(bitoidempotent_left(z)), csqrt(bitoidempotent_right(z))); }
+  vec4 bisqrt(vec4 z) { return bifromid(csqrt(bitoid_left(z)), csqrt(bitoid_right(z))); }
   vec4 bidot(vec4 z, vec4 w) { return bimul(z, biconj(w)); }
   vec4 bisop(vec4 z, vec4 w) { return bidiv(z, biconj(w)); }
-  vec4 bimul_i(vec4 z) { return bifromidempotent(cmul_i(bitoidempotent_left(z)), cmul_i(bitoidempotent_right(z))); }
-  vec4 bigamma(vec4 z) { return bifromidempotent(cgamma(bitoidempotent_left(z)), cgamma(bitoidempotent_right(z))); }
-  vec4 bidigamma(vec4 z) { return bifromidempotent(cdigamma(bitoidempotent_left(z)), cdigamma(bitoidempotent_right(z))); }
-  vec4 bigammasi(vec4 z) { return bifromidempotent(cgammasi(bitoidempotent_left(z)), cgammasi(bitoidempotent_right(z))); }
-  vec4 bieta(vec4 z) { return bifromidempotent(ceta(bitoidempotent_left(z)), ceta(bitoidempotent_right(z))); }
-  vec4 bizeta(vec4 z) { return bifromidempotent(czeta(bitoidempotent_left(z)), czeta(bitoidempotent_right(z))); }
-  vec4 bibeta(vec4 z, vec4 w) { return bifromidempotent(cbeta(bitoidempotent_left(z), bitoidempotent_left(w)), cbeta(bitoidempotent_right(z), bitoidempotent_right(w))); }
-  vec4 bisn(vec4 z, vec4 w) { return bifromidempotent(csn(bitoidempotent_left(z), bitoidempotent_left(w)), csn(bitoidempotent_right(z), bitoidempotent_right(w))); }
-  vec4 bicn(vec4 z, vec4 w) { return bifromidempotent(ccn(bitoidempotent_left(z), bitoidempotent_left(w)), ccn(bitoidempotent_right(z), bitoidempotent_right(w))); }
-  vec4 bidn(vec4 z, vec4 w) { return bifromidempotent(cdn(bitoidempotent_left(z), bitoidempotent_left(w)), cdn(bitoidempotent_right(z), bitoidempotent_right(w))); }
-  vec4 biwp(vec4 z, vec4 w) { return bifromidempotent(cwp(bitoidempotent_left(z), bitoidempotent_left(w)), cwp(bitoidempotent_right(z), bitoidempotent_right(w))); }
-  vec4 bisn_derv(vec4 z, vec4 w) { return bifromidempotent(csn_derv(bitoidempotent_left(z), bitoidempotent_left(w)), csn_derv(bitoidempotent_right(z), bitoidempotent_right(w))); }
-  vec4 bicn_derv(vec4 z, vec4 w) { return bifromidempotent(ccn_derv(bitoidempotent_left(z), bitoidempotent_left(w)), ccn_derv(bitoidempotent_right(z), bitoidempotent_right(w))); }
-  vec4 bidn_derv(vec4 z, vec4 w) { return bifromidempotent(cdn_derv(bitoidempotent_left(z), bitoidempotent_left(w)), cdn_derv(bitoidempotent_right(z), bitoidempotent_right(w))); }
+  vec4 bimul_i(vec4 z) { return bifromid(cmul_i(bitoid_left(z)), cmul_i(bitoid_right(z))); }
+  vec4 bigamma(vec4 z) { return bifromid(cgamma(bitoid_left(z)), cgamma(bitoid_right(z))); }
+  vec4 bidigamma(vec4 z) { return bifromid(cdigamma(bitoid_left(z)), cdigamma(bitoid_right(z))); }
+  vec4 bigammasi(vec4 z) { return bifromid(cgammasi(bitoid_left(z)), cgammasi(bitoid_right(z))); }
+  vec4 bieta(vec4 z) { return bifromid(ceta(bitoid_left(z)), ceta(bitoid_right(z))); }
+  vec4 bizeta(vec4 z) { return bifromid(czeta(bitoid_left(z)), czeta(bitoid_right(z))); }
+  vec4 bibeta(vec4 z, vec4 w) { return bifromid(cbeta(bitoid_left(z), bitoid_left(w)), cbeta(bitoid_right(z), bitoid_right(w))); }
+  vec4 bisn(vec4 z, vec4 w) { return bifromid(csn(bitoid_left(z), bitoid_left(w)), csn(bitoid_right(z), bitoid_right(w))); }
+  vec4 bicn(vec4 z, vec4 w) { return bifromid(ccn(bitoid_left(z), bitoid_left(w)), ccn(bitoid_right(z), bitoid_right(w))); }
+  vec4 bidn(vec4 z, vec4 w) { return bifromid(cdn(bitoid_left(z), bitoid_left(w)), cdn(bitoid_right(z), bitoid_right(w))); }
+  vec4 biwp(vec4 z, vec4 w) { return bifromid(cwp(bitoid_left(z), bitoid_left(w)), cwp(bitoid_right(z), bitoid_right(w))); }
+  vec4 bisn_derv(vec4 z, vec4 w) { return bifromid(csn_derv(bitoid_left(z), bitoid_left(w)), csn_derv(bitoid_right(z), bitoid_right(w))); }
+  vec4 bicn_derv(vec4 z, vec4 w) { return bifromid(ccn_derv(bitoid_left(z), bitoid_left(w)), ccn_derv(bitoid_right(z), bitoid_right(w))); }
+  vec4 bidn_derv(vec4 z, vec4 w) { return bifromid(cdn_derv(bitoid_left(z), bitoid_left(w)), cdn_derv(bitoid_right(z), bitoid_right(w))); }
   vec4 bipow_derv(vec4 z, float w) { return bipow(z, w - 1.0) * w; }
   vec4 bipow_derv(vec4 z, vec4 w) { return bimul(bipow(z, w - vec4(1.0, 0.0, 0.0, 0.0)), w); }
-  vec4 bigamma_derv(vec4 z) { return bifromidempotent(cgamma_derv(bitoidempotent_left(z)), cgamma_derv(bitoidempotent_right(z))); }
-  vec4 bizeta_derv(vec4 z) { return bifromidempotent(czeta_derv(bitoidempotent_left(z)), czeta_derv(bitoidempotent_right(z))); }
-  vec4 bieta_derv(vec4 z) { return bifromidempotent(ceta_derv(bitoidempotent_left(z)), ceta_derv(bitoidempotent_right(z))); }
-  vec4 biwp_derv(vec4 z, vec4 w) { return bifromidempotent(cwp_derv(bitoidempotent_left(z), bitoidempotent_left(w)), cwp_derv(bitoidempotent_right(z), bitoidempotent_right(w))); }
-  vec4 bimul_i_derv(vec4 z) { return bifromidempotent(cmul_i_derv(bitoidempotent_left(z)), cmul_i_derv(bitoidempotent_right(z))); }
+  vec4 bigamma_derv(vec4 z) { return bifromid(cgamma_derv(bitoid_left(z)), cgamma_derv(bitoid_right(z))); }
+  vec4 bizeta_derv(vec4 z) { return bifromid(czeta_derv(bitoid_left(z)), czeta_derv(bitoid_right(z))); }
+  vec4 bieta_derv(vec4 z) { return bifromid(ceta_derv(bitoid_left(z)), ceta_derv(bitoid_right(z))); }
+  vec4 biwp_derv(vec4 z, vec4 w) { return bifromid(cwp_derv(bitoid_left(z), bitoid_left(w)), cwp_derv(bitoid_right(z), bitoid_right(w))); }
+  vec4 bimul_i_derv(vec4 z) { return bifromid(cmul_i_derv(bitoid_left(z)), cmul_i_derv(bitoid_right(z))); }
 
   float tabs(vec4 z) { return length(z); }
   vec4 tneg(vec4 z) { return z * -1.0; }
@@ -831,7 +831,7 @@ return `void mandelbrot_calc() {
     if (n >= maxn) { n = iter; break; }
   }
   if (colorschemeindex == 0) {
-    float hue = (atan(z.y, z.x) * 0.159154943092 + 0.5);
+    float hue = atan(z.y, z.x) * 0.159154943092 + 0.5;
     vec3 color1 = vec3(0.0, 0.0, 0.0);
     if (hue != 0.0) {
       float value = log(znorm + 1.0) * 0.5;
@@ -856,7 +856,7 @@ return `void mandelbrot_calc() {
     vec3 col = hsv2rgb(vec3(0.7 - logMag * 0.1, 0.7, clamp(logMag * 0.3, 0.0, 1.0)));
     gl_FragColor = vec4(col, 1.0);
   } else if (colorschemeindex == 3) {
-    float hue = (atan(z.y, z.x) * 0.159154943092 + 0.5);
+    float hue = atan(z.y, z.x) * 0.159154943092 + 0.5;
     vec3 col = hsv2rgb(vec3(hue, 0.8, 0.9));
     gl_FragColor = vec4(col, 1.0);
   }
@@ -913,7 +913,7 @@ return `void newton_calc() {
     vec3 col = hsv2rgb(vec3(0.7 - logMag * 0.1, 0.7, clamp(logMag * 0.3, 0.0, 1.0)));
     gl_FragColor = vec4(col, 1.0);
   } else if (colorschemeindex == 3) {
-    float hue = (atan(z.y, z.x) * 0.159154943092 + 0.5);
+    float hue = atan(z.y, z.x) * 0.159154943092 + 0.5;
     vec3 col = hsv2rgb(vec3(hue, 0.8, 0.9));
     gl_FragColor = vec4(col, 1.0);
   }
@@ -1764,7 +1764,7 @@ function getfractal(formula, type, iteration) {
       console.error('canvas.captureStream is not supported'); return;
     }
     const stream = canvas.captureStream(30);
-    const options = { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 75000000 };
+    const options = { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 85000000 };
     recordedChunks = [];
     mediaRecorder = new MediaRecorder(stream, options);
     mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) { recordedChunks.push(event.data); } };
@@ -1797,7 +1797,6 @@ function getfractal(formula, type, iteration) {
     document.getElementById('fs-ui').style.display = 'none';
     document.getElementById('graph').style.marginLeft = '0';
     var box=document.createElement('div');
-    box.id='code-editor-box';
     box.style.cssText='position:fixed;left:0;top:0;width:600px;height:100vh;background:#1e1e1e;z-index:9999;display:flex;flex-direction:column;padding:8px;gap:8px;box-sizing:border-box;transition:transform .2s';
     var ta=document.createElement('textarea');
     ta.style.cssText='flex:1;background:#252526;color:#d4d4d4;border:1px solid #3c3c3c;border-radius:4px;padding:8px;font-family:Consolas,monospace;font-size:13px;resize:none;outline:none';
@@ -1805,14 +1804,11 @@ function getfractal(formula, type, iteration) {
     var run=document.createElement('button');
     run.textContent='RUN';
     run.style.cssText='padding:10px;background:#0e639c;color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:600';
-    run.onclick=function(){useShader(uniformcode+mathcode+ta.value)?setFormulaOk():setFormulaError('shader error');};
+    run.onclick=function(){useShader(uniformcode+mathcode+ta.value);};
     var toggle=document.createElement('button');
     toggle.id='toggle-editor'; toggle.textContent='◀';
     toggle.style.cssText='position:absolute;top:10px;right:-40px;background:rgba(255,255,255,.95);border:1px solid #ccc;padding:4px 10px;cursor:pointer;border-radius:3px;font-family:inherit;font-size:12px;z-index:10';
-    toggle.onclick=function() {
-      var hidden=box.style.transform==='translateX(-100%)';
-      box.style.transform=hidden?'translateX(0)':'translateX(-100%)'; toggle.textContent=hidden?'◀':'▶';
-    };
+    toggle.onclick=function(){ var hidden=box.style.transform==='translateX(-100%)'; box.style.transform=hidden?'translateX(0)':'translateX(-100%)'; toggle.textContent=hidden?'◀':'▶'; };
     box.appendChild(toggle);box.appendChild(ta);box.appendChild(run);
     document.body.appendChild(box);
     requestAnimationFrame(resize);
