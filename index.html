@@ -12,33 +12,19 @@
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family:'Consolas',monospace; display:flex; height:100vh; background:#1e1e1e; color:#d4d4d4; overflow:hidden; }
-    .btn {
-      background:#2d2d30; color:#d4d4d4; border:1px solid #3c3c3c;
-      border-radius:4px; font-family:inherit; cursor:pointer;
-      user-select:none; text-align:center;
+    .btn { background:#2d2d30; color:#d4d4d4; border:1px solid #3c3c3c; border-radius:4px; font-family:inherit; cursor:pointer; user-select:none; text-align:center;
       transition:background .12s, border-color .12s, color .12s;
     }
     .btn:hover { background:#3a3a3d; }
     .btn.active { background:#0e639c; border-color:#1177bb; color:#fff; }
-    #formula-panel {
-      width:340px; min-width:260px; display:flex; flex-direction:column;
-      background:#252526; border-right:2px solid #333;
+    #formula-panel { width:340px; min-width:260px; display:flex; flex-direction:column; background:#252526; border-right:2px solid #333;
       padding:8px 12px; gap:12px; overflow-y:auto;
     }
-    #formula-panel h2 {
-      font-size:13px; color:#4ec9b0; font-weight:600; letter-spacing:.5px;
-      margin-bottom:2px;
-    }
+    #formula-panel h2 { font-size:13px; color:#4ec9b0; font-weight:600; letter-spacing:.5px; margin-bottom:2px; }
     .panel-header { display:flex; align-items:center; justify-content:space-between; }
-    #fullscreen-btn {
-      width:26px; height:26px; font-size:14px; line-height:1;
-      display:flex; align-items:center; justify-content:center;
-    }
-    #formula-input {
-      width:100%; background:#1e1e1e; color:#d4d4d4;
-      border:1px solid #3c3c3c; border-radius:4px;
-      padding:10px 12px; font-family:inherit; font-size:16px; outline:none;
-      transition:border-color .15s, box-shadow .15s;
+    #fullscreen-btn { width: 26px; height: 26px; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+    #formula-input { width:100%; background:#1e1e1e; color:#d4d4d4; border:1px solid #3c3c3c; border-radius:4px;
+      padding:10px 12px; font-family:inherit; font-size:16px; outline:none; transition:border-color .15s, box-shadow .15s;
     }
     #formula-input:focus { border-color:#0e639c; box-shadow:0 0 0 2px rgba(14,99,156,.25); }
     #formula-input.error { border-color:#f14c4c; box-shadow:0 0 0 2px rgba(241,76,76,.25); }
@@ -52,24 +38,13 @@
     .color-buttons { display:flex; gap:6px; flex-wrap:wrap; }
     .color-btn { flex:1 0 auto; min-width:60px; padding:7px 0; font-size:12px; }
     .formula-presets { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; }
-    .preset-btn {
-      padding:6px 2px; font-size:10px;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .iter-row {
-      display:flex; align-items:center; gap:8px;
-      font-size:12px; color:#9d9d9d; flex-wrap:wrap;
-    }
-    .iter-row input {
-      width:70px; background:#1e1e1e; color:#d4d4d4;
-      border:1px solid #3c3c3c; border-radius:4px;
+    .preset-btn { padding: 6px 2px; font-size: 10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .iter-row { display:flex; align-items:center; gap:8px; font-size:12px; color:#9d9d9d; flex-wrap:wrap; }
+    .iter-row input { width:70px; background:#1e1e1e; color:#d4d4d4; border:1px solid #3c3c3c; border-radius:4px;
       padding:5px 8px; font-family:inherit; font-size:12px; outline:none;
     }
     .iter-row input:focus { border-color:#0e639c; }
-    .hint {
-      font-size:10px; color:#6b6b6b; margin-top:auto;
-      border-top:1px solid #333; padding-top:6px;
-    }
+    .hint { font-size:10px; color:#6b6b6b; margin-top:auto; border-top:1px solid #333; padding-top:6px; }
     #graph { flex:1; position:relative; background:#fff; min-width:0; }
     #canvas { width:100%; height:100%; cursor:crosshair; display:block; }
     .btn-row { display:flex; gap:5px; flex-wrap:wrap; }
@@ -81,24 +56,16 @@
     body.fullscreen-mode #formula-panel { display:none; }
     body.fullscreen-mode #graph { flex:1; }
     #graph:fullscreen { width:100vw; height:100vh; }
-    #fs-ui {
-      display:none; position:absolute; bottom:14px; left:14px;
-      z-index:10; width:240px; flex-direction:column; gap:8px;
-    }
+    #fs-ui { display:none; position:absolute; bottom:14px; left:14px; z-index:10; width:240px; flex-direction:column; gap:8px; }
     body.fullscreen-mode #fs-ui { display:flex; }
-    #fs-formula-input {
-      width:100%; background:rgba(30,30,30,.55); color:#e6e6e6;
-      border:1px solid rgba(47,47,47,.35); border-radius:8px;
+    #fs-formula-input { width:100%; background:rgba(30,30,30,.55); color:#e6e6e6; border:1px solid rgba(47,47,47,.35); border-radius:8px;
       padding:8px 12px; font-family:inherit;
     }
     #fs-formula-input::placeholder { color:rgba(212,212,212,.4); font-style:italic; }
     #fs-formula-input.error { border-color:#f14c4c; }
     #fs-var-buttons { display:flex; gap:8px; }
-    .fs-var-btn {
-      flex:1 0 0; background:rgba(30,30,30,.55); color:#e6e6e6;
-      border:1px solid rgba(47,47,47,.35); border-radius:8px;
-      padding:6px 0; font-family:inherit; font-size:12px;
-      letter-spacing:.3px; cursor:pointer; text-align:center;
+    .fs-var-btn { flex:1 0 0; background:rgba(30,30,30,.55); color:#e6e6e6; border:1px solid rgba(47,47,47,.35); border-radius:8px;
+      padding:6px 0; font-family:inherit; font-size:12px; letter-spacing:.3px; cursor:pointer; text-align:center;
     }
     .fs-var-btn small { display:block; font-size:9px; opacity:.6; margin-top:1px; }
     .fs-var-btn.active { background:rgba(14,99,156,.85); color:#fff; }
@@ -574,13 +541,11 @@ let mathcode = `
   float qabs(vec4 z) { return length(z); }
   float qarg(vec4 z) { float qlen = length(z); if (qlen < 1e-8) return 0.0; return acos(clamp(z.x / qlen, -1.0, 1.0)); }
   vec4 qsq(vec4 z) { return vec4(z.x * z.x - z.y * z.y - z.z * z.z - z.w * z.w, 2.0 * z.x * z.yzw); }
-  /*vec4 qsqrt(vec4 q) {
-    float a = q.x, b = q.y, c = q.z, d = q.w;
-    float norm = sqrt(a*a + b*b + c*c + d*d); // length
-    float lenV = sqrt(b*b + c*c + d*d);
-    if (lenV < 1e-10) { return vec4(sqrt(max(0.0, a)), 0, 0, 0); }
-    float scale = sqrt(max(0.0, 0.5 * (norm - a))) / lenV;
-    return vec4(sqrt(max(0.0, 0.5 * (norm + a))), b * scale, c * scale, d * scale);
+  /*vec4 qsqrt(vec4 z) {
+    float norm = length(z); float lenV = length(z.yzw);
+    if (lenV < 1e-10) { return vec4(sqrt(max(0.0, z.x)), 0, 0, 0); }
+    float scale = sqrt(max(0.0, 0.5 * (norm - z.x))) / lenV;
+    return vec4(sqrt(max(0.0, 0.5 * (norm + z.x))), z.y * scale, z.z * scale, z.w * scale);
   }*/
   vec4 qneg(vec4 z) { return z * -1.0; }
   vec4 qconj(vec4 z) { return vec4(z.x, -z.yzw); }
@@ -590,7 +555,7 @@ let mathcode = `
   vec4 qmul(vec4 z, vec4 w) { return vec4(z.x * w.x - dot(z.yzw, w.yzw), z.x * w.yzw + w.x * z.yzw + cross(z.yzw, w.yzw)); }
   vec4 qmul(vec4 z, float w) { return z * w; }
   vec4 qmul(float z, vec4 w) { return z * w; }
-  vec4 qdiv(vec4 z, vec4 w) { return qmul(z, qinv(w)); } // qmul(qinv(w), z)
+  vec4 qdiv(vec4 z, vec4 w) { return qmul(z, qinv(w)); }
   vec4 qexp(vec4 z) { float vlen = length(z.yzw), expv = exp(z.x); if (vlen < 1e-6) return vec4(expv, z.yzw); return expv * vec4(cos(vlen), sin(vlen) / vlen * z.yzw); }
   vec4 qlog(vec4 z) { float vlen = length(z.yzw), qlen = length(z); float logv = log(qlen); if (vlen < 1e-6) return vec4(logv, 0.0, 0.0, 0.0); return vec4(logv, acos(clamp(z.x / qlen, -1.0, 1.0)) / vlen * z.yzw); }
   vec4 qlog(float x) { if (x > 0.0) return vec4(log(x), 0.0, 0.0, 0.0); if (x < 0.0) return vec4(log(-x), 3.14159265359, 0.0, 0.0); return vec4(0.0, 0.0, 0.0, 0.0); }
@@ -617,7 +582,7 @@ let mathcode = `
   //vec4 qpow(float z, vec4 w) { return qexp(w * qlog(z)); }
   vec4 qpow(vec4 z, vec4 w) {
     if (w.y == 0.0 && w.z == 0.0 && w.w == 0.0) { return qpow(z, w.x); }
-    return qexp(qmul(w, qlog(z))); // qexp(qmul(qlog(z), w))
+    return qexp(qmul(w, qlog(z)));
   }
   vec4 qsqrt(vec4 z) { return qexp(0.5 * qlog(z)); }
   vec4 qroot(vec4 z, vec4 w) { return qpow(z, qinv(w)); }
@@ -680,6 +645,7 @@ let mathcode = `
   vec4 biexp(vec4 z) { vec2 r = cexp(z.xy); return vec4(cmul(r, ccos(z.zw)), cmul(r, csin(z.zw))); }
   vec4 bilog(vec4 z) { vec2 logz = clog(z.xy + cmul_i(z.zw)); vec2 logw = clog(z.xy - cmul_i(z.zw)); return vec4(0.5 * (logz + logw), -0.5 * cmul_i(logz - logw)); }
   vec4 biarg(vec4 z) { vec2 arg = bilog(z).zw; return vec4(0.0, 0.0, arg.x, arg.y); } // check it's correct?
+  //vec4 bi1arg(vec4 z) { vec2 u = cmul_i(bidiv(z.zw, z.xy)); vec2 arg = cmul_i(clog(bidiv(vec2(1.0, 0.0) - u, vec2(1.0, 0.0) + u))) * 0.5; return vec4(0.0, 0.0, arg.x, arg.y); }
   vec4 bisin(vec4 z) { vec2 r1 = cexp(z.zw); vec2 r2 = cexp(-z.zw); return vec4(cmul(csin(z.xy), 0.5 * (r1 + r2)), cmul(ccos(z.xy), 0.5 * (r1 - r2))); }
   vec4 bicos(vec4 z) { vec2 r1 = cexp(z.zw); vec2 r2 = cexp(-z.zw); return vec4(cmul(ccos(z.xy), 0.5 * (r1 + r2)),-cmul(csin(z.xy), 0.5 * (r1 - r2))); }
   vec4 bisinh(vec4 z) { vec2 r1 = cexp(z.xy); vec2 r2 = cexp(-z.xy); return vec4(cmul(ccos(z.zw), 0.5 * (r1 - r2)), cmul(csin(z.zw), 0.5 * (r1 + r2))); }
@@ -713,7 +679,6 @@ let mathcode = `
   vec4 biround(vec4 z) { return floor(z + 0.5); }
   vec4 bistep(vec4 z) { return vec4(step(0.0, z.x), 0.0, 0.0, 0.0); }
   vec4 biclamp(vec4 z, vec4 w, vec4 s) { return vec4(clamp(z.x, w.x, s.x), clamp(z.y, w.y, s.y), clamp(z.z, w.z, s.z), clamp(z.w, w.w, s.w)); }
-  //vec4 bi1arg(vec4 z) { vec2 u = cmul_i(bidiv(z.zw, z.xy)); vec2 arg = cmul_i(clog(bidiv(vec2(1.0, 0.0) - u, vec2(1.0, 0.0) + u))) * 0.5; return vec4(0.0, 0.0, arg.x, arg.y); }
   vec4 bifib(vec4 z) { return (bipow(vec4(1.61803398875, 0.0, 0.0, 0.0), z) - bipow(vec4(-0.61803398875, 0.0, 0.0, 0.0), z)) * 0.4472135955; }
   vec4 bitau(vec4 z, vec4 w) { return vec4(1.0, 0.0, 0.0, 0.0) - bipow(z, vec4(0.5, 0.0, 0.0, 0.0) - w); }
   vec4 bitau_derv(vec4 z, vec4 w) { return bimul(bipow(z, vec4(0.5, 0.0, 0.0, 0.0) - w), bilog(z)); }
@@ -811,7 +776,7 @@ let mathcode = `
   mat4 opow(mat4 z, mat4 w) { return oexp(omul(olog(z), w)); }
 
   mat4 bqmul(mat4 z, mat4 w) { return mat4(qmul(z[0], w[0]) - qmul(z[1], w[1]), qmul(z[0], w[1]) + qmul(z[1], w[0]), vec4(0.0), vec4(0.0)); }
-  //mat4 btmul(mat4 z, mat4 w) { return mat4(tmul(z[0], w[0]) - tmul(z[1], w[1]), qmul(z[0], w[1]) + qmul(z[1], w[0]), vec4(0.0), vec4(0.0)); } // not correct but interest 6d
+  //mat4 btmul(mat4 z, mat4 w) { return mat4(tmul(z[0], w[0]) - tmul(z[1], w[1]), qmul(z[0], w[1]) + qmul(z[1], w[0]), vec4(0.0), vec4(0.0)); }
 
   float bounce(float x, float min, float max) {
     float size = max - min;
@@ -967,10 +932,10 @@ let lyapunovshader = `void lyapunov_calc() {
   vec2 z = ismandel == 1 ? c : uv * zoomjulia + vec2(zxval, zyval);
   const int maxiter = 180;
   float lambda = 0.0, maxlambda = 120000.0, xn = 0.5, rx = 0.0, ri = 0.0, invn = 1.0 / float(maxiter);
-  int modval = 0, n0 = iteration / 10; // n0 > 1
+  int modval = 0, n0 = iteration / 10; //n0 > 1
   for (int i = 1; i < maxiter; i++) {
     modval = i - (i / 2) * 2;
-    if (modval == 1) { rx = z.x; } // re 
+    if (modval == 1) { rx = z.x; } // re
     else if (modval == 0) { rx = z.y; } // im
     xn = logmap(rx, xn);
     if (i >= n0) { lambda += log(abs(logmap_derv(rx, xn))) * invn; }
