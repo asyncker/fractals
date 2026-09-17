@@ -1,9 +1,8 @@
 <a href="https://disk.yandex.ru/d/brVJGswcmuE39g">All render video</a>
 
-Platform support:
-1. Windows 10, 11
-2. Windows 8, 7 (without ansi, set use_ansi 0 on 8 line)
-3. Linux
+Go to <a href="https://asyncker.github.io/fractals/index.html">web fractal</a> and find your fractal!
+
+All fractal in <a href="https://github.com/asyncker/fractals/blob/main/index.html">one html file</a>! Download the file and find fractal without internet for free!
 
 2d fractal:
 1. Mandelbrot
