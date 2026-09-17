@@ -68,20 +68,26 @@ Visual similarity of exp and zeta with the same dynamics, comparing all function
 https://asyncker.github.io/zeta-trigonometry/img/exp_pow.png <br />
 https://asyncker.github.io/zeta-trigonometry/img/zeta_pow.png <br /> <br />
 
-3d fractal:
-1. Mandelbulb
+3d triplex fractal:
+1. z^2 + c (Mandelbulb Triplex)
 ![](render/pic11.png)
+2. sinh(z) + c
+![](render/triplex-sinh(z)+c.png)
 
 4d quaternion fractal:
-1. Mandelbrot Quaternion
+1. z^2 + c (Mandelbrot Quaternion)
 ![](render/pic12.png)
+2. sinh(z) + c
+![](render/quaternion-sinh(z)+c.png)
 
 4d bicomplex fractal:
-1. Mandelbrot Bicomplex
+1. z^2 + c (Mandelbrot Bicomplex)
 ![](render/pic13.png)
-2. Zeta bicomplex branch
+2. sinh(z) + c
+![](render/bicomplex-sinh(z)+c.png)
+3. bizeta(z) + c (Zeta bicomplex branch)
 ![](render/bicomplex_zeta_branch.png)
-3. zeta bicomplex
+4. bizeta(z) + c (Zeta bicomplex)
 ![](render/bicomplex_zeta_near_center.png)
 
 Compile to binary:
