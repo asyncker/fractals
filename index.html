@@ -810,7 +810,6 @@ return `void mandelbrot_calc() {
   float znorm = 0.0;
   int n = 0, maxn = iter;
   vec2 w = vec2(power, 0.0);
-  vec2 z2 = vec2(0.0, 0.0);
   vec2 z0 = z, z_prev = z;
   for (int i = 0; i < maxiter; i++) {
     z_prev = z;
@@ -1936,16 +1935,7 @@ function getfractal(formula, type, iteration) {
     }
     requestAnimationFrame(() => { resize(); requestAnimationFrame(resize); });
   }
-
   document.addEventListener('fullscreenchange', () => {
-    const fsEl = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-    if (!fsEl && document.body.classList.contains('fullscreen-mode')) {
-      toggleFullscreen();
-    } else {
-      requestAnimationFrame(() => { resize(); requestAnimationFrame(resize); });
-    }
-  });
-  document.addEventListener('webkitfullscreenchange', () => {
     const fsEl = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
     if (!fsEl && document.body.classList.contains('fullscreen-mode')) {
       toggleFullscreen();
