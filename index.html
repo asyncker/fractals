@@ -4,7 +4,7 @@
   <title>Quaternion by formula (fractals)</title>
   <meta property="og:title" content="Fractal Gpu WebGL Render">
   <meta property="og:description" content="Fast fractal quaternion, bicomplex by math formula render in browser (newton fractal, mandelbrot fractal)">
-  <meta property="og:image" content="render/favicon.png">
+  <meta property="og:image" content="./render/favicon.png">
   <meta property="og:site_name" content="Fractal - render fractal">
   <link rel="icon" type="image/png" sizes="32x32" href="./render/favicon.png">
   <style>
@@ -397,7 +397,7 @@
   let rangeLocation, powerLocation, logvalLocation, inverseLocation, multlightLocation;
   let cosrotxLocation, sinrotxLocation, cosrotzLocation, sinrotzLocation, scalevalLocation;
   let ismandelLocation, isminusLocation, isburningLocation, isminusoneLocation, isconjLocation;
-  let fractalindexLocation, colorschemeindexLocation, iterationLocation, ismandelboxLocation;
+  let colorschemeindexLocation, iterationLocation, ismandelboxLocation;
   const formulaInput = document.getElementById('formula-input');
   const formulaStatus = document.getElementById('formula-status');
   const iterInput = document.getElementById('iter-input');
@@ -452,7 +452,7 @@
       if (ok) {
         setFormulaOk();
       } else {
-        setFormulaError('shader compile error (см. console)');
+        setFormulaError('shader compile error (console)');
       }
     } catch (e) {
       setFormulaError('getfractal error: ' + e.message);
@@ -643,7 +643,6 @@
     isburningLocation = gl.getUniformLocation(prog, 'isburning');
     isminusoneLocation = gl.getUniformLocation(prog, 'isminusone');
     isconjLocation = gl.getUniformLocation(prog, 'isconj');
-    fractalindexLocation = gl.getUniformLocation(prog, 'fractalindex');
     colorschemeindexLocation = gl.getUniformLocation(prog, 'colorschemeindex');
     iterationLocation = gl.getUniformLocation(prog, 'iteration');
   }
@@ -732,7 +731,6 @@
   let rotz = 0.0;
   let rotationSpeed = 0.05;
   let iteration = 24;
-  let hypercomplexindex = 0;
   let colorschemeindex = 0;
   let movespeedx = 0.025;
   let movespeedy = 0.025 * 0.5;
@@ -770,33 +768,30 @@
     };
     mediaRecorder.start();
     isRecording = true;
-    console.log('Recording started...');
   }
 
   function stopRecording() {
     if (mediaRecorder && isRecording) {
       mediaRecorder.stop();
       isRecording = false;
-      console.log('Recording stopped.');
     }
   }
 
   function updateControls(keyinit = false) {
     let keypress = false;
     const currentTime = Date.now();
-    if (keysPressed['w']) { if (ismandel) { cyval = cyval + zoomMandel * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } else { zyval = zyval + zoomJulia * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } keypress = true; }
-    if (keysPressed['s']) { if (ismandel) { cyval = cyval - zoomMandel * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } else { zyval = zyval - zoomJulia * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } keypress = true; }
-    if (keysPressed['d']) { if (ismandel) { cxval = cxval + zoomMandel * (hypercomplexindex == 0 ? movespeedx : movespeedy * 0.1); } else { zxval = zxval + zoomJulia * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } keypress = true; }
-    if (keysPressed['a']) { if (ismandel) { cxval = cxval - zoomMandel * (hypercomplexindex == 0 ? movespeedx : movespeedy * 0.1); } else { zxval = zxval - zoomJulia * (hypercomplexindex == 0 ? movespeedy : movespeedy * 0.1); } keypress = true; }
-    if (keysPressed['e']) { if (ismandel) { zoomMandel /= 1.0 + (hypercomplexindex == 0 ? zoomSpeed : zoomSpeed * 0.1); } else { zoomJulia /= 1.0 + zoomSpeed; } keypress = true; }
-    if (keysPressed['q']) { if (ismandel) { zoomMandel *= 1.0 + (hypercomplexindex == 0 ? zoomSpeed : zoomSpeed * 0.1); } else { zoomJulia *= 1.0 + zoomSpeed; } keypress = true; }
+    if (keysPressed['w']) { if (ismandel) { cyval = cyval + zoomMandel * movespeedy; } else { zyval = zyval + zoomJulia * movespeedy; } keypress = true; }
+    if (keysPressed['s']) { if (ismandel) { cyval = cyval - zoomMandel * movespeedy; } else { zyval = zyval - zoomJulia * movespeedy; } keypress = true; }
+    if (keysPressed['d']) { if (ismandel) { cxval = cxval + zoomMandel * movespeedx; } else { zxval = zxval + zoomJulia * movespeedy; } keypress = true; }
+    if (keysPressed['a']) { if (ismandel) { cxval = cxval - zoomMandel * movespeedx; } else { zxval = zxval - zoomJulia * movespeedy; } keypress = true; }
+    if (keysPressed['e']) { if (ismandel) { zoomMandel /= 1.0 + zoomSpeed; } else { zoomJulia /= 1.0 + zoomSpeed; } keypress = true; }
+    if (keysPressed['q']) { if (ismandel) { zoomMandel *= 1.0 + zoomSpeed; } else { zoomJulia *= 1.0 + zoomSpeed; } keypress = true; }
     if (keysPressed['r'] && currentTime - lastChangeTime > 200) { power = Math.floor(power + 1); lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['t'] && currentTime - lastChangeTime > 200) { power = Math.ceil(power - 1); lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['v'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 27 ? 0 : fractalindex + 1; lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['c'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 0 ? 27 : fractalindex - 1; lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['u'] && currentTime - lastChangeTime > 200) { ismandel = ismandel == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['f'] && currentTime - lastChangeTime > 800) { inverse = inverse == 1.0 ? 0.0 : 1.0; lastChangeTime = currentTime; keypress = true; }
-    if (keysPressed['n'] && currentTime - lastChangeTime > 200) { hypercomplexindex = hypercomplexindex == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['x']) { range *= 2.0; keypress = true; rangeInput.value = range; }
     if (keysPressed['z']) { range *= 1.0 / 1.125; keypress = true; rangeInput.value = range; }
     if (keysPressed['2'] && currentTime - lastChangeTime > 200) { zoomSpeed = zoomSpeed / 2.0; rotationSpeed = rotationSpeed / 2.0; movespeedx = movespeedx / 2.0; movespeedy = movespeedy / 2.0; lastChangeTime = currentTime; keypress = true; }
@@ -822,7 +817,6 @@
     if (keysPressed['p']) { scaleval += 0.01; keypress = true; }
     if (keysPressed['b']) { colorschemeindex += 1; colorschemeindex = colorschemeindex == 4 ? 0 : colorschemeindex; keypress = true; }
     if ((keypress || keyinit) && currentProgram) {
-      const logval = power > 2.0 ? 1.0 / Math.log(Math.abs(power)) : 1.44269504088896;
       let rangecalc = range;
       if (power < 0) { rangecalc = range * 8.0; }
       gl.uniform1i(ismandelLocation, ismandel);
@@ -847,7 +841,7 @@
       gl.uniform1f(cosrotzLocation, Math.cos(rotz));
       gl.uniform1f(sinrotzLocation, Math.sin(rotz));
       gl.uniform1f(scalevalLocation, scaleval);
-      gl.uniform1f(logvalLocation, logval);
+      gl.uniform1f(logvalLocation, power > 2.0 ? 1.0 / Math.log(Math.abs(power)) : 1.44269504088896);
       gl.uniform1f(rangeLocation, rangecalc);
       gl.uniform1i(colorschemeindexLocation, colorschemeindex);
       gl.uniform1i(iterationLocation, iteration);
