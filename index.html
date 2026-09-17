@@ -1608,14 +1608,15 @@ function getfractal(formula, type, iteration) {
     '((7 * z^w + 2) - exp(mul_i(z^w * PI)) * (5 * z^w + 2)) * 0.25 + c',
     '((7 * z^w + 2) - cos(PI * z^w) * (5 * z^w + 2)) * 0.25 + c',
     '1 - (1+w)^(0.5-z) + c',
-    '(w+1)^z + c'
+    '(w+1)^z + c',
+    '1 / (1 - z^w) + c'
   ];
 
   function getFormulaForCurrentVar(f) {
     return (currentVar === 'cn' || currentVar === 'bn' || currentVar === 'qn') ? f.replace(/\+\s*c\s*$/i, '- 1') : f;
   }
 
-  for (let i = 0; i < 21; i++) {
+  for (let i = 0; i < 22; i++) {
     const btn = document.createElement('div');
     btn.className = 'preset-btn btn';
     btn.textContent = presetFormulas[i];
