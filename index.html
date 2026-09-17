@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>Quaternion by formula (fractals)</title>
-  <meta name="description" content="Fractal WebGL render with support quaternion, bicomplex, octanion, and formulas: z^2+c, exp(z), gamma, zeta, sn, cn, dn, wp. Custom formulas, 3D, recording fractal.">
+  <meta name="description" content="Fractal WebGL render with support quaternion, bicomplex, octanion, and formulas: z^2+c, exp(z), gamma, zeta, sn, cn, dn, wp. Custom formulas, 3D, recording fractal">
   <meta name="keywords" content="fractal, quaternion, bicomplex, octonion, mandelbrot, julia, newton fractal, webgl, gpu render, 3d fractal, custom formula fractal, sn cn dn wp, gamma function fractal, zeta function fractal, real-time fractal">
   <meta property="og:title" content="Fractal Gpu WebGL Render">
   <meta property="og:description" content="Fast fractal quaternion, bicomplex by math formula render in browser (newton fractal, mandelbrot fractal)">
@@ -58,9 +58,7 @@
     #graph:fullscreen { width:100vw; height:100vh; }
     #fs-ui { display:none; position:absolute; bottom:14px; left:14px; z-index:10; width:240px; flex-direction:column; gap:8px; }
     body.fullscreen-mode #fs-ui { display:flex; }
-    #fs-formula-input { width:100%; background:rgba(30,30,30,.55); color:#e6e6e6; border:1px solid rgba(47,47,47,.35); border-radius:8px;
-      padding:8px 12px; font-family:inherit;
-    }
+    #fs-formula-input { width:100%; background:rgba(30,30,30,.55); color:#e6e6e6; border:1px solid rgba(47,47,47,.35); border-radius:8px; padding:8px 12px; font-family:inherit; }
     #fs-formula-input::placeholder { color:rgba(212,212,212,.4); font-style:italic; }
     #fs-formula-input.error { border-color:#f14c4c; }
     #fs-var-buttons { display:flex; gap:8px; }
@@ -242,7 +240,7 @@ let mathcode = `
   vec2 cclamp(vec2 z, vec2 w, vec2 s) { return vec2(clamp(z.x, w.x, s.x), clamp(z.y, w.y, s.y)); }
   vec2 ccomp_dotre(vec2 z, vec2 w) { return cre(z) * cre(w) + cim(z) * cim(w); }
   vec2 ccomp_dotim(vec2 z, vec2 w) { return cre(w) * cim(z) - cim(w) * cre(z); }
-  // vec2 ccomp_dim(vec2 z, vec2 w) { return cre(z) * cim(w) - cim(w) * cre(z); }
+  //vec2 ccomp_dim(vec2 z, vec2 w) { return cre(z) * cim(w) - cim(w) * cre(z); }
   vec2 ccomp_abs(vec2 z) { return vec2(cabs(cre(z)), cabs(cim(z))); } // return vec2(abs(z.x), abs(z.y));
   vec2 ccomp_pow(vec2 z, float k) { return vec2(fast_pow(z.x, k), fast_pow(z.y, k)); }
   vec2 cdot(vec2 z, vec2 w) { return vec2(z.x * w.x + z.y * w.y, w.x * z.y - w.y * z.x); }
@@ -542,9 +540,9 @@ let mathcode = `
   float qarg(vec4 z) { float qlen = length(z); if (qlen < 1e-8) return 0.0; return acos(clamp(z.x / qlen, -1.0, 1.0)); }
   vec4 qsq(vec4 z) { return vec4(z.x * z.x - z.y * z.y - z.z * z.z - z.w * z.w, 2.0 * z.x * z.yzw); }
   /*vec4 qsqrt(vec4 z) {
-    float norm = length(z); float lenV = length(z.yzw);
-    if (lenV < 1e-10) { return vec4(sqrt(max(0.0, z.x)), 0, 0, 0); }
-    float scale = sqrt(max(0.0, 0.5 * (norm - z.x))) / lenV;
+    float norm = length(z); float vlen = length(z.yzw);
+    if (vlen < 1e-6) { return vec4(sqrt(max(0.0, z.x)), 0, 0, 0); }
+    float scale = sqrt(max(0.0, 0.5 * (norm - z.x))) / vlen;
     return vec4(sqrt(max(0.0, 0.5 * (norm + z.x))), z.y * scale, z.z * scale, z.w * scale);
   }*/
   vec4 qneg(vec4 z) { return z * -1.0; }
@@ -636,7 +634,6 @@ let mathcode = `
   vec4 biinv(vec4 z) { vec2 len = bidabs_sq(z); vec2 invlen = conj(len) / dot(len, len); return vec4(cmul(z.xy, invlen), cmul(-z.zw, invlen)); }
   vec4 biadd(vec4 z, vec4 w) { return z + w; }
   vec4 bisub(vec4 z, vec4 w) { return z - w; }
-  
   //vec4 bimul(vec4 z, vec4 w) { return bifromidempotent(cmul(bitoidempotent_left(z), bitoidempotent_left(w)), cmul(bitoidempotent_right(z), bitoidempotent_right(w))); }
   vec4 bimul(vec4 z, vec4 w) { return vec4(cmul(z.xy, w.xy) - cmul(z.zw, w.zw), cmul(z.xy, w.zw) + cmul(z.zw, w.xy)); }
   vec4 bimul(vec4 z, float w) { return z * w; }
@@ -645,7 +642,7 @@ let mathcode = `
   vec4 biexp(vec4 z) { vec2 r = cexp(z.xy); return vec4(cmul(r, ccos(z.zw)), cmul(r, csin(z.zw))); }
   vec4 bilog(vec4 z) { vec2 logz = clog(z.xy + cmul_i(z.zw)); vec2 logw = clog(z.xy - cmul_i(z.zw)); return vec4(0.5 * (logz + logw), -0.5 * cmul_i(logz - logw)); }
   vec4 biarg(vec4 z) { vec2 arg = bilog(z).zw; return vec4(0.0, 0.0, arg.x, arg.y); } // check it's correct?
-  //vec4 bi1arg(vec4 z) { vec2 u = cmul_i(bidiv(z.zw, z.xy)); vec2 arg = cmul_i(clog(bidiv(vec2(1.0, 0.0) - u, vec2(1.0, 0.0) + u))) * 0.5; return vec4(0.0, 0.0, arg.x, arg.y); }
+  //vec4 biarg1(vec4 z) { vec2 u = cmul_i(bidiv(z.zw, z.xy)); vec2 arg = cmul_i(clog(bidiv(vec2(1.0, 0.0) - u, vec2(1.0, 0.0) + u))) * 0.5; return vec4(0.0, 0.0, arg.x, arg.y); }
   vec4 bisin(vec4 z) { vec2 r1 = cexp(z.zw); vec2 r2 = cexp(-z.zw); return vec4(cmul(csin(z.xy), 0.5 * (r1 + r2)), cmul(ccos(z.xy), 0.5 * (r1 - r2))); }
   vec4 bicos(vec4 z) { vec2 r1 = cexp(z.zw); vec2 r2 = cexp(-z.zw); return vec4(cmul(ccos(z.xy), 0.5 * (r1 + r2)),-cmul(csin(z.xy), 0.5 * (r1 - r2))); }
   vec4 bisinh(vec4 z) { vec2 r1 = cexp(z.xy); vec2 r2 = cexp(-z.xy); return vec4(cmul(ccos(z.zw), 0.5 * (r1 - r2)), cmul(csin(z.zw), 0.5 * (r1 + r2))); }
@@ -802,7 +799,7 @@ let mathcode = `
   }
 `;
 
-function mandelbrotshadercode(formula = "z = cpow(z, w) + c;", dervformula = "") {
+function mandelbrotshadercode(formula) {
 return `void mandelbrot_calc() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
   vec2 c = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : vec2(cxval, cyval);
@@ -867,7 +864,7 @@ return `void mandelbrot_calc() {
 } void main() { mandelbrot_calc(); }`;
 }
 
-function newtonshadercode(formula = "z = z_prev - cdiv(cpow(z, w) - vec2(1.0, 0.0), cmul(vec2(1.0, 0.0), cpow_derv(z, w))) + c;", formula2 = "") {
+function newtonshadercode(formula) {
 return `void newton_calc() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
   vec2 c = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : vec2(cxval, cyval);
@@ -876,8 +873,7 @@ return `void newton_calc() {
   const int maxiter = 220;
   float znorm = 0.0, rangeval = 1.0 / (500.0 * range);
   vec2 w = vec2(power, 0.0);
-  vec2 p = vec2(-0.5, 0.0);
-  vec2 z_prev = z, func = z, derv = vec2(1.0, 0.0);
+  vec2 z0 = z, z_prev = z, func = z, derv = vec2(1.0, 0.0);
   int n = 0, maxn = iteration;
   vec2 zpos = vec2(1.0, 0.0);
   for (int i = 0; i < maxiter; i++) {
@@ -1007,7 +1003,7 @@ function raymarchingsharecode(func1, func2) {
 }`;
 }
 
-function f4dshadercode(formula = "z = qpow(z, w) + c;", dervformula = "vec4 derv = qpow(z_prev, power - 1.0) * power;", iteration = 12, name = "mandel_quaternion") {
+function f4dshadercode(formula, dervformula, iteration = 12, name = "mandel_quaternion") {
   return `vec2 ` + name + `(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
     int n = 0;
     float dr = 1.0, znorm = 0.0, rangesq = range * range;
@@ -1383,7 +1379,9 @@ function getformula_and_derv(formula, vecf) {
   const newformula = convertformulatowebgl(formula, vecf);
   const dervformula = convertformulatowebgl(getDerivative(formula), vecf);
   const derv2formula = convertformulatowebgl(getDerivative(getDerivative(formula)), vecf);
-  return [newformula, dervformula, derv2formula];
+  const superfunction = [newformula, dervformula, derv2formula];
+  console.log(superfunction);
+  return superfunction;
 }
 
 function getfractal(formula, type, iteration) {
@@ -1400,25 +1398,25 @@ function getfractal(formula, type, iteration) {
   if (type != "c" && formula != "z^(2 * w) + c") { iteration = parseInt(iteration > 4 ? iteration / 3 : iteration); }
   if (type != "c" && (formula.includes("gamma") || formula.includes("eta"))) { iteration = parseInt(iteration > 2 ? iteration / 5 : iteration / 1.25) + 1; }
   if (type != "c" && (formula.includes("eta(-z") && formula.includes("eta(z") || formula.includes("sn(") || formula.includes("dn(") || formula.includes("cn(") || formula.includes("wp("))) { iteration = parseInt(iteration > 2 ? iteration / 25 : iteration / 25) + 1; }  
-  if (type == "bi") { const formulas = getformula_and_derv(formula, "vec4"); console.log(formulas); return f4dshadercode(convertformula("z = " + formulas[0], "bi") + ";", convertformula("derv = "  + formulas[1], "bi") + ";", iteration, "mandel_bicomplex"); }
-  else if (type == "q") { const formulas = getformula_and_derv(formula, "vec4"); console.log(formulas); return f4dshadercode(convertformula("z = " + formulas[0], "q") + ";", convertformula("derv = "  + formulas[1], "q") + ";", iteration, "mandel_quaternion"); }
-  else if (type == "t") { const formulas = getformula_and_derv(formula, "vec4"); console.log(formulas); return f4dshadercode(convertformula("z = " + formulas[0], "t") + ";", convertformula("derv = "  + formulas[1], "t") + ";", iteration, "mandelbulb"); }
-  else if (type == "o") { const formulas = getformula_and_derv(formula, "mat4"); console.log(formulas); return octanionshadercode(convertformula("z = " + formulas[0], "o") + ";", convertformula("derv = "  + formulas[1], "o") + ";", iteration); }
-  else if (type == "bq") { const formulas = getformula_and_derv(formula, "mat4"); console.log(formulas); return octanionshadercode(convertformula("z = " + formulas[0], "bq") + ";", convertformula("derv = "  + formulas[1], "bq") + ";", iteration); }
-  else if (type == "cn") { const formulas = getformula_and_derv(formula, "vec2"); console.log(formulas); const newton_iter = `z = z_prev - cdiv(${formulas[0]}, ${formulas[1]})`; let newformula = convertformula(newton_iter); return newtonshadercode(newformula + " + c;", "c"); }
-  else if (type == "bn") { const formulas = getformula_and_derv(formula, "vec4"); console.log(formulas); 
+  if (type == "bi") { const formulas = getformula_and_derv(formula, "vec4"); return f4dshadercode(convertformula("z = " + formulas[0], "bi") + ";", convertformula("derv = "  + formulas[1], "bi") + ";", iteration, "mandel_bicomplex"); }
+  else if (type == "q") { const formulas = getformula_and_derv(formula, "vec4"); return f4dshadercode(convertformula("z = " + formulas[0], "q") + ";", convertformula("derv = "  + formulas[1], "q") + ";", iteration, "mandel_quaternion"); }
+  else if (type == "t") { const formulas = getformula_and_derv(formula, "vec4"); return f4dshadercode(convertformula("z = " + formulas[0], "t") + ";", convertformula("derv = "  + formulas[1], "t") + ";", iteration, "mandelbulb"); }
+  else if (type == "o") { const formulas = getformula_and_derv(formula, "mat4"); return octanionshadercode(convertformula("z = " + formulas[0], "o") + ";", convertformula("derv = "  + formulas[1], "o") + ";", iteration); }
+  else if (type == "bq") { const formulas = getformula_and_derv(formula, "mat4"); return octanionshadercode(convertformula("z = " + formulas[0], "bq") + ";", convertformula("derv = "  + formulas[1], "bq") + ";", iteration); }
+  else if (type == "cn") { const formulas = getformula_and_derv(formula, "vec2"); return newtonshadercode(convertformula(`z = z_prev - cdiv(${formulas[0]}, ${formulas[1]})`) + " + c;", "c"); }
+  else if (type == "bn") { const formulas = getformula_and_derv(formula, "vec4"); 
     const f = convertformula("vec4 f_z = " + formulas[0], "bi") + ";";
     const df = convertformula("vec4 df_z = " + formulas[1], "bi") + ";";
     const ddf = formulas[2] ? convertformula("vec4 ddf_z = " + formulas[2], "bi") + ";" : "";
     return f4newtonshadercode(f, df, ddf, iteration, "bi", "newton_bicomplex");
   }
-  else if (type == "qn") { const formulas = getformula_and_derv(formula, "vec4"); console.log(formulas); 
+  else if (type == "qn") { const formulas = getformula_and_derv(formula, "vec4");
     const f = convertformula("vec4 f_z = " + formulas[0], "q") + ";";
     const df = convertformula("vec4 df_z = " + formulas[1], "q") + ";";
     const ddf = formulas[2] ? convertformula("vec4 ddf_z = " + formulas[2], "q") + ";" : "";
     return f4newtonshadercode(f, df, ddf, iteration, "q", "newton_quaternion");
   }
-  const formulas = getformula_and_derv(formula); console.log(formulas);
+  const formulas = getformula_and_derv(formula);
   return mandelbrotshadercode(convertformula("z = " + formulas[0], "c") + ";");
 }
 
@@ -1799,7 +1797,7 @@ function getfractal(formula, type, iteration) {
     document.getElementById('formula-panel').style.display = 'none';
     document.getElementById('fs-ui').style.display = 'none';
     document.getElementById('graph').style.marginLeft = '0';
-    var box = document.createElement('div');
+    var box=document.createElement('div');
     box.id='code-editor-box';
     box.style.cssText='position:fixed;left:0;top:0;width:600px;height:100vh;background:#1e1e1e;z-index:9999;display:flex;flex-direction:column;padding:8px;gap:8px;box-sizing:border-box;transition:transform .2s';
     var ta=document.createElement('textarea');
