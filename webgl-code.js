@@ -102,14 +102,14 @@ let mathcode = `
   // vec2 ccomp_dim(vec2 z, vec2 w) { return cre(z) * cim(w) - cim(w) * cre(z); }
   vec2 ccomp_abs(vec2 z) { return vec2(cabs(cre(z)), cabs(cim(z))); } // return vec2(abs(z.x), abs(z.y));
   vec2 ccomp_pow(vec2 z, float k) { return vec2(fast_pow(z.x, k), fast_pow(z.y, k)); }
-  //vec2 cdotalt(vec2 z, vec2 w) { return vec2(z.x * w.x + z.y * w.y, w.x * z.y + w.y * z.x); }
   vec2 cdot(vec2 z, vec2 w) { return vec2(z.x * w.x + z.y * w.y, w.x * z.y - w.y * z.x); }
   vec2 csop(vec2 z, vec2 w) { return cdiv(z, conj(w)); }
   vec2 ch(vec2 z, vec2 w) { return -w/2.0 * clog(z); }
   vec2 ctau(vec2 z, vec2 w) { return vec2(1.0, 0.0) - cpow(z, vec2(0.5, 0.0) - w); }
   vec2 ctau2(vec2 z) { return 2.0 * cexp(-0.69314718056 * z); }
   vec2 cinvmix(vec2 z, float s) { return mix(z, cinv(z), s); } // return cinv(z) * s + z * (1.0 - s);
-  vec2 crefhalf(vec2 z) { return vec2(1.0, 0.0) - z; }
+  vec2 cmsub(vec2 z) { return vec2(1.0, 0.0) - z; }
+  vec2 cmadd(vec2 z) { return vec2(1.0, 0.0) + z; }
   vec2 cdotlog(vec2 z, vec2 w, vec2 k) { return cmul(clog(cdot(z, w)), k); }
   vec2 cdotpow(vec2 z, vec2 w, vec2 k) { return cpow(cdot(z, w), k); }
   vec2 cmpow(vec2 z, vec2 w) { return cmul(cexp(log(length(z)) * w), cexp(cmul(vec2(0.0, carg(z)), (vec2(1.0, 0.0) - cexp(PI * vec2(-w.y, w.x))) * 0.5))); }
@@ -179,7 +179,7 @@ let mathcode = `
   }
   vec2 cpgamma(vec2 z) { return cinv(cinvpgamma(z)); }
   vec2 cbeta(vec2 z, vec2 w) { return cmul(cmul(cgamma(z), cgamma(w)), cinv(cgamma(z + w))); }
-  vec2 cdigamma(vec2 z) { // zeta, gamma, digamma,  high connect
+  vec2 cdigamma(vec2 z) { // zeta, gamma, digamma, high connect
     vec2 s = vec2(0.0, 0.0);
     for (int k = 0; k < 32; ++k) {
       s -= cinv(z);
@@ -834,7 +834,7 @@ function raymarchingsharecode(func1, func2) {
   vec4 c = vec4(cosrotz * ro.x + sinrotz * rozy, cosrotx * ro.y + sinrotx * ro.z, cosrotz * rozy - sinrotz * ro.x, zwval);
   if (inverse != 0.0) { c = v4invmix(c, inverse); }
   vec4 z = ismandel == 1 ? c : vec4(cxval, cyval, zoommandel, cwval);
-  float surDist = 0.1, val = 0.0, dO = 0.0, maxDist = 100.0, cpreinv = 0.0;
+  float surDist = 0.1, val = 0.0, dO = 0.0, maxDist = 200.0, cpreinv = 0.0;
   const int raymarch_iterations = 100;
   int ot = raymarch_iterations - 1;
   ` + func1 + `
@@ -868,8 +868,8 @@ function raymarchingsharecode(func1, func2) {
 }`;
 }
 
-function quaternionshadercode(formula = "z = qpow(z, w) + c;", dervformula = "vec4 derv = qpow(z_prev, power - 1.0) * power;", iteration = 12) {
-  return `vec2 mandel_quaternion(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
+function f4dshadercode(formula = "z = qpow(z, w) + c;", dervformula = "vec4 derv = qpow(z_prev, power - 1.0) * power;", iteration = 12, name = "mandel_quaternion") {
+  return `vec2 ` + name + `(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
     int n = 0;
     float dr = 1.0, znorm = 0.0, rangesq = range * range;
     vec4 z = vec4(zx, zy, zz, zw);
@@ -900,77 +900,7 @@ function quaternionshadercode(formula = "z = qpow(z, w) + c;", dervformula = "ve
     if (ismandelbox == 1) { return vec2(znorm / abs(dr) * 0.5, n); }
     return vec2(0.5 * log(znorm) * znorm / dr, n);
   }
-  ` + raymarchingsharecode("surDist = mandel_quaternion(z.x, z.y, z.z, z.w, c.x, c.y, c.z, c.w).x * 0.001;", "dist = mandel_quaternion(z.x, z.y, z.z, z.w, c.x, c.y, c.z, c.w);") + ' void main() { mandel3d_calc(); }';
-}
-
-function mandelbulbshadercode(formula = "z = tpow(z, w) + c;", dervformula = "vec4 derv = tpow(z_prev, power - 1.0) * power;", iteration = 12) {
-  return `vec2 mandelbulb(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
-    int n = 0;
-    float dr = 1.0, znorm = 0.0, rangesq = range * range;
-    vec4 z = vec4(zx, zy, zz, zw);
-    vec4 c = vec4(cx, cy, cz, cw);
-    float w = power;
-    vec4 z0 = z, z_prev = z, derv = z;
-    for (int i = 0; i < ` + iteration + `; i++) {
-      z_prev = z;
-      znorm = length(z);
-      n = i;
-      if (znorm > range) { break; }
-      if (isburning == 1) { z = v4abs(z); }
-      if (isconj == 1) { z = v4conj(z); }
-      if (isminusone == 1) { z = vec4(1.0, 0.0, 0.0, 0.0) - z; }
-      if (ismandelbox == 1) {
-        float foldingLimit = 1.0, fixedRadius = 1.0, minRadius = 0.5;
-        float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
-        z = clamp(z, -foldingLimit, foldingLimit) * 2.0 - z;
-        float r2 = dot(z, z);
-        if (r2 < minRadius2) { float temp = fixedRadius2 / minRadius2; z *= temp; dr *= temp; }
-        else if (r2 < fixedRadius2) { float temp = fixedRadius2 / r2;  z *= temp; dr *= temp; }
-      }
-      ` + dervformula + `
-      dr = length(derv) * dr + 1.0;
-      ` + formula + `
-    }
-    znorm = length(z);
-    if (ismandelbox == 1) { return vec2(znorm / abs(dr) * 0.5, n); }
-    return vec2(0.5 * log(znorm) * znorm / dr, n);
-  }
-  ` + raymarchingsharecode("surDist = mandelbulb(z.x, z.y, z.z, z.w, c.x, c.y, c.z, c.w).x * 0.001;", "dist = mandelbulb(z.x, z.y, z.z, z.w, c.x, c.y, c.z, c.w);") + ' void main() { mandel3d_calc(); }';
-}
-
-function bicomplexshadercode(formula = "z = bipow(z, w) + c;", dervformula = "vec4 derv = bipow(z_prev, power - 1.0) * power;", iteration = 12) {
-  return `vec2 mandel_bicomplex(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
-    int n = 0;
-    float dr = 1.0, znorm = 0.0, rangesq = range * range;
-    vec4 z = vec4(zx, zy, zz, zw);
-    vec4 c = vec4(cx, cy, cz, cw);
-    vec4 w = vec4(power, 0.0, 0.0, 0.0);
-    vec4 z0 = z, z_prev = z, derv = z;
-    for (int i = 0; i < ` + iteration + `; i++) {
-      z_prev = z;
-      znorm = length(z);
-      n = i;
-      if (znorm > range) { break; }
-      if (isburning == 1) { z = v4abs(z); }
-      if (isconj == 1) { z = v4conj(z); }
-      if (isminusone == 1) { z = vec4(1.0, 0.0, 0.0, 0.0) - z; }
-      if (ismandelbox == 1) {
-        float foldingLimit = 1.0, fixedRadius = 1.0, minRadius = 0.5;
-        float fixedRadius2 = fixedRadius * fixedRadius, minRadius2 = minRadius * minRadius;
-        z = clamp(z, -foldingLimit, foldingLimit) * 2.0 - z;
-        float r2 = dot(z, z);
-        if (r2 < minRadius2) { float temp = fixedRadius2 / minRadius2; z *= temp; dr *= temp; } // float temp = fixedRadius2 / minRadius;
-        else if (r2 < fixedRadius2) { float temp = fixedRadius2 / r2;  z *= temp; dr *= temp; }
-      }
-      ` + dervformula + `
-      dr = length(derv) * dr + 1.0;
-      ` + formula + `
-    }
-    znorm = length(z);
-    if (ismandelbox == 1) { return vec2(znorm / abs(dr) * 0.5, n); }
-    return vec2(0.5 * log(znorm) * znorm / dr, n);
-  }
-  ` + raymarchingsharecode("surDist = mandel_bicomplex(z.x, z.y, z.z, z.w, c.x, c.y, c.z, c.w).x * 0.001;", "dist = mandel_bicomplex(z.x, z.y, z.z, z.w, c.x, c.y, c.z, c.w);") + ' void main() { mandel3d_calc(); }';
+  ` + raymarchingsharecode("surDist = " + name + "(z.x, z.y, z.z, z.w, c.x, c.y, c.z, c.w).x * 0.001;", "dist = " + name + "(z.x, z.y, z.z, z.w, c.x, c.y, c.z, c.w);") + ' void main() { mandel3d_calc(); }';
 }
 
 function octanionshadercode(formula = "z = opow(z, w) + c;", dervformula = "vec4 derv = opow(z_prev, power - 1.0) * power;", iteration = 12) {
@@ -999,8 +929,8 @@ function octanionshadercode(formula = "z = opow(z, w) + c;", dervformula = "vec4
   ` + raymarchingsharecode("surDist = mandel_octanion(z.x, z.y, z.z, z.w, c.x, c.y, c.z, c.w).x * 0.001;", "dist = mandel_octanion(z.x, z.y, z.z, z.w, c.x, c.y, c.z, c.w);") + ' void main() { mandel3d_calc(); }';
 }
 
-function bicomplexnewtonshadercode(f_code = "", df_code = "", ddf_code = "", iteration = 25) {
-  return `vec2 newton_bicomplex(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
+function f4newtonshadercode(f_code = "", df_code = "", ddf_code = "", iteration = 25, type = "q", name = "newton_quaternion") {
+  return `vec2 ` + name + `(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
     int n = 0;
     float dr = 1.0, znorm = 0.0, rangesq = range * range;
     float rangeval = 1.0 / (500.0 * range);
@@ -1018,9 +948,9 @@ function bicomplexnewtonshadercode(f_code = "", df_code = "", ddf_code = "", ite
       ` + f_code + `
       ` + df_code + `
       ` + ddf_code + `
-      vec4 df_inv = biinv(df_z);
-      vec4 delta = bimul(df_inv, f_z);
-      dz = bimul(dz, bimul(bimul(f_z, ddf_z), bisq(df_inv)));
+      vec4 df_inv = ` + type + `inv(df_z);
+      vec4 delta = ` + type + `mul(df_inv, f_z);
+      dz = ` + type + `mul(dz, ` + type + `mul(` + type + `mul(f_z, ddf_z), ` + type + `sq(df_inv)));
       z = z - delta;
       if (length(delta) < rangeval) { break; }
     }
@@ -1028,39 +958,7 @@ function bicomplexnewtonshadercode(f_code = "", df_code = "", ddf_code = "", ite
     float dist = zabs * log(max(zabs, 1.0001)) / max(length(dz), 0.0001);
     return vec2(clamp(dist * 0.5, 0.0, 1.0), float(n));
   }
-  ` + raymarchingsharecode("surDist = newton_bicomplex(z.x, z.y, z.z, z.w, c.x, c.y, c.z, c.w).x * 0.001;", "dist = newton_bicomplex(z.x, z.y, z.z, z.w, c.x, c.y, c.z, c.w);") + ' void main() { mandel3d_calc(); }';
-}
-
-function quaternionnewtonshadercode(f_code = "", df_code = "", ddf_code = "", iteration = 25) {
-  return `vec2 newton_quaternion(float zx, float zy, float zz, float zw, float cx, float cy, float cz, float cw) {
-    int n = 0;
-    float dr = 1.0, znorm = 0.0, rangesq = range * range;
-    float rangeval = 1.0 / (500.0 * range);
-    vec4 z = vec4(zx, zy, zz, zw);
-    vec4 c = vec4(cx, cy, cz, cw);
-    vec4 w = vec4(power, 0.0, 0.0, 0.0);
-    vec4 dz = vec4(1.0, 0.0, 0.0, 0.0);
-    vec4 z0 = z, z_prev = z, derv = z;
-    for (int i = 0; i < ` + iteration + `; i++) {
-      z_prev = z;
-      n = i;
-      if (isburning == 1) { z = v4abs(z); }
-      if (isconj == 1) { z = v4conj(z); }
-      if (isminusone == 1) { z = vec4(1.0, 0.0, 0.0, 0.0) - z; }
-      ` + f_code + `
-      ` + df_code + `
-      ` + ddf_code + `
-      vec4 df_inv = qinv(df_z);
-      vec4 delta = qmul(df_inv, f_z);
-      dz = qmul(dz, qmul(qmul(f_z, ddf_z), qsq(df_inv)));
-      z = z - delta;
-      if (length(delta) < rangeval) { break; }
-    }
-    float zabs = length(z);
-    float dist = zabs * log(max(zabs, 1.0001)) / max(length(dz), 0.0001);
-    return vec2(clamp(dist * 0.5, 0.0, 1.0), float(n));
-  }
-  ` + raymarchingsharecode("surDist = newton_quaternion(z.x, z.y, z.z, z.w, c.x, c.y, c.z, c.w).x * 0.001;", "dist = newton_quaternion(z.x, z.y, z.z, z.w, c.x, c.y, c.z, c.w);") + ' void main() { mandel3d_calc(); }';
+  ` + raymarchingsharecode("surDist = " + name + "(z.x, z.y, z.z, z.w, c.x, c.y, c.z, c.w).x * 0.001;", "dist = " + name + "(z.x, z.y, z.z, z.w, c.x, c.y, c.z, c.w);") + ' void main() { mandel3d_calc(); }';
 }
 
 function getDerivative(f, v = 'z') {
@@ -1363,9 +1261,9 @@ function getfractal(formula, type, iteration) {
   if (type != "c" && formula != "z^(2 * w) + c") { iteration = parseInt(iteration > 4 ? iteration / 3 : iteration); }
   if (type != "c" && (formula.includes("gamma") || formula.includes("eta"))) { iteration = parseInt(iteration > 2 ? iteration / 5 : iteration / 1.25) + 1; }
   if (type != "c" && (formula.includes("eta(-z") && formula.includes("eta(z") || formula.includes("sn(") || formula.includes("dn(") || formula.includes("cn(") || formula.includes("wp("))) { iteration = parseInt(iteration > 2 ? iteration / 25 : iteration / 25) + 1; }  
-  if (type == "bi") { const formulas = getformula_and_derv(formula, "vec4"); console.log(formulas); return bicomplexshadercode(convertformula("z = " + formulas[0], "bi") + ";", convertformula("derv = "  + formulas[1], "bi") + ";", iteration); }
-  else if (type == "q") { const formulas = getformula_and_derv(formula, "vec4"); console.log(formulas); return quaternionshadercode(convertformula("z = " + formulas[0], "q") + ";", convertformula("derv = "  + formulas[1], "q") + ";", iteration); }
-  else if (type == "t") { const formulas = getformula_and_derv(formula, "vec4"); console.log(formulas); return mandelbulbshadercode(convertformula("z = " + formulas[0], "t") + ";", convertformula("derv = "  + formulas[1], "t") + ";", iteration); }
+  if (type == "bi") { const formulas = getformula_and_derv(formula, "vec4"); console.log(formulas); return f4dshadercode(convertformula("z = " + formulas[0], "bi") + ";", convertformula("derv = "  + formulas[1], "bi") + ";", iteration, "mandel_bicomplex"); }
+  else if (type == "q") { const formulas = getformula_and_derv(formula, "vec4"); console.log(formulas); return f4dshadercode(convertformula("z = " + formulas[0], "q") + ";", convertformula("derv = "  + formulas[1], "q") + ";", iteration, "mandel_quaternion"); }
+  else if (type == "t") { const formulas = getformula_and_derv(formula, "vec4"); console.log(formulas); return f4dshadercode(convertformula("z = " + formulas[0], "t") + ";", convertformula("derv = "  + formulas[1], "t") + ";", iteration, "mandelbulb"); }
   else if (type == "o") { const formulas = getformula_and_derv(formula, "mat4"); console.log(formulas); return octanionshadercode(convertformula("z = " + formulas[0], "o") + ";", convertformula("derv = "  + formulas[1], "o") + ";", iteration); }
   else if (type == "bq") { const formulas = getformula_and_derv(formula, "mat4"); console.log(formulas); return octanionshadercode(convertformula("z = " + formulas[0], "bq") + ";", convertformula("derv = "  + formulas[1], "bq") + ";", iteration); }
   else if (type == "cn") { const formulas = getformula_and_derv(formula, "vec2"); console.log(formulas); const newton_iter = `z = z_prev - cdiv(${formulas[0]}, ${formulas[1]})`; let newformula = convertformula(newton_iter); return newtonshadercode(newformula + " + c;", "c"); }
@@ -1373,13 +1271,13 @@ function getfractal(formula, type, iteration) {
     const f = convertformula("vec4 f_z = " + formulas[0], "bi") + ";";
     const df = convertformula("vec4 df_z = " + formulas[1], "bi") + ";";
     const ddf = formulas[2] ? convertformula("vec4 ddf_z = " + formulas[2], "bi") + ";" : "";
-    return bicomplexnewtonshadercode(f, df, ddf, iteration);
+    return f4newtonshadercode(f, df, ddf, iteration, "bi", "newton_bicomplex");
   }
   else if (type == "qn") { const formulas = getformula_and_derv(formula, "vec4"); console.log(formulas); 
     const f = convertformula("vec4 f_z = " + formulas[0], "q") + ";";
     const df = convertformula("vec4 df_z = " + formulas[1], "q") + ";";
     const ddf = formulas[2] ? convertformula("vec4 ddf_z = " + formulas[2], "q") + ";" : "";
-    return quaternionnewtonshadercode(f, df, ddf, iteration);
+    return f4newtonshadercode(f, df, ddf, iteration, "q", "newton_quaternion");
   }
   const formulas = getformula_and_derv(formula); console.log(formulas);
   return mandelbrotshadercode(convertformula("z = " + formulas[0], "c") + ";");
