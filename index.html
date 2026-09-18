@@ -75,7 +75,7 @@
       <div class="var-btn btn" data-var="cn">n<small>newton</small></div>
       <div class="var-btn btn" data-var="bn">bn<small>bicomplex newton</small></div>
       <div class="var-btn btn" data-var="qn">qn<small>quaternion newton (beta)</small></div>
-      <!--<div class="var-btn btn" data-var="ly">ly<small>lyapunov</small></div>-->
+      <div class="var-btn btn" data-var="ly">ly<small>lyapunov</small></div>
       <!--<div class="var-btn btn" data-var="o">o<small>octanion</small></div>-->
       <!--<div class="var-btn btn" data-var="bq">o<small>biquaternion</small></div>-->
     </div>
@@ -150,15 +150,13 @@
   uniform float cosrotz;
   uniform float sinrotz;
   uniform float multlight;
-  uniform float scaleval;
   uniform int ismandel;
   uniform int isminus;
   uniform int ismandelbox;
   uniform int isburning;
   uniform int isminusone;
   uniform int isconj;
-  uniform int colorschemeindex;
-  uniform int iteration;`;
+  uniform int colorschemeindex;`;
 
 let mathcode = `
   #define PI 3.14159265359
@@ -754,19 +752,18 @@ let mathcode = `
   }
 `;
 
-function mandelbrotshadercode(formula) {
+function mandelbrotshadercode(formula, iteration) {
 return `void mandelbrot_calc() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
   vec2 c = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : vec2(cxval, cyval);
   if (inverse != 0.0) { c = cinvmix(c, inverse); }
   vec2 z = ismandel == 1 ? c : uv * zoomjulia + vec2(zxval, zyval);
-  const int maxiter = 180;
-  int iter = maxiter > iteration ? iteration : maxiter;
   float znorm = 0.0;
-  int n = 0, maxn = iter;
+  int n = 0;
+  const int iter = ` + iteration + `;
   vec2 w = vec2(power, 0.0);
   vec2 z0 = z, z_prev = z;
-  for (int i = 0; i < maxiter; i++) {
+  for (int i = 0; i < iter; i++) {
     z_prev = z;
     znorm = dot(z, z);
     if (znorm > range) { n = i; break; }
@@ -783,7 +780,6 @@ return `void mandelbrot_calc() {
     }
     ` + formula + `
     n += 1;
-    if (n >= maxn) { n = iter; break; }
   }
   if (colorschemeindex == 0) {
     float hue = atan(z.y, z.x) * 0.159154943092 + 0.5;
@@ -818,19 +814,19 @@ return `void mandelbrot_calc() {
 } void main() { mandelbrot_calc(); }`;
 }
 
-function newtonshadercode(formula) {
+function newtonshadercode(formula, iteration) {
 return `void newton_calc() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
   vec2 c = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : vec2(cxval, cyval);
   if (inverse != 0.0) { c = cinvmix(c, inverse); }
   vec2 z = ismandel == 1 ? c : uv * zoomjulia + vec2(zxval, zyval);
-  const int maxiter = 220;
+  const int iter = ` + iteration + `;
   float znorm = 0.0, rangeval = 1.0 / (500.0 * range);
   vec2 w = vec2(power, 0.0);
   vec2 z0 = z, z_prev = z, func = z, derv = vec2(1.0, 0.0);
-  int n = 0, maxn = iteration;
+  int n = 0;
   vec2 zpos = vec2(1.0, 0.0);
-  for (int i = 0; i < maxiter; i++) {
+  for (int i = 0; i < iter; i++) {
     z_prev = z;
     if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); }
     if (isconj == 1) { z.x = z.x; z.y = -z.y; }
@@ -846,7 +842,7 @@ return `void newton_calc() {
     ` + formula + `
     n += 1;
     znorm = dot(z - z_prev, z - z_prev);
-    if (znorm < rangeval || n >= maxn) { z = z_prev; n = n >= maxn ? maxiter : i; break; }
+    if (znorm < rangeval || n >= iter) { z = z_prev; n = n >= iter ? iter : i; break; }
   }
   if (colorschemeindex == 0) {
     float hue = (atan(z.y, z.x) * 0.159154943092 + 0.5);
@@ -857,7 +853,7 @@ return `void newton_calc() {
     }
     gl_FragColor = vec4(color1, 1.0);
   } else if (colorschemeindex == 1) {
-    float color = n == iteration ? 0.0 : float(n);
+    float color = n == iter ? 0.0 : float(n);
     color *= 0.0078431372549 * multlight;
     float r = bounce(color, 0.0, 1.0);
     float g = bounce(color * 2.0, 0.0, 1.0);
@@ -875,23 +871,23 @@ return `void newton_calc() {
 } void main() { newton_calc(); }`;
 }
 
-function lyapunovshadercode(formula, dervformula) {
+function lyapunovshadercode(formula, dervformula, iteration) {
 return `void lyapunov_calc() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
   vec2 c = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : vec2(cxval, cyval);
   if (inverse != 0.0) { c = cinvmix(c, inverse); }
   vec2 z = ismandel == 1 ? c : uv * zoomjulia + vec2(zxval, zyval);
-  const int maxiter = 180;
-  float lambda = 0.0, maxlambda = 120000.0, xn = 0.5, rx = 0.0, ri = 0.0, invn = 1.0 / float(maxiter), derv = 0.0;
-  int modval = 0, n0 = iteration / 10;
-  for (int i = 1; i < maxiter; i++) {
+  const int iter = ` + iteration + `;
+  float lambda = 0.0, maxlambda = 120000.0, xn = c.x + 0.5, rx = 0.0, ri = 0.0, invn = 1.0 / float(iter), derv = 0.0;
+  int modval = 0, n0 = iter / 10;
+  for (int i = 1; i < iter; i++) {
     modval = i - (i / 2) * 2;
     if (modval == 1) { rx = z.x; }
     else if (modval == 0) { rx = z.y; }
     xn = logmap(rx, xn);
     derv = logmap_derv(rx, xn);
     if (i >= n0) { lambda += log(abs(derv)) * invn; }
-    if (abs(lambda) > maxlambda || i - 2 == iteration) { break; }
+    if (abs(lambda) > maxlambda || i - 2 == iter) { break; }
   }
   if (lambda > 0.0) {
     ri = exp(-3.3 * lambda) * 25.5;
@@ -900,12 +896,12 @@ return `void lyapunov_calc() {
     lambda = exp(lambda);
     ri = (lambda <= 0.98 ? lambda * 15.2653061226 : (1.76 + -37.0 * (0.98 - lambda)) * 8.5);
   }
-  if (colorschemeindex == 0) {
+  if (colorschemeindex == -1) {
     float hue = atan(rx, ri) * 0.159154943092 + 0.5;
     float value1 = log((rx * rx + ri * ri) + 1.0) * 0.5;
     vec3 color1 = hsv2rgb(vec3(hue, 0.8, clamp(value1, 0.0, 1.0)));
     gl_FragColor = vec4(color1, 1.0);
-  } else if (colorschemeindex == 1) {
+  } else if (colorschemeindex >= 0) {
     float color = ri * multlight * 0.00392156862745 * 2.5;
     float r = bounce(color, 0.0, 1.0);
     float g = bounce(color * 2.0, 0.0, 1.0);
@@ -1389,7 +1385,7 @@ function getfractal(formula, type, iteration) {
   else if (type == "t") { const formulas = getformula_and_derv(formula, "vec4"); return f4dshadercode(convertformula("z = " + formulas[0], "t") + ";", convertformula("derv = "  + formulas[1], "t") + ";", iteration, "mandelbulb"); }
   else if (type == "o") { const formulas = getformula_and_derv(formula, "mat4"); return octanionshadercode(convertformula("z = " + formulas[0], "o") + ";", convertformula("derv = "  + formulas[1], "o") + ";", iteration); }
   else if (type == "bq") { const formulas = getformula_and_derv(formula, "mat4"); return octanionshadercode(convertformula("z = " + formulas[0], "bq") + ";", convertformula("derv = "  + formulas[1], "bq") + ";", iteration); }
-  else if (type == "cn") { const formulas = getformula_and_derv(formula, "vec2"); return newtonshadercode(convertformula(`z = z_prev - cdiv(${formulas[0]}, ${formulas[1]})`) + " + c;", "c"); }
+  else if (type == "cn") { const formulas = getformula_and_derv(formula, "vec2"); return newtonshadercode(convertformula(`z = z_prev - cdiv(${formulas[0]}, ${formulas[1]})`) + " + c;", iteration); }
   else if (type == "bn") { const formulas = getformula_and_derv(formula, "vec4"); 
     const f = convertformula("vec4 f_z = " + formulas[0], "bi") + ";";
     const df = convertformula("vec4 df_z = " + formulas[1], "bi") + ";";
@@ -1404,10 +1400,10 @@ function getfractal(formula, type, iteration) {
   }
   else if (type == "ly") {
     const formulas = getformula_and_derv(formula, "vec2");
-    return lyapunovshadercode(convertformula("z = " + formulas[0], "c") + ";", convertformula("derv = " + formulas[1], "c") + ";");
+    return lyapunovshadercode(convertformula("z = " + formulas[0], "c") + ";", convertformula("derv = " + formulas[1], "c") + ";", iteration);
   }
   const formulas = getformula_and_derv(formula);
-  return mandelbrotshadercode(convertformula("z = " + formulas[0], "c") + ";");
+  return mandelbrotshadercode(convertformula("z = " + formulas[0], "c") + ";", iteration);
 }
 
   // webgl and detect button:
@@ -1420,9 +1416,8 @@ function getfractal(formula, type, iteration) {
   let resolutionLocation, timeLocation, cxvalLocation, cyvalLocation, zoommandelLocation;
   let cwvalLocation, zxvalLocation, zyvalLocation, zoomjuliaLocation, zwvalLocation;
   let rangeLocation, powerLocation, logvalLocation, inverseLocation, multlightLocation;
-  let cosrotxLocation, sinrotxLocation, cosrotzLocation, sinrotzLocation, scalevalLocation;
-  let ismandelLocation, isminusLocation, isburningLocation, isminusoneLocation, isconjLocation;
-  let colorschemeindexLocation, iterationLocation, ismandelboxLocation;
+  let cosrotxLocation, sinrotxLocation, cosrotzLocation, sinrotzLocation, colorschemeindexLocation;
+  let ismandelLocation, isminusLocation, isburningLocation, isminusoneLocation, isconjLocation, ismandelboxLocation;
   const formulaInput = document.getElementById('formula-input');
   const formulaStatus = document.getElementById('formula-status');
   const iterInput = document.getElementById('iter-input');
@@ -1645,7 +1640,6 @@ function getfractal(formula, type, iteration) {
     sinrotxLocation = gl.getUniformLocation(prog, 'sinrotx');
     cosrotzLocation = gl.getUniformLocation(prog, 'cosrotz');
     sinrotzLocation = gl.getUniformLocation(prog, 'sinrotz');
-    scalevalLocation = gl.getUniformLocation(prog, 'scaleval');
     ismandelLocation = gl.getUniformLocation(prog, 'ismandel');
     isminusLocation = gl.getUniformLocation(prog, 'isminus');
     ismandelboxLocation = gl.getUniformLocation(prog, 'ismandelbox');
@@ -1653,7 +1647,6 @@ function getfractal(formula, type, iteration) {
     isminusoneLocation = gl.getUniformLocation(prog, 'isminusone');
     isconjLocation = gl.getUniformLocation(prog, 'isconj');
     colorschemeindexLocation = gl.getUniformLocation(prog, 'colorschemeindex');
-    iterationLocation = gl.getUniformLocation(prog, 'iteration');
   }
 
   function useShader(fsSource) {
@@ -1745,7 +1738,6 @@ function getfractal(formula, type, iteration) {
   let movespeedy = 0.025 * 0.5;
   let isRecording = 0;
   let zoomSpeed = 0.07;
-  let scaleval = 0.0;
   let recordedChunks = [];
   let mediaRecorder = null;
 
@@ -1844,8 +1836,6 @@ function getfractal(formula, type, iteration) {
     if (keysPressed['arrowdown']) { rotx += rotationSpeed * 0.1; keypress = true; }
     if (keysPressed['arrowleft']) { rotz += rotationSpeed * 0.1; keypress = true; }
     if (keysPressed['arrowright']) { rotz -= rotationSpeed * 0.1; keypress = true; }
-    if (keysPressed['o']) { scaleval -= 0.01; keypress = true; }
-    if (keysPressed['p']) { scaleval += 0.01; keypress = true; }
     if (keysPressed['b']) { colorschemeindex += 1; colorschemeindex = colorschemeindex == 4 ? 0 : colorschemeindex; keypress = true; }
     if ((keypress || keyinit) && currentProgram) {
       let rangecalc = range;
@@ -1871,11 +1861,9 @@ function getfractal(formula, type, iteration) {
       gl.uniform1f(sinrotxLocation, Math.sin(rotx));
       gl.uniform1f(cosrotzLocation, Math.cos(rotz));
       gl.uniform1f(sinrotzLocation, Math.sin(rotz));
-      gl.uniform1f(scalevalLocation, scaleval);
       gl.uniform1f(logvalLocation, power > 2.0 ? 1.0 / Math.log(Math.abs(power)) : 1.44269504088896);
       gl.uniform1f(rangeLocation, rangecalc);
       gl.uniform1i(colorschemeindexLocation, colorschemeindex);
-      gl.uniform1i(iterationLocation, iteration);
     }
   }
 
