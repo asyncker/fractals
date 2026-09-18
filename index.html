@@ -13,24 +13,18 @@
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family:'Consolas',monospace; display:flex; height:100vh; background:#1e1e1e; color:#d4d4d4; overflow:hidden; }
-    .btn { background:#2d2d30; color:#d4d4d4; border:1px solid #3c3c3c; border-radius:4px; font-family:inherit; cursor:pointer; user-select:none; text-align:center;
-      transition:background .12s, border-color .12s, color .12s;
-    }
+    .btn { background:#2d2d30; border:1px solid #3c3c3c; border-radius:4px; font-family:inherit; cursor:pointer; user-select:none; text-align:center; transition:background .12s, border-color .12s, color .12s; }
     .btn:hover { background:#3a3a3d; }
     .btn.active { background:#0e639c; border-color:#1177bb; color:#fff; }
-    #formula-panel { width:340px; min-width:260px; display:flex; flex-direction:column; background:#252526; border-right:2px solid #333;
-      padding:8px 12px; gap:12px; overflow-y:auto;
-    }
-    #formula-panel h2 { font-size:13px; color:#4ec9b0; font-weight:600; letter-spacing:.5px; margin-bottom:2px; }
-    .panel-header { display:flex; align-items:center; justify-content:space-between; }
+    #formula-panel { width:340px; min-width:260px; display:flex; flex-direction:column; background:#252526; border-right:2px solid #333; padding:8px 12px; gap:12px; overflow-y:auto; }
+    #formula-panel h2 { font-size:13px; color:#4ec9b0; font-weight:600; letter-spacing:.5px; }
     #fullscreen-btn { width: 26px; height: 26px; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center; }
-    #formula-input { width:100%; background:#1e1e1e; color:#d4d4d4; border:1px solid #3c3c3c; border-radius:4px;
-      padding:10px 12px; font-family:inherit; font-size:16px; outline:none; transition:border-color .15s, box-shadow .15s;
-    }
+    #formula-input { width:100%; background:#1e1e1e; color:#d4d4d4; border:1px solid #3c3c3c; border-radius:4px; padding:10px 12px; font-family:inherit; font-size:16px; outline:none; transition:border-color .15s, box-shadow .15s; }
     #formula-input:focus { border-color:#0e639c; box-shadow:0 0 0 2px rgba(14,99,156,.25); }
     #formula-input.error { border-color:#f14c4c; box-shadow:0 0 0 2px rgba(241,76,76,.25); }
     #formula-status { font-size:11px; min-height:14px; color:#6a9955; transition:color .15s; }
     #formula-status.error { color:#f14c4c; }
+    .panel-header { display:flex; align-items:center; justify-content:space-between; }
     .var-buttons { display:flex; gap:6px; flex-wrap:wrap; }
     .var-btn { flex:1 0 auto; min-width:52px; padding:7px 0; font-size:13px; }
     .var-btn small { display:block; font-size:9px; opacity:.6; margin-top:1px; }
@@ -41,19 +35,15 @@
     .formula-presets { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; }
     .preset-btn { padding: 6px 2px; font-size: 10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .iter-row { display:flex; align-items:center; gap:8px; font-size:12px; color:#9d9d9d; flex-wrap:wrap; }
-    .iter-row input { width:70px; background:#1e1e1e; color:#d4d4d4; border:1px solid #3c3c3c; border-radius:4px;
-      padding:5px 8px; font-family:inherit; font-size:12px; outline:none;
-    }
+    .iter-row input { width:70px; background:#1e1e1e; color:#d4d4d4; border:1px solid #3c3c3c; border-radius:4px; padding:5px 8px; font-family:inherit; font-size:12px; outline:none; }
     .iter-row input:focus { border-color:#0e639c; }
     .hint { font-size:10px; color:#6b6b6b; margin-top:auto; border-top:1px solid #333; padding-top:6px; }
-    #graph { flex:1; position:relative; background:#fff; min-width:0; }
-    #canvas { width:100%; height:100%; cursor:crosshair; display:block; }
     .btn-row { display:flex; gap:5px; flex-wrap:wrap; }
     .btn-row .extra-btn { flex:1 0 auto; min-width:50px; width:auto; padding:6px 4px; font-size:11px; }
     .btn-row .extra-btn.active { background:#0e639c; border-color:#1177bb; color:#fff; }
     .power-row .extra-btn { flex:1 0 0; min-width:38px; padding:6px 2px; font-size:11px; }
-    #julia-btn { width:100%; font-size:13px; font-weight:600; letter-spacing:.5px; padding:9px 0; }
-    #julia-btn.active { background:#0e639c; border-color:#1177bb; color:#fff; }
+    #graph { flex:1; position:relative; background:#fff; min-width:0; }
+    #canvas { width:100%; height:100%; cursor:crosshair; display:block; }
     body.fullscreen-mode #formula-panel { display:none; }
     body.fullscreen-mode #graph { flex:1; }
     #graph:fullscreen { width:100vw; height:100vh; }
@@ -63,9 +53,7 @@
     #fs-formula-input::placeholder { color:rgba(212,212,212,.4); font-style:italic; }
     #fs-formula-input.error { border-color:#f14c4c; }
     #fs-var-buttons { display:flex; gap:8px; }
-    .fs-var-btn { flex:1 0 0; background:rgba(30,30,30,.55); color:#e6e6e6; border:1px solid rgba(47,47,47,.35); border-radius:8px;
-      padding:6px 0; font-family:inherit; font-size:12px; letter-spacing:.3px; cursor:pointer; text-align:center;
-    }
+    .fs-var-btn { flex:1 0 0; background:rgba(30,30,30,.55); color:#e6e6e6; border:1px solid rgba(47,47,47,.35); border-radius:8px; padding:6px 0; font-family:inherit; font-size:12px; letter-spacing:.3px; cursor:pointer; text-align:center; }
     .fs-var-btn small { display:block; font-size:9px; opacity:.6; margin-top:1px; }
     .fs-var-btn.active { background:rgba(14,99,156,.85); color:#fff; }
     .fs-var-btn.active small { opacity:.85; }
@@ -123,7 +111,7 @@
       <input id="range-input" type="number" min="1" max="100000" step="1" value="40" />
     </div>
     <div class="hint">
-      <b>WASD</b> — move. | QE</b> — zoom<br>
+      <b>WASD</b> — move. | QE</b> — zoom | 0</b> — record video<br>
       <b>RT</b> — +1/-1 w | H</b> — reset<br>
       <b>XR</b> — +1/-1 r | Arrow</b> — rotate 3d
     </div>
