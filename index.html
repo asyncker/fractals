@@ -241,7 +241,6 @@ let mathcode = `
   vec2 cclamp(vec2 z, vec2 w, vec2 s) { return vec2(clamp(z.x, w.x, s.x), clamp(z.y, w.y, s.y)); }
   vec2 ccomp_dotre(vec2 z, vec2 w) { return cre(z) * cre(w) + cim(z) * cim(w); }
   vec2 ccomp_dotim(vec2 z, vec2 w) { return cre(w) * cim(z) - cim(w) * cre(z); }
-  //vec2 ccomp_dim(vec2 z, vec2 w) { return cre(z) * cim(w) - cim(w) * cre(z); }
   vec2 ccomp_abs(vec2 z) { return vec2(cabs(cre(z)), cabs(cim(z))); } // return vec2(abs(z.x), abs(z.y));
   vec2 ccomp_pow(vec2 z, float k) { return vec2(fast_pow(z.x, k), fast_pow(z.y, k)); }
   vec2 cdot(vec2 z, vec2 w) { return vec2(z.x * w.x + z.y * w.y, w.x * z.y - w.y * z.x); }
@@ -257,25 +256,17 @@ let mathcode = `
   vec2 cmpow(vec2 z, vec2 w) { return cmul(cexp(log(length(z)) * w), cexp(cmul(vec2(0.0, carg(z)), (vec2(1.0, 0.0) - cexp(PI * vec2(-w.y, w.x))) * 0.5))); }
   vec2 csin(vec2 z) { float ey = exp(z.y); float eyminus = 1.0 / ey; return vec2(sin(z.x) * (ey + eyminus) * 0.5, cos(z.x) * (ey - eyminus) * 0.5); }
   vec2 ccos(vec2 z) { float ey = exp(z.y); float eyminus = 1.0 / ey; return vec2(cos(z.x) * (ey + eyminus) * 0.5, -sin(z.x) * (ey - eyminus) * 0.5); }
-  vec2 csin_slow(vec2 z) { return vec2(sin(z.x) * cosh(z.y), cos(z.x) * sinh(z.y)); }
-  vec2 ccos_slow(vec2 z) { return vec2(cos(z.x) * cosh(z.y), -sin(z.x) * sinh(z.y)); }
   vec2 csinh(vec2 z) { return vec2(sinh(z.x) * cos(z.y), cosh(z.x) * sin(z.y)); }
   vec2 ccosh(vec2 z) { return vec2(cosh(z.x) * cos(z.y), sinh(z.x) * sin(z.y)); }
-  vec2 csinw(vec2 z, vec2 w) { return cpow(csin(z), w); }
-  vec2 ccosw(vec2 z, vec2 w) { return cpow(ccos(z), w); }
-  vec2 csinhw(vec2 z, vec2 w) { return cpow(csinh(z), w); }
-  vec2 ccoshw(vec2 z, vec2 w) { return cpow(ccosh(z), w); }
-  vec2 ctanw(vec2 z, vec2 w, vec2 s) { return cmul(cpow(csin(z), s), cpow(ccos(z), w)); }
-  vec2 ccotw(vec2 z, vec2 w, vec2 s) { return cmul(cpow(ccos(z), s), cpow(csin(z), w)); }
-  vec2 ctanhw(vec2 z, vec2 w, vec2 s) { return cmul(cpow(csinh(z), s), cpow(ccosh(z), w)); }
-  vec2 ccothw(vec2 z, vec2 w, vec2 s) { return cmul(cpow(ccosh(z), s), cpow(csinh(z), w)); }
-  vec2 clogn(vec2 z, vec2 w) { return cdiv(clog(z), clog(w)); }
+  vec2 ctos(vec2 z, vec2 w, vec2 s) { return cmul(cpow(csin(z), s), cpow(ccos(z), w)); }
+  vec2 ctosh(vec2 z, vec2 w, vec2 s) { return cmul(cpow(csinh(z), s), cpow(ccosh(z), w)); }
   vec2 ctanh(vec2 z) { return cdiv(csinh(z), ccosh(z)); } // return vec2(1.0, 0.0) - 2.0 / (vec2(1.0, 0.0) + cexp(2.0 * z));
   vec2 ccoth(vec2 z) { return cdiv(ccosh(z), csinh(z)); }
   vec2 ctan(vec2 z) { return cdiv(csin(z), ccos(z)); }
-  vec2 ccot(vec2 z) { return cinv(ctan(z)); }
+  vec2 ccot(vec2 z) { return cdiv(ccos(z), csin(z)); }
   vec2 carcsin(vec2 z) { vec2 a = csqrt(vec2(1.0, 0.0) - csq(z)); return z.y < 0.0 ? -cmul_i(clog(a + cmul_i(z))) : -cmul_i(-clog(a - cmul_i(z))); }
   vec2 carccos(vec2 z) { return vec2(0.5 * PI, 0.0) - carcsin(z); }
+  vec2 clogn(vec2 z, vec2 w) { return cdiv(clog(z), clog(w)); }
   vec2 cfib(vec2 z) { return (cpow(vec2(1.61803398875, 0.0), z) - cpow(vec2(-0.61803398875, 0.0), z)) * 0.4472135955; }
   vec2 cgamma_right(vec2 z) {
     vec2 w = z - vec2(1.0, 0.0);
@@ -466,8 +457,7 @@ let mathcode = `
   vec2 cmul_i_derv(vec2 z) { return vec2(0.0, 1.0); }
   vec2 cdzsinh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czsinh(z + dz, t) - czsinh(z - dz, t), cinv(2.0 * dz)); }
   vec2 cdzcosh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czcosh(z + dz, t) - czcosh(z - dz, t), cinv(2.0 * dz)); }
-  vec2 cdlogzeta(vec2 z) { return cdiv(czeta(z), czeta_derv(z)); }
-  //vec2 cdloggamma(vec2 z) { return cdiv(cgamma(z), cdgamma(z)); }
+  vec2 cdizeta(vec2 z) { return cdiv(czeta_derv(z), czeta(z)); }
 
   vec2 invert_tau(vec2 z) {
     vec2 rt_k = csqrt(csqrt(vec2(1.0, 0.0) - csq(z)));
@@ -596,7 +586,6 @@ let mathcode = `
   vec4 qstep(vec4 z) { return vec4(step(0.0, z.x), 0.0, 0.0, 0.0); }
   vec4 qclamp(vec4 z, vec4 w, vec4 s) { return vec4(clamp(z.x, w.x, s.x), clamp(z.y, w.y, s.y), clamp(z.z, w.z, s.z), clamp(z.w, w.w, s.w)); }
   vec4 qtau(vec4 z, vec4 w) { return vec4(1.0, 0.0, 0.0, 0.0) - qpow(z, vec4(0.5, 0.0, 0.0, 0.0) - w); }
-  vec4 qtau_derv(vec4 z, vec4 w) { return qmul(qpow(w, vec4(0.5, 0.0, 0.0, 0.0) - z), qlog(w)); }
   vec4 qgamma_right(vec4 z) {
     vec4 w = z - vec4(1.0, 0.0, 0.0, 0.0);
     vec4 t = w + vec4(7.5, 0.0, 0.0, 0.0);
@@ -617,11 +606,12 @@ let mathcode = `
   vec4 qgammasi(vec4 z) { return vec4(1.0, 0.0, 0.0, 0.0) - qdiv(qgamma(vec4(1.0, 0.0, 0.0, 0.0) - z), qgamma(z)); }
   vec4 qbeta(vec4 z, vec4 w) { return qmul(qmul(qgamma(z), qgamma(w)), qinv(qgamma(z + w))); }
   vec4 qfib(vec4 z) { return (qpow(vec4(1.61803398875, 0.0, 0.0, 0.0), z) - qpow(vec4(-0.61803398875, 0.0, 0.0, 0.0), z)) * 0.4472135955; }
+  vec4 qtau_derv(vec4 z, vec4 w) { return qmul(qpow(w, vec4(0.5, 0.0, 0.0, 0.0) - z), qlog(w)); }
+  vec4 qpow_derv(vec4 z, float w) { return qpow(z, w - 1.0) * w; }
+  vec4 qpow_derv(vec4 z, vec4 w) { return qmul(qpow(z, w - vec4(1.0, 0.0, 0.0, 0.0)), w); }
   vec4 v4invmix(vec4 z, float w) { return z * (w / dot(z, z)) + (1.0 - w) * z; }
   vec4 v4abs(vec4 z) { return vec4(abs(z.x), -abs(z.y), -abs(z.z), abs(z.w)); }
   vec4 v4conj(vec4 z) { return vec4(z.x, -z.y, -z.z, z.w); }
-  vec4 qpow_derv(vec4 z, float w) { return qpow(z, w - 1.0) * w; }
-  vec4 qpow_derv(vec4 z, vec4 w) { return qmul(qpow(z, w - vec4(1.0, 0.0, 0.0, 0.0)), w); }
 
   float biabs_sq(vec4 z) { return dot(z, z); }
   float biabs(vec4 z) { return length(z); }
@@ -635,7 +625,6 @@ let mathcode = `
   vec4 biinv(vec4 z) { vec2 len = bidabs_sq(z); vec2 invlen = conj(len) / dot(len, len); return vec4(cmul(z.xy, invlen), cmul(-z.zw, invlen)); }
   vec4 biadd(vec4 z, vec4 w) { return z + w; }
   vec4 bisub(vec4 z, vec4 w) { return z - w; }
-  //vec4 bimul(vec4 z, vec4 w) { return bifromid(cmul(bitoid_left(z), bitoid_left(w)), cmul(bitoid_right(z), bitoid_right(w))); }
   vec4 bimul(vec4 z, vec4 w) { return vec4(cmul(z.xy, w.xy) - cmul(z.zw, w.zw), cmul(z.xy, w.zw) + cmul(z.zw, w.xy)); }
   vec4 bimul(vec4 z, float w) { return z * w; }
   vec4 bimul(float z, vec4 w) { return z * w; }
@@ -643,7 +632,6 @@ let mathcode = `
   vec4 biexp(vec4 z) { vec2 r = cexp(z.xy); return vec4(cmul(r, ccos(z.zw)), cmul(r, csin(z.zw))); }
   vec4 bilog(vec4 z) { vec2 logz = clog(z.xy + cmul_i(z.zw)); vec2 logw = clog(z.xy - cmul_i(z.zw)); return vec4(0.5 * (logz + logw), -0.5 * cmul_i(logz - logw)); }
   vec4 biarg(vec4 z) { vec2 arg = bilog(z).zw; return vec4(0.0, 0.0, arg.x, arg.y); } // check it's correct?
-  //vec4 biarg1(vec4 z) { vec2 u = cmul_i(bidiv(z.zw, z.xy)); vec2 arg = cmul_i(clog(bidiv(vec2(1.0, 0.0) - u, vec2(1.0, 0.0) + u))) * 0.5; return vec4(0.0, 0.0, arg.x, arg.y); }
   vec4 bisin(vec4 z) { vec2 r1 = cexp(z.zw); vec2 r2 = cexp(-z.zw); return vec4(cmul(csin(z.xy), 0.5 * (r1 + r2)), cmul(ccos(z.xy), 0.5 * (r1 - r2))); }
   vec4 bicos(vec4 z) { vec2 r1 = cexp(z.zw); vec2 r2 = cexp(-z.zw); return vec4(cmul(ccos(z.xy), 0.5 * (r1 + r2)),-cmul(csin(z.xy), 0.5 * (r1 - r2))); }
   vec4 bisinh(vec4 z) { vec2 r1 = cexp(z.xy); vec2 r2 = cexp(-z.xy); return vec4(cmul(ccos(z.zw), 0.5 * (r1 - r2)), cmul(csin(z.zw), 0.5 * (r1 + r2))); }
