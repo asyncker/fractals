@@ -75,7 +75,7 @@
       <div class="var-btn btn" data-var="cn">n<small>newton</small></div>
       <div class="var-btn btn" data-var="bn">bn<small>bicomplex newton</small></div>
       <div class="var-btn btn" data-var="qn">qn<small>quaternion newton (beta)</small></div>
-      <!--<div class="var-btn btn" data-var="ly">ly<small>lyapunov</small></div>-->
+      <div class="var-btn btn" data-var="ly">ly<small>lyapunov</small></div>
       <!--<div class="var-btn btn" data-var="o">o<small>octanion</small></div>-->
       <!--<div class="var-btn btn" data-var="bq">o<small>biquaternion</small></div>-->
     </div>
@@ -1867,15 +1867,20 @@ function getfractal(formula, type, iteration) {
     }
   }
 
+  let isRender = true;
+
   function render(currentTimeMs) {
+    animFrameId = requestAnimationFrame(render);
+    const isAnyPress = Object.values(keysPressed).some(v => v);
     updateControls();
+    if (!isRender && !isAnyPress) return;
+    isRender = false;
     if (currentProgram) {
       gl.uniform1f(timeLocation, currentTimeMs * 0.001);
       gl.clearColor(0, 0, 0, 1);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
-    animFrameId = requestAnimationFrame(render);
   }
 
   function resize() {
@@ -1890,6 +1895,7 @@ function getfractal(formula, type, iteration) {
     if (resolutionLocation) {
       gl.uniform2f(resolutionLocation, w, h);
     }
+    isRender = true;
   }
 
   function toggleFullscreen() {
