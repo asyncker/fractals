@@ -36,3 +36,10 @@ vec4 bigamma_right(vec4 z) {
 }
 vec4 bigamma_left(vec4 z) { return PI * biinv(bimul(bisin(z * PI), bigamma_right(vec4(1.0, 0.0, 0.0, 0.0) - z))); }
 vec4 bigamma(vec4 z) { return z.x < 0.5 ? bigamma_left(z) : bigamma_right(z); }
+
+vec4 qsqrt(vec4 z) {
+  float norm = length(z); float vlen = length(z.yzw);
+  if (vlen < 1e-6) { return vec4(sqrt(max(0.0, z.x)), 0, 0, 0); }
+  float scale = sqrt(max(0.0, 0.5 * (norm - z.x))) / vlen;
+  return vec4(sqrt(max(0.0, 0.5 * (norm + z.x))), z.y * scale, z.z * scale, z.w * scale);
+}
