@@ -75,6 +75,7 @@
       <div class="var-btn btn" data-var="cn">n<small>newton</small></div>
       <div class="var-btn btn" data-var="bn">bn<small>bicomplex newton</small></div>
       <div class="var-btn btn" data-var="qn">qn<small>quaternion newton (beta)</small></div>
+      <!--<div class="var-btn btn" data-var="ly">ly<small>lyapunov</small></div>-->
       <!--<div class="var-btn btn" data-var="o">o<small>octanion</small></div>-->
       <!--<div class="var-btn btn" data-var="bq">o<small>biquaternion</small></div>-->
     </div>
@@ -874,20 +875,22 @@ return `void newton_calc() {
 } void main() { newton_calc(); }`;
 }
 
-let lyapunovshader = `void lyapunov_calc() {
+function lyapunovshadercode(formula, dervformula) {
+return `void lyapunov_calc() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * iResolution.xy) / iResolution.y;
   vec2 c = ismandel == 1 ? uv * zoommandel + vec2(cxval, cyval) : vec2(cxval, cyval);
   if (inverse != 0.0) { c = cinvmix(c, inverse); }
   vec2 z = ismandel == 1 ? c : uv * zoomjulia + vec2(zxval, zyval);
   const int maxiter = 180;
-  float lambda = 0.0, maxlambda = 120000.0, xn = 0.5, rx = 0.0, ri = 0.0, invn = 1.0 / float(maxiter);
-  int modval = 0, n0 = iteration / 10; //n0 > 1
+  float lambda = 0.0, maxlambda = 120000.0, xn = 0.5, rx = 0.0, ri = 0.0, invn = 1.0 / float(maxiter), derv = 0.0;
+  int modval = 0, n0 = iteration / 10;
   for (int i = 1; i < maxiter; i++) {
     modval = i - (i / 2) * 2;
-    if (modval == 1) { rx = z.x; } // re
-    else if (modval == 0) { rx = z.y; } // im
+    if (modval == 1) { rx = z.x; }
+    else if (modval == 0) { rx = z.y; }
     xn = logmap(rx, xn);
-    if (i >= n0) { lambda += log(abs(logmap_derv(rx, xn))) * invn; }
+    derv = logmap_derv(rx, xn);
+    if (i >= n0) { lambda += log(abs(derv)) * invn; }
     if (abs(lambda) > maxlambda || i - 2 == iteration) { break; }
   }
   if (lambda > 0.0) {
@@ -912,6 +915,7 @@ let lyapunovshader = `void lyapunov_calc() {
 }
 
 void main() { lyapunov_calc(); }`;
+}
 
 function raymarchingsharecode(func1, func2) {
   return `void mandel3d_calc() {
@@ -1397,6 +1401,10 @@ function getfractal(formula, type, iteration) {
     const df = convertformula("vec4 df_z = " + formulas[1], "q") + ";";
     const ddf = formulas[2] ? convertformula("vec4 ddf_z = " + formulas[2], "q") + ";" : "";
     return f4newtonshadercode(f, df, ddf, iteration, "q", "newton_quaternion");
+  }
+  else if (type == "ly") {
+    const formulas = getformula_and_derv(formula, "vec2");
+    return lyapunovshadercode(convertformula("z = " + formulas[0], "c") + ";", convertformula("derv = " + formulas[1], "c") + ";");
   }
   const formulas = getformula_and_derv(formula);
   return mandelbrotshadercode(convertformula("z = " + formulas[0], "c") + ";");
