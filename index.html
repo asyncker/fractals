@@ -27,7 +27,7 @@
     .panel-header { display:flex; align-items:center; justify-content:space-between; }
     .var-buttons { display:flex; gap:6px; flex-wrap:wrap; }
     .var-btn { flex:1 0 auto; min-width:52px; padding:7px 0; font-size:13px; }
-    .var-btn small { display:block; font-size:9px; opacity:.6; margin-top:1px; }
+    .var-btn small { display:block; font-size:9px; opacity:.6; }
     .var-btn.active small { opacity:.85; }
     .extra-btn { width:100%; padding:7px 0; font-size:12px; }
     .color-buttons { display:flex; gap:6px; flex-wrap:wrap; }
@@ -286,20 +286,16 @@ let mathcode = `
     mat4 prime32 = mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
     for (int col = 0; col < 4; col++) {
       for (int row = 0; row < 4; row++) {
-        float invn = 1.0 / float(prime16[row][col]);
+        float invn = 1.0 / prime16[row][col];
         result = cmul(result, cmul(vec2(1.0, 0.0) + z * invn, cexp(-z * invn)));
-      }
-    }
-    for (int col = 0; col < 4; col++) {
-      for (int row = 0; row < 4; row++) {
-        float invn = 1.0 / float(prime32[row][col]);
+        invn = 1.0 / prime32[row][col];
         result = cmul(result, cmul(vec2(1.0, 0.0) + z * invn, cexp(-z * invn)));
       }
     }
     return result;
   }
   vec2 cpgamma(vec2 z) { return cinv(cinvpgamma(z)); }
-  vec2 cbeta(vec2 z, vec2 w) { return cmul(cmul(cgamma(z), cgamma(w)), cinv(cgamma(z + w))); }
+  vec2 cdipgamma(vec2 z) { float eps = 1e-4; return -cdiv(cdiv(cinvpgamma(z + vec2(eps, 0.0)) - cinvpgamma(z - vec2(eps, 0.0)), vec2(2.0 * eps, 0.0)), cinvpgamma(z)); }
   vec2 cdigamma(vec2 z) { // zeta, gamma, digamma, high connect
     vec2 s = vec2(0.0, 0.0);
     for (int k = 0; k < 32; ++k) {
@@ -325,6 +321,7 @@ let mathcode = `
     result -= inv14 * (1.0 / 12.0);
     return result + s;
   }
+  vec2 cbeta(vec2 z, vec2 w) { return cmul(cmul(cgamma(z), cgamma(w)), cinv(cgamma(z + w))); }
 
   vec2 cgammaphi(vec2 z) { return cexp(cmul(z, vec2(-3.53102424697, 1.57079632679) + clog(vec2(1.0, 0.0) - 2.0 * z)) - 0.5 * clog(z) + vec2(1.4189385332, 0.0)); }
 
@@ -440,6 +437,7 @@ let mathcode = `
   vec2 clog_derv(vec2 z) { return cinv(z); }
   vec2 cinv_derv(vec2 z) { return -cinv(csq(z)); }
   vec2 cgamma_derv(vec2 z) { return cmul(cgamma(z), cdigamma(z)); }
+  vec2 cpgamma_derv(vec2 z) { return cmul(cpgamma(z), cdipgamma(z)); }
   vec2 czeta_derv(vec2 z) { vec2 dz = vec2(0.0, 0.001); return cmul(czeta(z + dz) - czeta(z - dz), cinv(2.0 * dz)); }
   vec2 ceta_derv(vec2 z) { vec2 dz = vec2(0.0, 0.001); return cmul(ceta(z + dz) - ceta(z - dz), cinv(2.0 * dz)); }
   vec2 cmul_i_derv(vec2 z) { return vec2(0.0, 1.0); }
@@ -518,12 +516,6 @@ let mathcode = `
   float qabs(vec4 z) { return length(z); }
   float qarg(vec4 z) { float qlen = length(z); if (qlen < 1e-8) return 0.0; return acos(clamp(z.x / qlen, -1.0, 1.0)); }
   vec4 qsq(vec4 z) { return vec4(z.x * z.x - z.y * z.y - z.z * z.z - z.w * z.w, 2.0 * z.x * z.yzw); }
-  /*vec4 qsqrt(vec4 z) {
-    float norm = length(z); float vlen = length(z.yzw);
-    if (vlen < 1e-6) { return vec4(sqrt(max(0.0, z.x)), 0, 0, 0); }
-    float scale = sqrt(max(0.0, 0.5 * (norm - z.x))) / vlen;
-    return vec4(sqrt(max(0.0, 0.5 * (norm + z.x))), z.y * scale, z.z * scale, z.w * scale);
-  }*/
   vec4 qneg(vec4 z) { return z * -1.0; }
   vec4 qconj(vec4 z) { return vec4(z.x, -z.yzw); }
   vec4 qinv(vec4 z) { return vec4(z.x, -z.yzw) / dot(z, z); }
@@ -661,6 +653,7 @@ let mathcode = `
   vec4 bisop(vec4 z, vec4 w) { return bidiv(z, biconj(w)); }
   vec4 bimul_i(vec4 z) { return bifromid(cmul_i(bitoid_left(z)), cmul_i(bitoid_right(z))); }
   vec4 bigamma(vec4 z) { return bifromid(cgamma(bitoid_left(z)), cgamma(bitoid_right(z))); }
+  vec4 bipgamma(vec4 z) { return bifromid(cpgamma(bitoid_left(z)), cpgamma(bitoid_right(z))); }
   vec4 bidigamma(vec4 z) { return bifromid(cdigamma(bitoid_left(z)), cdigamma(bitoid_right(z))); }
   vec4 bigammasi(vec4 z) { return bifromid(cgammasi(bitoid_left(z)), cgammasi(bitoid_right(z))); }
   vec4 bieta(vec4 z) { return bifromid(ceta(bitoid_left(z)), ceta(bitoid_right(z))); }
@@ -676,6 +669,7 @@ let mathcode = `
   vec4 bipow_derv(vec4 z, float w) { return bipow(z, w - 1.0) * w; }
   vec4 bipow_derv(vec4 z, vec4 w) { return bimul(bipow(z, w - vec4(1.0, 0.0, 0.0, 0.0)), w); }
   vec4 bigamma_derv(vec4 z) { return bifromid(cgamma_derv(bitoid_left(z)), cgamma_derv(bitoid_right(z))); }
+  vec4 bipgamma_derv(vec4 z) { return bifromid(cpgamma_derv(bitoid_left(z)), cpgamma_derv(bitoid_right(z))); }
   vec4 bizeta_derv(vec4 z) { return bifromid(czeta_derv(bitoid_left(z)), czeta_derv(bitoid_right(z))); }
   vec4 bieta_derv(vec4 z) { return bifromid(ceta_derv(bitoid_left(z)), ceta_derv(bitoid_right(z))); }
   vec4 biwp_derv(vec4 z, vec4 w) { return bifromid(cwp_derv(bitoid_left(z), bitoid_left(w)), cwp_derv(bitoid_right(z), bitoid_right(w))); }
@@ -719,7 +713,7 @@ let mathcode = `
   vec4 tceil(vec4 z) { return ceil(z); }
   vec4 tround(vec4 z) { return floor(z + 0.5); }
   vec4 tstep(vec4 z) { return vec4(step(0.0, z.x), 0.0, 0.0, 0.0); }
-  vec4 tclamp(vec4 z, vec4 w, vec4 s) { return vec4(clamp(z.x, w.x, s.y), clamp(z.y, w.y, s.y), clamp(z.z, w.z, s.z), clamp(z.w, w.w, s.w)); }
+  vec4 tclamp(vec4 z, vec4 w, vec4 s) { return vec4(clamp(z.x, w.x, s.x), clamp(z.y, w.y, s.y), clamp(z.z, w.z, s.z), clamp(z.w, w.w, s.w)); }
   
   float length8(mat4 z) { return sqrt(dot(z[0], z[0]) + dot(z[1], z[1])); }
   mat4 v8abs(mat4 z) { return mat4(v4abs(z[0]), vec4(0.0), vec4(0.0), vec4(0.0)); }
@@ -1056,8 +1050,8 @@ function f4newtonshadercode(f_code = "", df_code = "", ddf_code = "", iteration 
 }
 
 function getDerivative(f, v = 'z') {
-  const F = ["add","sub","mul","div","pow","root","neg","mul_i","inv","log","exp","gamma","zeta","eta","beta","sinh","cosh","tanh","coth","sin","cos","tan","cot","tau","gammasi","fib","sn","cn","dn","wp","abs","arg","conj","sign","floor","ceil","round","max","min","relumax","relumin","step","clamp","sq","sqrt","dot","sop"];
-  const D = ["gamma","zeta","eta","beta","tau","gammasi","fib","sn","cn","dn","wp","mul_i"];
+  const F = ["add","sub","mul","div","pow","root","neg","mul_i","inv","log","exp","gamma","zeta","eta","pgamma","beta","sinh","cosh","tanh","coth","sin","cos","tan","cot","tau","gammasi","fib","sn","cn","dn","wp","abs","arg","conj","sign","floor","ceil","round","max","min","relumax","relumin","step","clamp","sq","sqrt","dot","sop"];
+  const D = ["gamma","zeta","eta","pgamma","beta","tau","gammasi","fib","sn","cn","dn","wp","mul_i"];
   const T = f.match(/\d+(?:\.\d+)?|[a-zA-Z_]\w*|[()+\-/*^,]/g) || [];
   let p = 0;
   const pk = () => T[p];
@@ -1245,7 +1239,6 @@ function convertformulatowebgl(f, vecf = "vec2") {
   const Z_POW = { '0': '1', '1': 'z', '2': 'sq(z)', '3': 'mul(z, sq(z))', '4': 'mul(sq(z), sq(z))', '(-1)': 'inv(z)', '(-2)': 'inv(sq(z))', '(-3)': 'inv(mul(sq(z), z))' };
   f = f.replace(/pow\s*\(\s*z\s*,\s*(-?\d+)\s*\)/g, (m, n) => Z_POW[n] ?? m).replace(/\bz\s*\^\s*(-?\d+)/g, (m, n) => Z_POW[n] ?? m);
   f = f.replace(/\/\s*(\d+(?:\.\d+)?)/g, (m, d) => `* ${1 / d}`);
-
   const T = f.match(/\d+(?:\.\d+)?|[a-zA-Z_]\w*|[()+\-/*^,]/g) || [];
   let p = 0;
   const pk = () => T[p], nx = () => T[p++];
@@ -1375,8 +1368,8 @@ function getformula_and_derv(formula, vecf) {
 
 function getfractal(formula, type, iteration) {
   function convertformula(formula, addtag = "c") {
-    const functionlist = ["add", "sub", "mul", "div", "pow", "root", "neg", "mul_i", "inv", "log", "exp", "gamma", "zeta", "eta", "beta", "sinh", "cosh", "tanh", "coth", "sin", "cos", "tan", "cot", "tau", "gammasi", "fib", "sn", "cn", "dn", "wp", "abs", "arg", "conj", "sign", "floor", "ceil", "round", "max", "min", "relumax", "relumin", "step", "clamp", "sq", "sqrt", "dot", "sop",
-     "gamma_derv", "zeta_derv", "eta_derv", "beta_derv", "tau_derv", "gammasi_derv", "fib_derv", "sn_derv", "cn_derv", "dn_derv", "wp_derv", "mul_i_derv" ];
+    const functionlist = ["add", "sub", "mul", "div", "pow", "root", "neg", "mul_i", "inv", "log", "exp", "gamma", "zeta", "eta", "pgamma", "beta", "sinh", "cosh", "tanh", "coth", "sin", "cos", "tan", "cot", "tau", "gammasi", "fib", "sn", "cn", "dn", "wp", "abs", "arg", "conj", "sign", "floor", "ceil", "round", "max", "min", "relumax", "relumin", "step", "clamp", "sq", "sqrt", "dot", "sop",
+     "gamma_derv", "zeta_derv", "eta_derv", "pgamma_derv", "beta_derv", "tau_derv", "gammasi_derv", "fib_derv", "sn_derv", "cn_derv", "dn_derv", "wp_derv", "mul_i_derv" ];
     let newFormula = formula;
     for (let i = 0; i < functionlist.length; i++) {
       const func = functionlist[i];
@@ -1607,7 +1600,7 @@ function getfractal(formula, type, iteration) {
     return (currentVar === 'cn' || currentVar === 'bn' || currentVar === 'qn') ? f.replace(/\+\s*c\s*$/i, '- 1') : f;
   }
 
-  for (let i = 0; i < 24; i++) {
+  for (let i = 0; i < presetFormulas.length; i++) {
     const btn = document.createElement('div');
     btn.className = 'preset-btn btn';
     btn.textContent = presetFormulas[i];
