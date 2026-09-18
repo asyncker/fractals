@@ -43,3 +43,18 @@ vec4 qsqrt(vec4 z) {
   float scale = sqrt(max(0.0, 0.5 * (norm - z.x))) / vlen;
   return vec4(sqrt(max(0.0, 0.5 * (norm + z.x))), z.y * scale, z.z * scale, z.w * scale);
 }
+
+vec2 cinvpgamma(vec2 z) { // it's simple formula i use this
+    vec2 result = cmul(z, cexp(EULER_GAMMA * z));
+    mat4 prime16 = mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
+    mat4 prime32 = mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
+    for (int col = 0; col < 4; col++) {
+      for (int row = 0; row < 4; row++) {
+        float invn = 1.0 / float(prime16[row][col]);
+        result = cmul(result, cmul(vec2(1.0, 0.0) + z * invn, cexp(-z * invn)));
+        invn = 1.0 / float(prime32[row][col]);
+        result = cmul(result, cmul(vec2(1.0, 0.0) + z * invn, cexp(-z * invn)));
+      }
+    }
+    return result;
+  }
