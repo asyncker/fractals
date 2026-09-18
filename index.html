@@ -668,23 +668,6 @@ let mathcode = `
   vec4 bifib(vec4 z) { return (bipow(vec4(1.61803398875, 0.0, 0.0, 0.0), z) - bipow(vec4(-0.61803398875, 0.0, 0.0, 0.0), z)) * 0.4472135955; }
   vec4 bitau(vec4 z, vec4 w) { return vec4(1.0, 0.0, 0.0, 0.0) - bipow(z, vec4(0.5, 0.0, 0.0, 0.0) - w); }
   vec4 bitau_derv(vec4 z, vec4 w) { return bimul(bipow(z, vec4(0.5, 0.0, 0.0, 0.0) - w), bilog(z)); }
-  vec4 bigamma_right(vec4 z) {
-    vec4 w = z - vec4(1.0, 0.0, 0.0, 0.0);
-    vec4 t = w + vec4(7.5, 0.0, 0.0, 0.0);
-    vec4 x = vec4(0.99999999999980993, 0.0, 0.0, 0.0);
-    x += 676.5203681218851 * biinv(w + vec4(1.0, 0.0, 0.0, 0.0));
-    x -= 1259.1392167224028 * biinv(w + vec4(2.0, 0.0, 0.0, 0.0));
-    x += 771.32342877765313 * biinv(w + vec4(3.0, 0.0, 0.0, 0.0));
-    x -= 176.61502916214059 * biinv(w + vec4(4.0, 0.0, 0.0, 0.0));
-    x += 12.507343278686905 * biinv(w + vec4(5.0, 0.0, 0.0, 0.0));
-    x -= 0.13857109526572012 * biinv(w + vec4(6.0, 0.0, 0.0, 0.0));
-    x += 9.9843695780195716e-6 * biinv(w + vec4(7.0, 0.0, 0.0, 0.0));
-    x += 1.5056327351493116e-7 * biinv(w + vec4(8.0, 0.0, 0.0, 0.0));
-    vec4 logterm = bimul(bilog(t), w + vec4(0.5, 0.0, 0.0, 0.0)) - t;
-    return 2.50662827463 * bimul(x, biexp(logterm));
-  }
-  vec4 bigamma_left(vec4 z) { return PI * biinv(bimul(bisin(z * PI), bigamma_right(vec4(1.0, 0.0, 0.0, 0.0) - z))); }
-  vec4 bigamma1(vec4 z) { return z.x < 0.5 ? bigamma_left(z) : bigamma_right(z); }
   vec4 bisqrt(vec4 z) { return bifromid(csqrt(bitoid_left(z)), csqrt(bitoid_right(z))); }
   vec4 bidot(vec4 z, vec4 w) { return bimul(z, biconj(w)); }
   vec4 bisop(vec4 z, vec4 w) { return bidiv(z, biconj(w)); }
@@ -1271,7 +1254,6 @@ function getDerivative(f, v = 'z') {
 }
 
 function convertformulatowebgl(f, vecf = "vec2") {
-  // test add:
   const Z_POW = { '0': '1', '1': 'z', '2': 'sq(z)', '3': 'mul(z, sq(z))', '4': 'mul(sq(z), sq(z))', '(-1)': 'inv(z)', '(-2)': 'inv(sq(z))', '(-3)': 'inv(mul(sq(z), z))' };
   f = f.replace(/pow\s*\(\s*z\s*,\s*(-?\d+)\s*\)/g, (m, n) => Z_POW[n] ?? m).replace(/\bz\s*\^\s*(-?\d+)/g, (m, n) => Z_POW[n] ?? m);
   f = f.replace(/\/\s*(\d+(?:\.\d+)?)/g, (m, d) => `* ${1 / d}`);
@@ -1296,11 +1278,17 @@ function convertformulatowebgl(f, vecf = "vec2") {
   };
 
   let ast = pE();
-  
   const fmt = (v) => {
     let n = parseFloat(v);
     if (Number.isInteger(n)) return n.toFixed(1);
     return String(n);
+  };
+
+  const num = (v, ctx) => {
+    if (ctx === 'mul' || ctx === 'div') return fmt(v);
+    if (vecf == "mat4") return `mat4(vec4(${fmt(v)}, 0.0, 0.0, 0.0), vec4(0.0), vec4(0.0), vec4(0.0))`;
+    if (vecf == "vec4") return `vec4(${fmt(v)}, 0.0, 0.0, 0.0)`;
+    return `vec2(${fmt(v)}, 0.0)`;
   };
 
   const glslFuncs = {
@@ -1308,8 +1296,8 @@ function convertformulatowebgl(f, vecf = "vec2") {
     'sqrt': 'sqrt', 'abs': 'abs', 'pow': 'pow',
     'sinh': 'sinh', 'cosh': 'cosh', 'tanh': 'tanh',
     'inv': 'inv', 'neg': 'neg',
-    'sq': (args) => `mul(${args[0]}, ${args[0]})`, 
-    'cot': (args) => `inv(tan(${args[0]}))`, 
+    'sq': (args) => `mul(${args[0]}, ${args[0]})`,
+    'cot': (args) => `inv(tan(${args[0]}))`,
     'coth': (args) => `inv(tanh(${args[0]}))`
   };
 
@@ -1317,29 +1305,42 @@ function convertformulatowebgl(f, vecf = "vec2") {
     return node.t === 'n' || (node.t === 'u' && node.c.t === 'n');
   };
 
+  const constVal = (node) => {
+    if (node.t === 'n') return node.v;
+    if (node.t === 'u' && node.c.t === 'n') return -node.c.v;
+    return null;
+  };
+
   const str = (n, pr = 0, ctx = 'top') => {
     if (n.t === 'v') return n.n;
-    if (n.t === 'n') {
-      if (ctx === 'mul' || ctx === 'div') return fmt(n.v);
-      if (vecf == "mat4") { return `mat4(vec4(${fmt(n.v)}, 0.0, 0.0, 0.0), vec4(0.0), vec4(0.0), vec4(0.0))`; }
-      if (vecf == "vec4") { return `vec4(${fmt(n.v)}, 0.0, 0.0, 0.0)`; }
-      if (vecf == "vec3") { return `vec3(${fmt(n.v)}, 0.0, 0.0)`; }
-      if (vecf == "vec1") { return `${fmt(n.v)}`; }
-      return `vec2(${fmt(n.v)}, 0.0)`;
-    }
+    if (n.t === 'n') return num(n.v, ctx);
     if (n.t === 'u') {
       if ((ctx === 'mul' || ctx === 'div') && n.c.t === 'n') {
         return `-${fmt(n.c.v)}`;
       }
-      return `-${str(n.c, 3, ctx)}`; 
+      return `-${str(n.c, 3, ctx)}`;
     }
     if (n.t === 'f') {
+      if (n.n === 'pow' && n.a.length === 2 && isScalarConst(n.a[0]) && isScalarConst(n.a[1])) {
+        const b = constVal(n.a[0]), e = constVal(n.a[1]);
+        const v = Math.pow(b, e);
+        if (Number.isFinite(v)) return num(v, ctx);
+      }
       let args = n.a.map(x => str(x, 0, 'func'));
       if (typeof glslFuncs[n.n] === 'function') return glslFuncs[n.n](args);
       return `${glslFuncs[n.n] || n.n}(${args.join(', ')})`;
     }
     if (n.t === 'b') {
       const { o, l, r } = n;
+      if (isScalarConst(l) && isScalarConst(r)) {
+        const lv = constVal(l), rv = constVal(r);
+        let v = null;
+        if (o === '+') v = lv + rv;
+        else if (o === '-') v = lv - rv;
+        else if (o === '*') v = lv * rv;
+        else if (o === '/') v = rv !== 0 ? lv / rv : null;
+        if (v !== null && Number.isFinite(v)) return num(v, ctx);
+      }
       if (o === '*' || o === '/') {
         const lIsConst = isScalarConst(l);
         const rIsConst = isScalarConst(r);
@@ -1366,8 +1367,11 @@ function convertformulatowebgl(f, vecf = "vec2") {
     return vecf + '(0.0)';
   };
   if (ast.t === 'b' && (ast.o === '*' || ast.o === '/') && isScalarConst(ast.l) && isScalarConst(ast.r)) {
-    const e = `${str(ast.l, 2, 'mul')} ${ast.o} ${str(ast.r, 2, 'mul')}`;
-    return `${vecf}(${e}, ${vecf === 'vec2' ? '0.0' : vecf === 'vec4' ? '0.0, 0.0, 0.0' : 'vec4(0.0), vec4(0.0), vec4(0.0)'})`;
+    const lv = constVal(ast.l), rv = constVal(ast.r);
+    const v = ast.o === '*' ? lv * rv : (rv !== 0 ? lv / rv : null);
+    if (v !== null && Number.isFinite(v)) {
+      return vecf === 'vec2' ? `vec2(${fmt(v)}, 0.0)` : vecf === 'vec4' ? `vec4(${fmt(v)}, 0.0, 0.0, 0.0)` : `mat4(vec4(${fmt(v)}, 0.0, 0.0, 0.0), vec4(0.0), vec4(0.0), vec4(0.0))`;
+    }
   }
   return str(ast);
 }
@@ -1608,7 +1612,7 @@ function getfractal(formula, type, iteration) {
     '(w+1)^z + c',
     '1 / (1 - z^w) + c',
     '1 / (2^z - 1) + c',
-    'zeta(z^w) / c'
+    '1 - gamma(0.5 - z/2) / gamma(z/2) + c'
   ];
 
   function getFormulaForCurrentVar(f) {
