@@ -1271,6 +1271,11 @@ function getDerivative(f, v = 'z') {
 }
 
 function convertformulatowebgl(f, vecf = "vec2") {
+  // test add:
+  const Z_POW = { '0': '1', '1': 'z', '2': 'sq(z)', '3': 'mul(z, sq(z))', '4': 'mul(sq(z), sq(z))', '(-1)': 'inv(z)', '(-2)': 'inv(sq(z))', '(-3)': 'inv(mul(sq(z), z))' };
+  f = f.replace(/pow\s*\(\s*z\s*,\s*(-?\d+)\s*\)/g, (m, n) => Z_POW[n] ?? m).replace(/\bz\s*\^\s*(-?\d+)/g, (m, n) => Z_POW[n] ?? m);
+  f = f.replace(/\/\s*(\d+(?:\.\d+)?)/g, (m, d) => `* ${1 / d}`);
+
   const T = f.match(/\d+(?:\.\d+)?|[a-zA-Z_]\w*|[()+\-/*^,]/g) || [];
   let p = 0;
   const pk = () => T[p], nx = () => T[p++];
@@ -1360,6 +1365,10 @@ function convertformulatowebgl(f, vecf = "vec2") {
     }
     return vecf + '(0.0)';
   };
+  if (ast.t === 'b' && (ast.o === '*' || ast.o === '/') && isScalarConst(ast.l) && isScalarConst(ast.r)) {
+    const e = `${str(ast.l, 2, 'mul')} ${ast.o} ${str(ast.r, 2, 'mul')}`;
+    return `${vecf}(${e}, ${vecf === 'vec2' ? '0.0' : vecf === 'vec4' ? '0.0, 0.0, 0.0' : 'vec4(0.0), vec4(0.0), vec4(0.0)'})`;
+  }
   return str(ast);
 }
 
@@ -1598,14 +1607,15 @@ function getfractal(formula, type, iteration) {
     '1 - (1+w)^(0.5-z) + c',
     '(w+1)^z + c',
     '1 / (1 - z^w) + c',
-    '1 / (2^z - 1) + c'
+    '1 / (2^z - 1) + c',
+    'zeta(z^w) / c'
   ];
 
   function getFormulaForCurrentVar(f) {
     return (currentVar === 'cn' || currentVar === 'bn' || currentVar === 'qn') ? f.replace(/\+\s*c\s*$/i, '- 1') : f;
   }
 
-  for (let i = 0; i < 23; i++) {
+  for (let i = 0; i < 24; i++) {
     const btn = document.createElement('div');
     btn.className = 'preset-btn btn';
     btn.textContent = presetFormulas[i];
