@@ -17,3 +17,22 @@ vec2 czeta2(vec2 z) { return cmul(czeta_derv(z), cinv(czeta(z))); }
 
 vec4 bimul(vec4 z, vec4 w) { return bifromid(cmul(bitoid_left(z), bitoid_left(w)), cmul(bitoid_right(z), bitoid_right(w))); }
 vec4 biarg_test(vec4 z) { vec2 u = cmul_i(bidiv(z.zw, z.xy)); vec2 arg = cmul_i(clog(bidiv(vec2(1.0, 0.0) - u, vec2(1.0, 0.0) + u))) * 0.5; return vec4(0.0, 0.0, arg.x, arg.y); }
+
+//bicomplex gamma
+vec4 bigamma_right(vec4 z) {
+  vec4 w = z - vec4(1.0, 0.0, 0.0, 0.0);
+  vec4 t = w + vec4(7.5, 0.0, 0.0, 0.0);
+  vec4 x = vec4(0.99999999999980993, 0.0, 0.0, 0.0);
+  x += 676.5203681218851 * biinv(w + vec4(1.0, 0.0, 0.0, 0.0));
+  x -= 1259.1392167224028 * biinv(w + vec4(2.0, 0.0, 0.0, 0.0));
+  x += 771.32342877765313 * biinv(w + vec4(3.0, 0.0, 0.0, 0.0));
+  x -= 176.61502916214059 * biinv(w + vec4(4.0, 0.0, 0.0, 0.0));
+  x += 12.507343278686905 * biinv(w + vec4(5.0, 0.0, 0.0, 0.0));
+  x -= 0.13857109526572012 * biinv(w + vec4(6.0, 0.0, 0.0, 0.0));
+  x += 9.9843695780195716e-6 * biinv(w + vec4(7.0, 0.0, 0.0, 0.0));
+  x += 1.5056327351493116e-7 * biinv(w + vec4(8.0, 0.0, 0.0, 0.0));
+  vec4 logterm = bimul(bilog(t), w + vec4(0.5, 0.0, 0.0, 0.0)) - t;
+  return 2.50662827463 * bimul(x, biexp(logterm));
+}
+vec4 bigamma_left(vec4 z) { return PI * biinv(bimul(bisin(z * PI), bigamma_right(vec4(1.0, 0.0, 0.0, 0.0) - z))); }
+vec4 bigamma(vec4 z) { return z.x < 0.5 ? bigamma_left(z) : bigamma_right(z); }
