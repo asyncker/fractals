@@ -1864,6 +1864,7 @@ function getfractal(formula, type, iteration) {
       gl.uniform1f(logvalLocation, power > 2.0 ? 1.0 / Math.log(Math.abs(power)) : 1.44269504088896);
       gl.uniform1f(rangeLocation, rangecalc);
       gl.uniform1i(colorschemeindexLocation, colorschemeindex);
+      isRender = true;
     }
   }
 
