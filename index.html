@@ -1599,10 +1599,6 @@ function getfractal(formula, type, iteration) {
     '1 - gamma(0.5 - z/2) / gamma(z/2) + c'
   ];
 
-  function getFormulaForCurrentVar(f) {
-    return (currentVar === 'cn' || currentVar === 'bn' || currentVar === 'qn') ? f.replace(/\+\s*c\s*$/i, '- 1') : f;
-  }
-
   for (let i = 0; i < presetFormulas.length; i++) {
     const btn = document.createElement('div');
     btn.className = 'preset-btn btn';
@@ -1610,7 +1606,8 @@ function getfractal(formula, type, iteration) {
     btn.title = presetFormulas[i];
     btn.dataset.formula = presetFormulas[i];
     btn.addEventListener('click', () => {
-      formulaInput.value = getFormulaForCurrentVar(btn.dataset.formula);
+      const f = btn.dataset.formula;
+      formulaInput.value = (currentVar === 'cn' || currentVar === 'bn' || currentVar === 'qn') ? f.replace(/\+\s*c\s*$/i, '- 1') : f;
       fsFormulaInput.value = formulaInput.value;
       document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
@@ -1772,10 +1769,7 @@ function getfractal(formula, type, iteration) {
   }
 
   function stopRecording() {
-    if (mediaRecorder && isRecording) {
-      mediaRecorder.stop();
-      isRecording = false;
-    }
+    if (mediaRecorder && isRecording) { mediaRecorder.stop(); isRecording = false; }
   }
 
   function codeEditor() {
@@ -1811,8 +1805,8 @@ function getfractal(formula, type, iteration) {
     if (keysPressed['q']) { if (ismandel) { zoomMandel *= 1.0 + zoomSpeed; } else { zoomJulia *= 1.0 + zoomSpeed; } keypress = true; }
     if (keysPressed['r'] && currentTime - lastChangeTime > 200) { power = Math.floor(power + 1); lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['t'] && currentTime - lastChangeTime > 200) { power = Math.ceil(power - 1); lastChangeTime = currentTime; keypress = true; }
-    if (keysPressed['v'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 27 ? 0 : fractalindex + 1; lastChangeTime = currentTime; keypress = true; }
-    if (keysPressed['c'] && currentTime - lastChangeTime > 200) { fractalindex = fractalindex == 0 ? 27 : fractalindex - 1; lastChangeTime = currentTime; keypress = true; }
+    if (keysPressed['v'] && currentTime - lastChangeTime > 200) { fractalindex = (fractalindex + 1) % presetFormulas.length; lastChangeTime = currentTime; formulaInput.value = presetFormulas[fractalindex]; fsFormulaInput.value = formulaInput.value; lastChangeTime = currentTime; keypress = true; applyFormula(); }
+    if (keysPressed['c'] && currentTime - lastChangeTime > 200) { fractalindex = (fractalindex - 1) % presetFormulas.length; lastChangeTime = currentTime; formulaInput.value = presetFormulas[fractalindex]; fsFormulaInput.value = formulaInput.value; lastChangeTime = currentTime; keypress = true; applyFormula(); }
     if (keysPressed['u'] && currentTime - lastChangeTime > 200) { ismandel = ismandel == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['f'] && currentTime - lastChangeTime > 800) { inverse = inverse == 1.0 ? 0.0 : 1.0; lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['x']) { range *= 2.0; keypress = true; rangeInput.value = range; }
