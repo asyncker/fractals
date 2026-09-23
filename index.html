@@ -256,24 +256,36 @@ let mathcode = `
   vec2 clogn(vec2 z, vec2 w) { return cdiv(clog(z), clog(w)); }
   vec2 cfib(vec2 z) { return (cpow(vec2(1.61803398875, 0.0), z) - cpow(vec2(-0.61803398875, 0.0), z)) * 0.4472135955; }
   vec2 clanczos(vec2 z) {
-    vec2 w = z - vec2(1.0, 0.0);
     vec2 x = vec2(0.99999999999980993, 0.0);
-    x += 676.5203681218851 * cinv(w + vec2(1.0, 0.0));
-    x -= 1259.1392167224028 * cinv(w + vec2(2.0, 0.0));
-    x += 771.32342877765313 * cinv(w + vec2(3.0, 0.0));
-    x -= 176.61502916214059 * cinv(w + vec2(4.0, 0.0));
-    x += 12.507343278686905 * cinv(w + vec2(5.0, 0.0));
-    x -= 0.13857109526572012 * cinv(w + vec2(6.0, 0.0));
-    x += 9.9843695780195716e-6 * cinv(w + vec2(7.0, 0.0));
-    x += 1.5056327351493116e-7 * cinv(w + vec2(8.0, 0.0));
+    x += 676.5203681218851 * cinv(z);
+    x -= 1259.1392167224028 * cinv(z + vec2(1.0, 0.0));
+    x += 771.32342877765313 * cinv(z + vec2(2.0, 0.0));
+    x -= 176.61502916214059 * cinv(z + vec2(3.0, 0.0));
+    x += 12.507343278686905 * cinv(z + vec2(4.0, 0.0));
+    x -= 0.13857109526572012 * cinv(z + vec2(5.0, 0.0));
+    x += 9.9843695780195716e-6 * cinv(z + vec2(6.0, 0.0));
+    x += 1.5056327351493116e-7 * cinv(z + vec2(7.0, 0.0));
     return x;
   }
-  vec2 cgamma_right(vec2 z) {
-    vec2 t = z + vec2(6.5, 0.0);
-    return 2.50662827463 * cmul(clanczos(z), cexp(cmul(clog(t), z - vec2(0.5, 0.0)) - t));
-  }
+  vec2 cgamma_right(vec2 z) { vec2 t = z + vec2(6.5, 0.0); return 2.50662827463 * cmul(clanczos(z), cexp(cmul(clog(t), z - vec2(0.5, 0.0)) - t)); }
   vec2 cgamma_left(vec2 z) { return PI * cinv(cmul(csin(z * PI), cgamma_right(vec2(1.0, 0.0) - z))); }
   vec2 cgamma(vec2 z) { return z.x < 0.5 ? cgamma_left(z) : cgamma_right(z); }
+  vec2 cgammat_right(vec2 z) {
+    vec2 t = z + vec2(6.5, 0.0);
+    vec2 Q = cmul(z - vec2(0.5, 0.0), clog(t)) - t - (z - vec2(1.0, 0.0)) * 0.6931471805599453;
+    vec2 i_pi_z_2 = 1.5707963267948966 * vec2(-z.y, z.x);
+    return 1.4142135623730951 * cinv(cmul(clanczos(z), cexp(Q + i_pi_z_2) + cexp(Q - i_pi_z_2)));
+  }
+  vec2 cgammat_left(vec2 z) {
+    vec2 u = vec2(1.0, 0.0) - z;
+    vec2 t = u + vec2(6.5, 0.0);
+    vec2 P = (cmul(u - vec2(0.5, 0.0), clog(t)) - t) + z * 0.6931471805599453;
+    vec2 i_pi_z_2 = 1.5707963267948966 * vec2(-z.y, z.x);
+    return cmul(clanczos(u), -cmul_i(cexp(P + i_pi_z_2) - cexp(P - i_pi_z_2))) * 0.7071067811865475;
+  }
+  vec2 cgammat(vec2 z) { return z.x >= 0.5 ? cgammat_right(z) : cgammat_left(z); }
+  vec2 chi(vec2 z) { return cmul(cgammat(z), cexp(1.14472988585 * (vec2(-0.5, 0.0) + z))); }
+
   vec2 cinvgamma(vec2 z) {
     vec2 result = cmul(z, cexp(EULER_GAMMA * z));
     for (int n = 1; n <= 32; n++) {
@@ -283,23 +295,6 @@ let mathcode = `
     return result;
   }
 
-  vec2 cgammat_right(vec2 z) {
-    vec2 t = z + vec2(6.5, 0.0);
-    vec2 Q = cmul(z - vec2(0.5, 0.0), clog(t)) - t - (z - vec2(1.0, 0.0)) * 0.6931471805599453;
-    vec2 i_pi_z_2 = 1.5707963267948966 * vec2(-z.y, z.x);
-    return 1.4142135623730951 * cinv(cmul(clanczos(z), cexp(Q + i_pi_z_2) + cexp(Q - i_pi_z_2)));
-  }
-
-  vec2 cgammat_left(vec2 z) {
-    vec2 u = vec2(1.0, 0.0) - z;
-    vec2 t = u + vec2(6.5, 0.0);
-    vec2 P = (cmul(u - vec2(0.5, 0.0), clog(t)) - t) + z * 0.6931471805599453;
-    vec2 i_pi_z_2 = 1.5707963267948966 * vec2(-z.y, z.x);
-    return cmul(clanczos(u), -cmul_i(cexp(P + i_pi_z_2) - cexp(P - i_pi_z_2))) * 0.7071067811865475;
-  }
-
-  vec2 cgammat(vec2 z) { return z.x >= 0.5 ? cgammat_right(z) : cgammat_left(z); } // gamma(0.5 - z/2) / gamma(z/2) | gamma(t * 2v - z * v) / gamma(z * v)
-  
   vec2 cinvpgamma(vec2 z) { // calc with log
     vec2 result = cmul(z, cexp(EULER_GAMMA * z));
     mat4 prime16 = mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
@@ -341,6 +336,7 @@ let mathcode = `
     result -= inv14 * (1.0 / 12.0);
     return result + s;
   }
+  vec2 chi_derv(vec2 z) { return cmul(chi(z), vec2(1.1447298858494002, 0.0) - 0.5 * (cdigamma(0.5 * z) + cdigamma(0.5 * (vec2(1.0, 0.0) - z)))); }
   vec2 cbeta(vec2 z, vec2 w) { return cmul(cmul(cgamma(z), cgamma(w)), cinv(cgamma(z + w))); }
 
   vec2 cgammaphi(vec2 z) { return cexp(cmul(z, vec2(-3.53102424697, 1.57079632679) + clog(vec2(1.0, 0.0) - 2.0 * z)) - 0.5 * clog(z) + vec2(1.4189385332, 0.0)); }
@@ -431,7 +427,7 @@ let mathcode = `
   }
 
   vec2 czeta(vec2 z) { return cmul(ceta(z), cinv(vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z))); }
-  vec2 chi(vec2 z) {
+  vec2 cxi(vec2 z) {
     vec2 zhalf = 0.5 * z;
     return cmul(cmul(cmul(zhalf, z - vec2(1.0, 0.0)), cexp(-1.14472988585 * zhalf)), cmul(cgamma(zhalf), czeta(z)));
   }
@@ -678,6 +674,7 @@ let mathcode = `
   vec4 bipgamma(vec4 z) { return bifromid(cpgamma(bitoid_left(z)), cpgamma(bitoid_right(z))); }
   vec4 bidigamma(vec4 z) { return bifromid(cdigamma(bitoid_left(z)), cdigamma(bitoid_right(z))); }
   vec4 bigammasi(vec4 z) { return bifromid(cgammasi(bitoid_left(z)), cgammasi(bitoid_right(z))); }
+  vec4 bihi(vec4 z) { return bifromid(chi(bitoid_left(z)), chi(bitoid_right(z))); }
   vec4 bieta(vec4 z) { return bifromid(ceta(bitoid_left(z)), ceta(bitoid_right(z))); }
   vec4 bizeta(vec4 z) { return bifromid(czeta(bitoid_left(z)), czeta(bitoid_right(z))); }
   vec4 bibeta(vec4 z, vec4 w) { return bifromid(cbeta(bitoid_left(z), bitoid_left(w)), cbeta(bitoid_right(z), bitoid_right(w))); }
@@ -692,8 +689,9 @@ let mathcode = `
   vec4 bipow_derv(vec4 z, vec4 w) { return bimul(bipow(z, w - vec4(1.0, 0.0, 0.0, 0.0)), w); }
   vec4 bigamma_derv(vec4 z) { return bifromid(cgamma_derv(bitoid_left(z)), cgamma_derv(bitoid_right(z))); }
   vec4 bipgamma_derv(vec4 z) { return bifromid(cpgamma_derv(bitoid_left(z)), cpgamma_derv(bitoid_right(z))); }
-  vec4 bizeta_derv(vec4 z) { return bifromid(czeta_derv(bitoid_left(z)), czeta_derv(bitoid_right(z))); }
+  vec4 bihi_derv(vec4 z) { return bifromid(chi_derv(bitoid_left(z)), chi_derv(bitoid_right(z))); }
   vec4 bieta_derv(vec4 z) { return bifromid(ceta_derv(bitoid_left(z)), ceta_derv(bitoid_right(z))); }
+  vec4 bizeta_derv(vec4 z) { return bifromid(czeta_derv(bitoid_left(z)), czeta_derv(bitoid_right(z))); }
   vec4 biwp_derv(vec4 z, vec4 w) { return bifromid(cwp_derv(bitoid_left(z), bitoid_left(w)), cwp_derv(bitoid_right(z), bitoid_right(w))); }
   vec4 bimul_i_derv(vec4 z) { return bifromid(cmul_i_derv(bitoid_left(z)), cmul_i_derv(bitoid_right(z))); }
 
@@ -1073,8 +1071,8 @@ function f4newtonshadercode(f_code = "", df_code = "", ddf_code = "", iteration 
 }
 
 function getDerivative(f, v = 'z') {
-  const F = ["add","sub","mul","div","pow","root","neg","mul_i","inv","log","exp","gamma","zeta","eta","pgamma","beta","sinh","cosh","tanh","coth","sin","cos","tan","cot","tau","gammasi","fib","sn","cn","dn","wp","abs","arg","conj","sign","floor","ceil","round","max","min","relumax","relumin","step","clamp","sq","sqrt","dot","sop"];
-  const D = ["gamma","zeta","eta","pgamma","beta","tau","gammasi","fib","sn","cn","dn","wp","mul_i"];
+  const F = ["add","sub","mul","div","pow","root","neg","mul_i","inv","log","exp","gamma","hi","zeta","eta","pgamma","beta","sinh","cosh","tanh","coth","sin","cos","tan","cot","tau","gammasi","fib","sn","cn","dn","wp","abs","arg","conj","sign","floor","ceil","round","max","min","relumax","relumin","step","clamp","sq","sqrt","dot","sop"];
+  const D = ["gamma","hi","zeta","eta","pgamma","beta","tau","gammasi","fib","sn","cn","dn","wp","mul_i"];
   const T = f.match(/\d+(?:\.\d+)?|[a-zA-Z_]\w*|[()+\-/*^,]/g) || [];
   let p = 0;
   const pk = () => T[p];
@@ -1391,8 +1389,8 @@ function getformula_and_derv(formula, vecf) {
 
 function getfractal(formula, type, iteration) {
   function convertformula(formula, addtag = "c") {
-    const functionlist = ["add", "sub", "mul", "div", "pow", "root", "neg", "mul_i", "inv", "log", "exp", "gamma", "zeta", "eta", "pgamma", "beta", "sinh", "cosh", "tanh", "coth", "sin", "cos", "tan", "cot", "tau", "gammasi", "fib", "sn", "cn", "dn", "wp", "abs", "arg", "conj", "sign", "floor", "ceil", "round", "max", "min", "relumax", "relumin", "step", "clamp", "sq", "sqrt", "dot", "sop",
-     "gamma_derv", "zeta_derv", "eta_derv", "pgamma_derv", "beta_derv", "tau_derv", "gammasi_derv", "fib_derv", "sn_derv", "cn_derv", "dn_derv", "wp_derv", "mul_i_derv" ];
+    const functionlist = ["add", "sub", "mul", "div", "pow", "root", "neg", "mul_i", "inv", "log", "exp", "gamma", "hi", "zeta", "eta", "pgamma", "beta", "sinh", "cosh", "tanh", "coth", "sin", "cos", "tan", "cot", "tau", "gammasi", "fib", "sn", "cn", "dn", "wp", "abs", "arg", "conj", "sign", "floor", "ceil", "round", "max", "min", "relumax", "relumin", "step", "clamp", "sq", "sqrt", "dot", "sop",
+     "gamma_derv", "hi_derv", "zeta_derv", "eta_derv", "pgamma_derv", "beta_derv", "tau_derv", "gammasi_derv", "fib_derv", "sn_derv", "cn_derv", "dn_derv", "wp_derv", "mul_i_derv" ];
     let newFormula = formula;
     for (let i = 0; i < functionlist.length; i++) {
       const func = functionlist[i];
@@ -1619,7 +1617,8 @@ function getfractal(formula, type, iteration) {
     '(w+1)^z + c',
     '1 / (1 - z^w) + c',
     '1 / (2^z - 1) + c',
-    '1 - gamma(0.5 - z/2) / gamma(z/2) + c'
+    '1 - hi(z) + c',
+    // zeta(mul_i(z)) - cmul_i(15/32) + c
   ];
 
   for (let i = 0; i < presetFormulas.length; i++) {
