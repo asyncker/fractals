@@ -14,6 +14,7 @@ vec2 cgamma_div_digamma(vec2 z) { return cmul(cgamma(z), cinv(cdigamma(z))); }
 vec2 cdigamma_div_gamma(vec2 z) { return cmul(cdigamma(z), cinv(cgamma(z))); }
 vec2 czeta1(vec2 z) { return cmul(czeta(z), cinv(czeta_derv(z))); }
 vec2 czeta2(vec2 z) { return cmul(czeta_derv(z), cinv(czeta(z))); }
+vec2 czeta_left(vec2 z) { return cmul(cpow(vec2(2.0 * PI, 0.0), z - vec2(1.0, 0.0)) * 2.0, cmul(csin(z * PI * 0.5), cgamma(vec2(1.0, 0.0) - z))); }
 
 vec4 bimul(vec4 z, vec4 w) { return bifromid(cmul(bitoid_left(z), bitoid_left(w)), cmul(bitoid_right(z), bitoid_right(w))); }
 vec4 biarg_test(vec4 z) { vec2 u = cmul_i(bidiv(z.zw, z.xy)); vec2 arg = cmul_i(clog(bidiv(vec2(1.0, 0.0) - u, vec2(1.0, 0.0) + u))) * 0.5; return vec4(0.0, 0.0, arg.x, arg.y); }
