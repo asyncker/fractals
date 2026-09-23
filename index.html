@@ -99,7 +99,7 @@
     <div class="formula-presets" id="preset-container"></div>
     <h2>FORMULA CHANGE</h2>
     <div class="btn-row">
-      <div class="extra-btn btn" id="conj-btn">conj(z) OFF</div>
+      <div class="extra-btn btn" id="conj-btn">z̄ OFF</div>
       <div class="extra-btn btn" id="minus-btn">1 - z OFF</div>
       <div class="extra-btn btn" id="inverse-btn">1 / c OFF</div>
       <div class="extra-btn btn" id="mandelbox-btn" title="insert formula in 3d: z * -2 + c (with 90 iteration)">mandelbox OFF</div>
@@ -255,9 +255,8 @@ let mathcode = `
   vec2 carccos(vec2 z) { return vec2(0.5 * PI, 0.0) - carcsin(z); }
   vec2 clogn(vec2 z, vec2 w) { return cdiv(clog(z), clog(w)); }
   vec2 cfib(vec2 z) { return (cpow(vec2(1.61803398875, 0.0), z) - cpow(vec2(-0.61803398875, 0.0), z)) * 0.4472135955; }
-  vec2 cgamma_right(vec2 z) {
+  vec2 clanczos(vec2 z) {
     vec2 w = z - vec2(1.0, 0.0);
-    vec2 t = w + vec2(7.5, 0.0);
     vec2 x = vec2(0.99999999999980993, 0.0);
     x += 676.5203681218851 * cinv(w + vec2(1.0, 0.0));
     x -= 1259.1392167224028 * cinv(w + vec2(2.0, 0.0));
@@ -267,7 +266,11 @@ let mathcode = `
     x -= 0.13857109526572012 * cinv(w + vec2(6.0, 0.0));
     x += 9.9843695780195716e-6 * cinv(w + vec2(7.0, 0.0));
     x += 1.5056327351493116e-7 * cinv(w + vec2(8.0, 0.0));
-    return 2.50662827463 * cmul(x, cexp(cmul(clog(t), w + vec2(0.5, 0.0)) - t));
+    return x;
+  }
+  vec2 cgamma_right(vec2 z) {
+    vec2 t = z + vec2(6.5, 0.0);
+    return 2.50662827463 * cmul(clanczos(z), cexp(cmul(clog(t), z - vec2(0.5, 0.0)) - t));
   }
   vec2 cgamma_left(vec2 z) { return PI * cinv(cmul(csin(z * PI), cgamma_right(vec2(1.0, 0.0) - z))); }
   vec2 cgamma(vec2 z) { return z.x < 0.5 ? cgamma_left(z) : cgamma_right(z); }
@@ -279,6 +282,24 @@ let mathcode = `
     }
     return result;
   }
+
+  vec2 cgammat_right(vec2 z) {
+    vec2 t = z + vec2(6.5, 0.0);
+    vec2 Q = cmul(z - vec2(0.5, 0.0), clog(t)) - t - (z - vec2(1.0, 0.0)) * 0.6931471805599453;
+    vec2 i_pi_z_2 = 1.5707963267948966 * vec2(-z.y, z.x);
+    return 1.4142135623730951 * cinv(cmul(clanczos(z), cexp(Q + i_pi_z_2) + cexp(Q - i_pi_z_2)));
+  }
+
+  vec2 cgammat_left(vec2 z) {
+    vec2 u = vec2(1.0, 0.0) - z;
+    vec2 t = u + vec2(6.5, 0.0);
+    vec2 P = (cmul(u - vec2(0.5, 0.0), clog(t)) - t) + z * 0.6931471805599453;
+    vec2 i_pi_z_2 = 1.5707963267948966 * vec2(-z.y, z.x);
+    return cmul(clanczos(u), -cmul_i(cexp(P + i_pi_z_2) - cexp(P - i_pi_z_2))) * 0.7071067811865475;
+  }
+
+  vec2 cgammat(vec2 z) { return z.x >= 0.5 ? cgammat_right(z) : cgammat_left(z); } // gamma(0.5 - z/2) / gamma(z/2) | gamma(t * 2v - z * v) / gamma(z * v)
+  
   vec2 cinvpgamma(vec2 z) { // calc with log
     vec2 result = cmul(z, cexp(EULER_GAMMA * z));
     mat4 prime16 = mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
@@ -323,8 +344,6 @@ let mathcode = `
   vec2 cbeta(vec2 z, vec2 w) { return cmul(cmul(cgamma(z), cgamma(w)), cinv(cgamma(z + w))); }
 
   vec2 cgammaphi(vec2 z) { return cexp(cmul(z, vec2(-3.53102424697, 1.57079632679) + clog(vec2(1.0, 0.0) - 2.0 * z)) - 0.5 * clog(z) + vec2(1.4189385332, 0.0)); }
-
-  vec2 czeta_left(vec2 z) { return cmul(cpow(vec2(2.0 * PI, 0.0), z - vec2(1.0, 0.0)) * 2.0, cmul(csin(z * PI * 0.5), cgamma(vec2(1.0, 0.0) - z))); }
 
   vec4 czeta_helper_4(vec2 z, mat4 bases, mat4 ns) {
     mat4 phases = z.y * bases;
@@ -412,6 +431,10 @@ let mathcode = `
   }
 
   vec2 czeta(vec2 z) { return cmul(ceta(z), cinv(vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z))); }
+  vec2 chi(vec2 z) {
+    vec2 zhalf = 0.5 * z;
+    return cmul(cmul(cmul(zhalf, z - vec2(1.0, 0.0)), cexp(-1.14472988585 * zhalf)), cmul(cgamma(zhalf), czeta(z)));
+  }
   vec2 cgammasi(vec2 z) { float t = 1.0; return vec2(1.0, 0.0) - cdiv(cgamma((vec2(1.0, 0.0) - z) * t), cgamma(z * t)); }
   vec2 cgammapsi(vec2 z) { return vec2(1.0, 0.0) - cdiv(cpgamma(vec2(1.0, 0.0) - z), cpgamma(z)); }
   vec2 czsinh(vec2 z, vec2 t) { return (czeta(z + t) - czeta(t - z)) * 0.5; }
@@ -1523,7 +1546,7 @@ function getfractal(formula, type, iteration) {
   conjBtn.addEventListener('click', () => {
     isconj = isconj ? 0 : 1;
     conjBtn.classList.toggle('active', isconj === 1);
-    conjBtn.textContent = 'conj(z) ' + (isconj ? 'ON' : 'OFF');
+    conjBtn.textContent = 'z̄ ' + (isconj ? 'ON' : 'OFF');
     updateControls(true);
   });
 
@@ -1715,7 +1738,7 @@ function getfractal(formula, type, iteration) {
   let zoomJulia = 3.0;
   let zwval = 0.0;
   let power = 1.0;
-  let range = 40.0; // 300.0
+  let range = 40.0; // 300.0 | 20480.0
   let inverse = 0.0;
   let lastChangeTime = 0;
   let ismandel = 1;
