@@ -24,6 +24,9 @@
     #formula-input.error { border-color:#f14c4c; box-shadow:0 0 0 2px rgba(241,76,76,.25); }
     #formula-status { font-size:11px; min-height:14px; color:#6a9955; transition:color .15s; }
     #formula-status.error { color:#f14c4c; }
+    #formula-panel::-webkit-scrollbar { width: 3px; }
+    #formula-panel::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
+    #formula-panel::-webkit-scrollbar-track { background: transparent; }
     .panel-header { display:flex; align-items:center; justify-content:space-between; }
     .var-buttons { display:flex; gap:6px; flex-wrap:wrap; }
     .var-btn { flex:1 0 auto; min-width:52px; padding:7px 0; font-size:13px; }
@@ -44,10 +47,10 @@
     .power-row .extra-btn { flex:1 0 0; min-width:38px; padding:6px 2px; font-size:11px; }
     #graph { flex:1; position:relative; background:#fff; min-width:0; }
     #canvas { width:100%; height:100%; cursor:crosshair; display:block; }
-    body.fullscreen-mode #formula-panel { display:none; }
-    body.fullscreen-mode #graph { flex:1; }
     #graph:fullscreen { width:100vw; height:100vh; }
     #fs-ui { display:none; position:absolute; bottom:14px; left:14px; z-index:10; width:240px; flex-direction:column; gap:8px; }
+    body.fullscreen-mode #formula-panel { display:none; }
+    body.fullscreen-mode #graph { flex:1; }
     body.fullscreen-mode #fs-ui { display:flex; }
     #fs-formula-input { width:100%; background:rgba(30,30,30,.55); color:#e6e6e6; border:1px solid rgba(47,47,47,.35); border-radius:8px; padding:8px 12px; font-family:inherit; }
     #fs-formula-input::placeholder { color:rgba(212,212,212,.4); font-style:italic; }
@@ -114,7 +117,7 @@
     <div class="hint">
       <b>WASD</b> — move. | QE</b> — zoom | 0</b> — record video<br>
       <b>RT</b> — +1/-1 w | H</b> — reset<br>
-      <b>XR</b> — +1/-1 r | Arrow</b> — rotate 3d
+      <b>CX</b> — +1/-1 r | Arrow</b> — rotate 3d
     </div>
   </div>
 
@@ -719,7 +722,13 @@ let mathcode = `
   vec4 tmul(vec4 z, vec4 w) { return texp(tlog(z) + tlog(w)); }
   vec4 tdiv(vec4 z, vec4 w) { return texp(tlog(z) - tlog(w)); }
   vec4 tpow(vec4 z, float w) { if (w == 1.0) { return z; } else if (w == 2.0) { return tsq(z); } return texp(w * tlog(z)); }
-  vec4 tpow(vec4 z, vec4 w) { return tpow(z, w.x); }
+  vec4 tpow(vec4 z, vec4 w) { 
+    if (z.y == 0.0 && z.z == 0.0 && z.w == 0.0) {
+      if (z.x > 0.0) { return texp(log(z.x) * w); }
+      else { return texp(tmul(vec4(log(abs(z.x)), atan(0.0, z.x), 0.0, 0.0), w)); }
+    }
+    return tpow(z, w.x);
+  }
   vec4 troot(vec4 z, float w) { return tpow(z, 1.0 / w); }
   vec4 tsqrt(vec4 z) { return texp(0.5 * tlog(z)); }
   vec4 ttanh(vec4 z) { return tdiv(tsinh(z), tcosh(z)); }
@@ -1258,6 +1267,9 @@ function getDerivative(f, v = 'z') {
 
 function convertformulatowebgl(f, vecf = "vec2") {
   const Z_POW = { '0': '1', '1': 'z', '2': 'sq(z)', '3': 'mul(z, sq(z))', '4': 'mul(sq(z), sq(z))', '(-1)': 'inv(z)', '(-2)': 'inv(sq(z))', '(-3)': 'inv(mul(sq(z), z))' };
+  const CONSTANTS = { 'pi': Math.PI, 'e': Math.E, 'phi': 1.61803398875 };
+  f = f.replace(/\b(pi|e|phi)\b/g, (m, name) => { const val = CONSTANTS[name]; return val !== undefined ? String(val) : m; });
+  f = f.replace(/\/\s*(\d+(?:\.\d+)?)/g, (m, d) => `* ${1 / d}`);
   f = f.replace(/pow\s*\(\s*z\s*,\s*(-?\d+)\s*\)/g, (m, n) => Z_POW[n] ?? m).replace(/\bz\s*\^\s*(-?\d+)/g, (m, n) => Z_POW[n] ?? m);
   f = f.replace(/\/\s*(\d+(?:\.\d+)?)/g, (m, d) => `* ${1 / d}`);
   const T = f.match(/\d+(?:\.\d+)?|[a-zA-Z_]\w*|[()+\-/*^,]/g) || [];
@@ -1828,11 +1840,11 @@ function getfractal(formula, type, iteration) {
     if (keysPressed['r'] && currentTime - lastChangeTime > 200) { power = Math.floor(power + 1); lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['t'] && currentTime - lastChangeTime > 200) { power = Math.ceil(power - 1); lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['v'] && currentTime - lastChangeTime > 200) { fractalindex = (fractalindex + 1) % presetFormulas.length; lastChangeTime = currentTime; formulaInput.value = presetFormulas[fractalindex]; fsFormulaInput.value = formulaInput.value; lastChangeTime = currentTime; keypress = true; applyFormula(); }
-    if (keysPressed['c'] && currentTime - lastChangeTime > 200) { fractalindex = (fractalindex - 1) % presetFormulas.length; lastChangeTime = currentTime; formulaInput.value = presetFormulas[fractalindex]; fsFormulaInput.value = formulaInput.value; lastChangeTime = currentTime; keypress = true; applyFormula(); }
+    if (keysPressed['b'] && currentTime - lastChangeTime > 200) { fractalindex = (fractalindex - 1 + presetFormulas.length) % presetFormulas.length; lastChangeTime = currentTime; formulaInput.value = presetFormulas[fractalindex]; fsFormulaInput.value = formulaInput.value; lastChangeTime = currentTime; keypress = true; applyFormula(); }
     if (keysPressed['u'] && currentTime - lastChangeTime > 200) { ismandel = ismandel == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['f'] && currentTime - lastChangeTime > 800) { inverse = inverse == 1.0 ? 0.0 : 1.0; lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['x']) { range *= 2.0; keypress = true; rangeInput.value = range; }
-    if (keysPressed['z']) { range *= 1.0 / 1.125; keypress = true; rangeInput.value = range; }
+    if (keysPressed['c']) { range *= 1.0 / 1.125; keypress = true; rangeInput.value = range; }
     if (keysPressed['2'] && currentTime - lastChangeTime > 200) { zoomSpeed = zoomSpeed / 2.0; rotationSpeed = rotationSpeed / 2.0; movespeedx = movespeedx / 2.0; movespeedy = movespeedy / 2.0; lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['3'] && currentTime - lastChangeTime > 200) { zoomSpeed = zoomSpeed * 2.0; rotationSpeed = rotationSpeed * 2.0; movespeedx = movespeedx * 2.0; movespeedy = movespeedy * 2.0; lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['0'] && currentTime - lastChangeTime > 500) { if (isRecording) { stopRecording(); } else { startRecording(); } lastChangeTime = currentTime; keypress = true; }
@@ -1852,7 +1864,7 @@ function getfractal(formula, type, iteration) {
     if (keysPressed['arrowdown']) { rotx += rotationSpeed * 0.1; keypress = true; }
     if (keysPressed['arrowleft']) { rotz += rotationSpeed * 0.1; keypress = true; }
     if (keysPressed['arrowright']) { rotz -= rotationSpeed * 0.1; keypress = true; }
-    if (keysPressed['b']) { colorschemeindex += 1; colorschemeindex = colorschemeindex == 4 ? 0 : colorschemeindex; keypress = true; }
+    if (keysPressed['n'] && currentTime - lastChangeTime > 200) { colorschemeindex += 1; colorschemeindex = colorschemeindex == 4 ? 0 : colorschemeindex; lastChangeTime = currentTime; keypress = true; }
     if ((keypress || keyinit) && currentProgram) {
       let rangecalc = range;
       if (power < 0) { rangecalc = range * 8.0; }
