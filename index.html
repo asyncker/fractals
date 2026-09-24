@@ -1631,6 +1631,7 @@ function getfractal(formula, type, iteration) {
     '1 / (2^z - 1) + c',
     '1 - hi(z) + c',
     // zeta(mul_i(z)) - cmul_i(15/32) + c
+    // zeta(z^w) * zeta(1-z^w) + c
   ];
 
   for (let i = 0; i < presetFormulas.length; i++) {
