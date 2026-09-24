@@ -1,3 +1,4 @@
+float tanh(float x) { float ex = exp(x); return (ex - 1.0 / ex) / (ex + 1.0 / ex); }
 vec2 csin_slow(vec2 z) { return vec2(sin(z.x) * cosh(z.y), cos(z.x) * sinh(z.y)); }
 vec2 ccos_slow(vec2 z) { return vec2(cos(z.x) * cosh(z.y), -sin(z.x) * sinh(z.y)); }
 vec2 csinw(vec2 z, vec2 w) { return cpow(csin(z), w); }
