@@ -1655,7 +1655,7 @@ function getfractal(formula, type, iteration) {
     'cosh(z^w) + c',
     'tanh(z^w) + c',
     'tan(z^w) + c',
-    'cos(z^w) + c',
+    /*'cos(z^w) + c',*/
     'sin(z^w) + c',
     'gamma(z^w) + c',
     'zeta(z^w) + c',
@@ -1672,11 +1672,12 @@ function getfractal(formula, type, iteration) {
     '(w+1)^z + c',
     '1 / (1 - z^w) + c',
     '1 / (2^z - 1) + c',
-    '1 - hi(z) + c',
+    '1 - hi(z^w) + c',
     //'zeta(mul_i(z)) - cmul_i(15/32) + c',
     'zeta(z^w) * zeta(1-z^w) + c',
     'serp(z)^w',
-    'kox(z)^w'
+    'kox(z)^w',
+    'pgamma(z^w) - 1.38629436112 + c'
   ];
 
   for (let i = 0; i < presetFormulas.length; i++) {
