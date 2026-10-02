@@ -166,6 +166,7 @@
 let mathcode = `
   #define PI 3.14159265359
   #define EULER_GAMMA 0.5772156649015329
+  #define isabs 0
 
   float sinh(float x) { float ex = exp(x); return (ex - 1.0 / ex) * 0.5; }
   float cosh(float x) { float ex = exp(x); return (ex + 1.0 / ex) * 0.5; }
@@ -843,6 +844,7 @@ return `void mandelbrot_calc() {
     znorm = dot(z, z);
     if (znorm > range) { n = i; break; }
     if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); }
+    if (isabs == 1) { z = cpow(csq(z), vec2(0.5, 0.0)); }
     if (isconj == 1) { z.x = z.x; z.y = -z.y; }
     if (isminusone == 1) { z = vec2(1.0, 0.0) - z; }
     if (ismandelbox == 1) {
@@ -904,6 +906,7 @@ return `void newton_calc() {
   for (int i = 0; i < iter; i++) {
     z_prev = z;
     if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); }
+    if (isabs == 1) { z = csqrt(csq(z)); }
     if (isconj == 1) { z.x = z.x; z.y = -z.y; }
     if (isminusone == 1) { z = vec2(1.0, 0.0) - z; }
     if (ismandelbox == 1) {
@@ -1660,6 +1663,8 @@ function getfractal(formula, type, iteration) {
     'gamma(z^w) + c',
     'zeta(z^w) + c',
     'zeta((z^(2 * w))^(0.5)) - 1.38629436112 + c',
+    'zeta((z^(-2))^(0.5)) + 1/w', // zeta((z^(-2))^(0.5)) + log(1/w)
+    // 'zeta((z^(-w))^(1/w))',
     'sn(z^w, z^w) + c',
     'cn(z^w, z^w) + c',
     'dn(z^w, z^w) + c',
@@ -1676,7 +1681,7 @@ function getfractal(formula, type, iteration) {
     //'zeta(mul_i(z)) - cmul_i(15/32) + c',
     'zeta(z^w) * zeta(1-z^w) + c',
     'serp(z)^w',
-    'kox(z)^w',
+    //'kox(z)^w',
     'pgamma(z^w) - 1.38629436112 + c'
   ];
 
