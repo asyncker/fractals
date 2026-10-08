@@ -60,13 +60,17 @@
     .fs-var-btn small { display:block; font-size:9px; opacity:.6; margin-top:1px; }
     .fs-var-btn.active { background:rgba(14,99,156,.85); color:#fff; }
     .fs-var-btn.active small { opacity:.85; }
+    #share-btn { width: 26px; height: 26px; font-size: 8px; line-height: 1; display: flex; align-items: center; justify-content: center; position: relative; }
   </style>
 </head>
 <body>
   <div id="formula-panel">
     <div class="panel-header">
       <h2>FORMULA</h2>
-      <div id="fullscreen-btn" class="btn" onclick="toggleFullscreen();" title="Fullscreen (ESC - escape)">⛶</div>
+      <div style="display:flex; gap:0;">
+        <div id="share-btn" class="btn" onclick="shareSave();" title="Copy share link" style="margin-right:-1px; border-top-right-radius:0; border-bottom-right-radius:0;">🔗</div>
+        <div id="fullscreen-btn" class="btn" onclick="toggleFullscreen();" title="Fullscreen (ESC - escape)" style="border-top-left-radius:0; border-bottom-left-radius:0;">⛶</div>
+      </div>
     </div>
     <input id="formula-input" type="text" spellcheck="false" value="z^(2 * w) + c" />
     <div id="formula-status"></div>
@@ -2064,6 +2068,52 @@ function getfractal(formula, type, iteration, isseq = false) {
     isRender = true;
   }
 
+  function shareSave() {
+    try {
+      const d = {v:currentVar,i:iterInput.value,r:rangeInput.value,cs:colorschemeindex,p:power,b:isburning,cj:isconj,mn:isminusone,iv:inverse,mb:ismandelbox,im:ismandel,ml:multlight,cx:cxval,cy:cyval,zm:zoomMandel,zx:zxval,zy:zyval,zj:zoomJulia,cw:cwval,zw:zwval,rx:rotx,rz:rotz,sq:seqInput.value,f:formulaInput.value};
+      const base = location.href.split(/[?#]/)[0];
+      const params = new URLSearchParams();
+      for (const key in d) {
+        const value = d[key];
+        if (value !== undefined && value !== null && value !== '') {
+          params.set(key, value);
+        }
+      }
+      const url = base + '?' + params.toString();
+      navigator.clipboard.writeText(url);
+    } catch(e) { }
+  }
+
+  function shareLoad() {
+    try {
+      const p = new URLSearchParams(location.search);
+      if (!p.toString()) return;
+      if (p.has('f')) { formulaInput.value = p.get('f'); fsFormulaInput.value = p.get('f'); }
+      if (p.has('v')) setActiveVar(p.get('v'));
+      if (p.has('i')) iterInput.value = p.get('i');
+      if (p.has('r')) { range = +p.get('r') || range; rangeInput.value = range; }
+      if (p.has('cs')) { colorschemeindex = +p.get('cs') || 0; colorButtons.forEach(b => b.classList.toggle('active', +b.dataset.color === colorschemeindex)); }
+      if (p.has('p')) { power = +p.get('p') || 1; powerRow.querySelectorAll('.extra-btn').forEach(b => b.classList.toggle('active', +b.dataset.power === power)); }
+      if (p.has('b'))  { isburning   = +p.get('b')  ? 1 : 0; burningBtn.classList.toggle('active', !!isburning); burningBtn.textContent = '|Re(z)| + |Im(z)| * i ' + (isburning ? 'ON' : 'OFF'); }
+      if (p.has('cj')) { isconj      = +p.get('cj') ? 1 : 0; conjBtn.classList.toggle('active', !!isconj); conjBtn.textContent = 'z̄ ' + (isconj ? 'ON' : 'OFF'); }
+      if (p.has('mn')) { isminusone  = +p.get('mn') ? 1 : 0; minusBtn.classList.toggle('active', !!isminusone); minusBtn.textContent = '1 - z ' + (isminusone ? 'ON' : 'OFF'); }
+      if (p.has('iv')) { inverse     = +p.get('iv') ? 1 : 0; inverseBtn.classList.toggle('active', !!inverse); inverseBtn.textContent = '1 / c ' + (inverse ? 'ON' : 'OFF'); }
+      if (p.has('mb')) { ismandelbox = +p.get('mb') ? 1 : 0; mandelboxBtn.classList.toggle('active', !!ismandelbox); mandelboxBtn.textContent = 'mandelbox ' + (ismandelbox ? 'ON' : 'OFF'); }
+      if (p.has('im')) { ismandel    = +p.get('im') ? 1 : 0; juliaBtn.classList.toggle('active', !ismandel); }
+      ['ml','cx','cy','zm','zx','zy','zj','cw','zw','rx','rz'].forEach(k => {
+        if (p.has(k)) {
+          const v = +p.get(k);
+          ({ml:()=>multlight=v, cx:()=>cxval=v, cy:()=>cyval=v, zm:()=>zoomMandel=v, zx:()=>zxval=v, zy:()=>zyval=v, zj:()=>zoomJulia=v, cw:()=>cwval=v, zw:()=>zwval=v, rx:()=>rotx=v, rz:()=>rotz=v})[k]();
+        }
+      });
+      if (p.has('sq')) {
+        seqInput.value = p.get('sq');
+        isseq = seqInput.value !== '';
+        if (isseq) updateSequenceTexture(seqInput.value.replace(/ /g, '').split(',').map(x => x === '' ? 0 : parseInt(x) || 0));
+      }
+    } catch (e) { console.warn('shareLoad:', e); }
+  }
+
   function toggleFullscreen() {
     const isFs = document.body.classList.contains('fullscreen-mode');
     const fsEl = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
@@ -2093,6 +2143,7 @@ function getfractal(formula, type, iteration, isseq = false) {
       requestAnimationFrame(() => { resize(); requestAnimationFrame(resize); });
     }
   });
+  shareLoad();
   setActiveVar(currentVar);
   fsFormulaInput.value = formulaInput.value;
   applyFormula();
