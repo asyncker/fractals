@@ -1179,9 +1179,10 @@ function count(arr) {
   return result;
 }
 
+function seqRand(n, minn = 0, maxn = 6) { const seq = []; for (let i = 0; i < n; i++) { seq.push(Math.floor(Math.random() * (maxn - minn + 1)) + minn); } return seq; }
 function seqPrimes(n) { const seq = [0]; let i = 2; while (seq.length < n) { let isPrime = true; for (let j = 2; j * j <= i; j++) { if (i % j === 0) { isPrime = false; break; } } if (isPrime) { seq.push(i); } i++; } return seq; }
-function seqNaturals(n) { const seq = [0]; for (let i = 1; i < n; i++) { seq.push(i); } return seq; }
 function seqSquares(n) { const seq = [0]; for (let i = 1; i < n; i++) { seq.push(i * i); } return seq; }
+function seqNaturals(n) { const seq = [0]; for (let i = 1; i < n; i++) { seq.push(i); } return seq; }
 function seqFibonacci(n) { const seq = [0, 1]; for (let i = 2; i < n; i++) { seq.push(seq[i-1] + seq[i-2]); } return seq; } // n=47 max for int
 
 function getDerivative(f, v = 'z') {
