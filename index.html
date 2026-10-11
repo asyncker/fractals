@@ -1648,14 +1648,12 @@ function getfractal(formula, type, iteration, isseq = false) {
   });
 
   iterInput.addEventListener('change', () => {
-    iteration = Math.max(1, Math.min(2000, parseInt(iterInput.value, 10) || 24));
-    iterInput.value = iteration;
+    iteration = parseInt(iterInput.value, 10) || 24;
     applyFormula();
   });
 
   rangeInput.addEventListener('change', () => {
-    range = Math.max(1, Math.min(100000, parseFloat(rangeInput.value) || 300));
-    rangeInput.value = range;
+    range = parseFloat(rangeInput.value) || 24;
     updateControls(true);
   });
 
