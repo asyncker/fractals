@@ -1734,6 +1734,7 @@ function getfractal(formula, type, iteration, isseq = false) {
     'cn(z^w, z^w) + c',
     'dn(z^w, z^w) + c',
     'wp(z^w, mul_i(1)) + c',
+    // 1 / (z^2 - z - 1) || 1 / (1 - z - z^2) || z / (z^2 - z - 1) || z / (1 - z - z^2)
     'zeta(z^w)*zeta(-z^w) + c',
     '((7 * z^w + 2) - exp(z^w) * (5 * z^w + 2)) * 0.25 + c',
     '((7 * z^w + 2) - exp(mul_i(z^w * PI)) * (5 * z^w + 2)) * 0.25 + c',
