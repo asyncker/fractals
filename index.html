@@ -62,13 +62,12 @@
     .fs-var-btn.active small { opacity:.85; }
     #share-btn { width: 26px; height: 26px; font-size: 8px; line-height: 1; display: flex; align-items: center; justify-content: center; position: relative; }
     @media (max-width: 768px) {
-      body { flex-direction: column; overflow: hidden; }
+      body { display:flex; height:100vh; overflow:hidden; }
       #formula-panel { position: fixed; left: 0; right: 0; bottom: 0; width: 100%; min-width: 0; max-height: 55vh; border-right: none; border-top: 2px solid #333; border-radius: 14px 14px 0 0; padding: 10px 14px 18px; gap: 10px; z-index: 100; box-shadow: 0 -6px 24px rgba(0,0,0,.5); transition: transform .25s ease, max-height .25s ease; overflow-y: auto; -webkit-overflow-scrolling: touch; }
       #formula-panel.collapsed { transform: translateY(calc(100% - 36px)); max-height: 36px; overflow: hidden; }
       #formula-panel .panel-header { position: sticky; top: 0; background: #252526; z-index: 2; padding-bottom: 4px; }
       #formula-panel .panel-header h2 { font-size: 13px; }
       #graph { position: absolute; top: 0; left: 0; right: 0; bottom: 55vh; min-height: 40vh; transition: bottom .25s ease; }
-      #formula-panel.collapsed ~ #graph { bottom: 36px; }
       .btn { min-height: 38px; font-size: 13px; border-radius: 6px; }
       .var-btn { min-width: 60px; padding: 9px 0; font-size: 14px; }
       .var-btn small { font-size: 10px; }
