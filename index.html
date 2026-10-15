@@ -521,8 +521,8 @@ let mathcode = `
   vec2 invert_tau(vec2 z) {
     vec2 rt_k = csqrt(csqrt(vec2(1.0, 0.0) - csq(z)));
     vec2 ell = 0.5 * cdiv(vec2(1.0, 0.0) - rt_k, vec2(1.0, 0.0) + rt_k);
-    vec2 log_l = clog(ell);
-    vec2 q = ell + 2.0 * cexp(5.0 * log_l) + 15.0 * cexp(9.0 * log_l);
+    vec2 logl = clog(ell);
+    vec2 q = ell + 2.0 * cexp(5.0 * logl) + 15.0 * cexp(9.0 * logl);
     return -cmul_i(clog(q)) / PI;
   }
   vec2 theta3(vec2 z, vec2 w) {
@@ -1378,6 +1378,7 @@ function convertformulatowebgl(f, vecf = "vec2") {
   f = f.replace(/\/\s*(\d+(?:\.\d+)?)/g, (m, d) => `* ${1 / d}`);
   f = f.replace(/pow\s*\(\s*z\s*,\s*(-?\d+)\s*\)/g, (m, n) => Z_POW[n] ?? m).replace(/\bz\s*\^\s*(-?\d+)/g, (m, n) => Z_POW[n] ?? m);
   f = f.replace(/\/\s*(\d+(?:\.\d+)?)/g, (m, d) => `* ${1 / d}`);
+  f = f.replace(/\bln\s*\(/g, 'log(');
   const T = f.match(/\d+(?:\.\d+)?|[a-zA-Z_]\w*|[()+\-/*^,]/g) || [];
   let p = 0;
   const pk = () => T[p], nx = () => T[p++];
