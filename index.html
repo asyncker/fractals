@@ -1796,6 +1796,7 @@ function getfractal(formula, type, iteration, isseq = false) {
       btn.classList.add('active');
       clearTimeout(formulaDebounce);
       applyFormula();
+      fractalindex = i;
     });
     presetContainer.appendChild(btn);
   }
@@ -2009,8 +2010,8 @@ function getfractal(formula, type, iteration, isseq = false) {
     if (keysPressed['q']) { if (ismandel) { zoomMandel *= 1.0 + zoomSpeed; } else { zoomJulia *= 1.0 + zoomSpeed; } keypress = true; }
     if (keysPressed['r'] && currentTime - lastChangeTime > 200) { power = Math.floor(power + 1); lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['t'] && currentTime - lastChangeTime > 200) { power = Math.ceil(power - 1); lastChangeTime = currentTime; keypress = true; }
-    if (keysPressed['v'] && currentTime - lastChangeTime > 200) { fractalindex = (fractalindex + 1) % presetFormulas.length; lastChangeTime = currentTime; formulaInput.value = presetFormulas[fractalindex]; fsFormulaInput.value = formulaInput.value; lastChangeTime = currentTime; keypress = true; applyFormula(); }
-    if (keysPressed['b'] && currentTime - lastChangeTime > 200) { fractalindex = (fractalindex - 1 + presetFormulas.length) % presetFormulas.length; lastChangeTime = currentTime; formulaInput.value = presetFormulas[fractalindex]; fsFormulaInput.value = formulaInput.value; lastChangeTime = currentTime; keypress = true; applyFormula(); }
+    if (keysPressed['v'] && currentTime - lastChangeTime > 1200) { fractalindex = (fractalindex + 1) % presetFormulas.length; lastChangeTime = currentTime; keypress = true; formulaInput.value = presetFormulas[fractalindex]; fsFormulaInput.value = formulaInput.value; setTimeout(applyFormula, 40); }
+    if (keysPressed['b'] && currentTime - lastChangeTime > 1200) { fractalindex = (fractalindex - 1 + presetFormulas.length) % presetFormulas.length; lastChangeTime = currentTime; keypress = true; formulaInput.value = presetFormulas[fractalindex]; fsFormulaInput.value = formulaInput.value; setTimeout(applyFormula, 40); }
     if (keysPressed['u'] && currentTime - lastChangeTime > 200) { ismandel = ismandel == 1 ? 0 : 1; lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['f'] && currentTime - lastChangeTime > 800) { inverse = inverse == 1.0 ? 0.0 : 1.0; lastChangeTime = currentTime; keypress = true; }
     if (keysPressed['x']) { range *= 2.0; keypress = true; rangeInput.value = range; }
