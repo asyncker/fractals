@@ -69,7 +69,7 @@
       #formula-panel .panel-header { position: sticky; top: 0; background: #252526; z-index: 2; padding-bottom: 4px; }
       #formula-panel .panel-header h2 { font-size: 13px; }
       #graph { position: absolute; top: 0; left: 0; right: 0; bottom: 55vh; min-height: 40vh; transition: bottom .25s ease; }
-      .btn { min-height: 38px; font-size: 13px; border-radius: 6px; }
+      .btn { min-height: 38px; border-radius: 6px; }
       .var-btn { min-width: 60px; padding: 9px 0; font-size: 14px; }
       .var-btn small { font-size: 10px; }
       .extra-btn { padding: 9px 0; font-size: 13px; }
@@ -135,7 +135,10 @@
       <div class="extra-btn btn" id="inverse-btn">1 / c OFF</div>
       <div class="extra-btn btn" id="mandelbox-btn" title="insert formula in 3d: z * -2 + c (with 90 iteration)">mandelbox OFF</div>
     </div>
-    <div class="extra-btn btn" id="julia-btn">Julia</div>
+    <div class="btn-row">
+      <div class="extra-btn btn" id="julia-btn">Julia</div>
+      <div class="extra-btn btn" id="rotate-btn">Rotate z=pi/2</div>
+    </div>
     <div class="iter-row">
       <label for="iter-input">iteration</label>
       <input id="iter-input" type="number" min="1" max="200" value="24" />
@@ -1624,6 +1627,7 @@ function getfractal(formula, type, iteration, isseq = false) {
   const mandelboxBtn = document.getElementById('mandelbox-btn');
   const inverseBtn = document.getElementById('inverse-btn');
   const juliaBtn = document.getElementById('julia-btn');
+  const rotateBtn = document.getElementById('rotate-btn');
   const powerRow = document.getElementById('power-row');
   const fullscreenBtn = document.getElementById('fullscreen-btn');
   const fsFormulaInput = document.getElementById('fs-formula-input');
@@ -1750,6 +1754,11 @@ function getfractal(formula, type, iteration, isseq = false) {
   juliaBtn.addEventListener('click', () => {
     ismandel = ismandel == 1 ? 0 : 1;
     juliaBtn.classList.toggle('active', ismandel === 0);
+    updateControls(true);
+  });
+
+  rotateBtn.addEventListener('click', () => {
+    rotz = rotz == 1.57079632679 ? 0 : 1.57079632679;
     updateControls(true);
   });
 
