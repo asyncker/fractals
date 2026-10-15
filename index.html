@@ -350,16 +350,29 @@ let mathcode = `
     return result;
   }
 
+  vec2 cinvmergamma(vec2 z) {
+    vec2 result = cmul(z, cexp(EULER_GAMMA * z));
+    mat3 mer16 = 1.0 / mat3(2, 3, 7, 31, 127, 8191, 131071, 524287, 2147483647);
+    for (int col = 0; col < 3; col++) {
+      for (int row = 0; row < 3; row++) {
+        vec2 zinvn = z * mer16[row][col];
+        result = cmul(result, cmul(vec2(1.0, 0.0) + zinvn, cexp(-zinvn)));
+      }
+    }
+    return result;
+  }
+  vec2 cmergamma(vec2 z) { return cinv(cinvmergamma(z)); }
+
   vec2 cinvpgamma(vec2 z) { // calc with log
     vec2 result = cmul(z, cexp(EULER_GAMMA * z));
-    mat4 prime16 = mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
-    mat4 prime32 = mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
+    mat4 prime16 = 1.0 / mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
+    mat4 prime32 = 1.0 / mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
     for (int col = 0; col < 4; col++) {
       for (int row = 0; row < 4; row++) {
-        float invn = 1.0 / prime16[row][col];
-        result = cmul(result, cmul(vec2(1.0, 0.0) + z * invn, cexp(-z * invn)));
-        invn = 1.0 / prime32[row][col];
-        result = cmul(result, cmul(vec2(1.0, 0.0) + z * invn, cexp(-z * invn)));
+        vec2 zinvn = z * prime16[row][col];
+        result = cmul(result, cmul(vec2(1.0, 0.0) + zinvn, cexp(-zinvn)));
+        zinvn = z * prime32[row][col];
+        result = cmul(result, cmul(vec2(1.0, 0.0) + zinvn, cexp(-zinvn)));
       }
     }
     return result;
