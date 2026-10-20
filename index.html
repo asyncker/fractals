@@ -268,9 +268,9 @@ let mathcode = `
   vec2 cexp(vec2 z) { return exp(z.x) * vec2(cos(z.y), sin(z.y)); }
   vec2 cadd(vec2 z, vec2 w) { return vec2(z.x + w.x, z.y + w.y); }
   vec2 csub(vec2 z, vec2 w) { return cadd(z, cneg(w)); }
-  vec2 cmul(vec2 z, vec2 w) { return vec2(z.x * w.x - z.y * w.y, z.x * w.y + z.y * w.x); }
   vec2 cmul(vec2 z, float w) { return z * w; }
   vec2 cmul(float z, vec2 w) { return z * w; }
+  vec2 cmul(vec2 z, vec2 w) { return vec2(z.x * w.x - z.y * w.y, z.x * w.y + z.y * w.x); }
   vec2 cdiv(vec2 z, vec2 w) { return cmul(z, cinv(w)); }
   vec2 cpow(vec2 z, vec2 w) { 
     if (w.y == 0.0) { 
@@ -399,20 +399,35 @@ let mathcode = `
   vec2 cmergamma(vec2 z) { return cinv(cinvmergamma(z)); }
 
   vec2 cinvpgamma(vec2 z) { // calc with log
-    vec2 result = cmul(z, cexp(EULER_GAMMA * z));
+    vec2 s = cmul(z, cexp(EULER_GAMMA * z));
     mat4 prime16 = 1.0 / mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
     mat4 prime32 = 1.0 / mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
     for (int col = 0; col < 4; col++) {
       for (int row = 0; row < 4; row++) {
         vec2 zinvn = z * prime16[row][col];
-        result = cmul(result, cmul(vec2(1.0, 0.0) + zinvn, cexp(-zinvn)));
+        s = cmul(s, cmul(vec2(1.0, 0.0) + zinvn, cexp(-zinvn)));
         zinvn = z * prime32[row][col];
-        result = cmul(result, cmul(vec2(1.0, 0.0) + zinvn, cexp(-zinvn)));
+        s = cmul(s, cmul(vec2(1.0, 0.0) + zinvn, cexp(-zinvn)));
       }
     }
-    return result;
+    return s;
   }
   vec2 cpgamma(vec2 z) { return cinv(cinvpgamma(z)); }
+
+  vec2 cdipgamma(vec2 z) {
+    vec2 s = cdiv(vec2(1.0, 0.0), z) + vec2(EULER_GAMMA, 0.0);
+    mat4 prime16 = mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
+    mat4 prime32 = mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
+    for (int col = 0; col < 4; col++) {
+      for (int row = 0; row < 4; row++) {
+        float p = prime16[row][col];
+        s += cdiv(vec2(1.0, 0.0), z + vec2(p, 0.0)) - vec2(1.0/p, 0.0);
+        p = prime32[row][col];
+        s += cdiv(vec2(1.0, 0.0), z + vec2(p, 0.0)) - vec2(1.0/p, 0.0);
+      }
+    }
+    return -s;
+  }
 
   vec2 cinvrandgamma(vec2 z) { // calc with log
     vec2 result = cmul(z, cexp(EULER_GAMMA * z));
@@ -429,8 +444,7 @@ let mathcode = `
     return result;
   }
   vec2 crandgamma(vec2 z) { return cinv(cinvrandgamma(z)); }
-  
-  vec2 cdipgamma(vec2 z) { float eps = 1e-4; return -cdiv(cdiv(cinvpgamma(z + vec2(eps, 0.0)) - cinvpgamma(z - vec2(eps, 0.0)), vec2(2.0 * eps, 0.0)), cinvpgamma(z)); }
+
   vec2 cdigamma(vec2 z) { // zeta, gamma, digamma, high connect
     vec2 s = vec2(0.0, 0.0);
     for (int k = 0; k < 32; ++k) {
@@ -1878,6 +1892,7 @@ function getfractal(formula, type, iteration, isseq = false) {
     //'kox(z)^w',
     //nome(z^(4 * w)) + c
     'pgamma(z^w) - 1.38629436112 + c'
+    //pgamma((1 - z) / 2)^w
   ];
 
   for (let i = 0; i < presetFormulas.length; i++) {
