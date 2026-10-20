@@ -684,7 +684,7 @@ let mathcode = `
     vec2 e2 = -(PI*PI/3.0) * (csq(t102) + csq(t002));
     return PI*PI*cmul(cmul(t002, t102), csq(cdiv(theta2(zz, w), theta1(zz, w)))) + e2;
   }
-  vec2 cnome_derv(vec2 z) { return cmul_i(cdiv(vec2(-0.159154943092, 0.0), z)); }
+  vec2 cnome_derv(vec2 z) { return cmul_i(-0.159154943092 * cinv(z)); }
   vec2 cwp_derv(vec2 z, vec2 w) {
     const float PI2_3 = PI * PI / 3.0;
     vec2 t004 = csq(csq(theta3_z0(w)));
@@ -1873,6 +1873,7 @@ function getfractal(formula, type, iteration, isseq = false) {
     'zeta(z^w) * zeta(1-z^w) + c',
     'serp(z)^w',
     //'kox(z)^w',
+    //nome(z^(4 * w)) + c
     'pgamma(z^w) - 1.38629436112 + c'
   ];
 
