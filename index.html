@@ -398,7 +398,7 @@ let mathcode = `
   }
   vec2 cmergamma(vec2 z) { return cinv(cinvmergamma(z)); }
 
-  vec2 cinvpgamma(vec2 z) { // calc with log
+  vec2 cinvpgamma(vec2 z) {
     vec2 s = cmul(z, cexp(EULER_GAMMA * z));
     mat4 prime16 = 1.0 / mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
     mat4 prime32 = 1.0 / mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
@@ -413,7 +413,6 @@ let mathcode = `
     return s;
   }
   vec2 cpgamma(vec2 z) { return cinv(cinvpgamma(z)); }
-
   vec2 cdipgamma(vec2 z) {
     vec2 s = cdiv(vec2(1.0, 0.0), z) + vec2(EULER_GAMMA, 0.0);
     mat4 prime16 = mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
@@ -428,6 +427,8 @@ let mathcode = `
     }
     return -s;
   }
+  vec2 cpbeta(vec2 z, vec2 w) { return cmul(cmul(cpgamma(z), cpgamma(w)), cinvpgamma(z + w)); }
+  vec2 cpg1(vec2 z, vec2 w) { return cdiv(cpgamma(-z), cpgamma(z)); } // ~~ -eta(-|Re(z)| - |Im(z)| * i)
 
   vec2 cinvrandgamma(vec2 z) { // calc with log
     vec2 result = cmul(z, cexp(EULER_GAMMA * z));
@@ -633,6 +634,28 @@ let mathcode = `
   vec2 cdizeta2(vec2 z) { return cdieta(z) - cdiv(cpow(vec2(2.0, 0.0), vec2(1.0, 0.0) - z) * 0.69314718056, vec2(1.0, 0.0) - cpow(vec2(2.0, 0.0), vec2(1.0, 0.0) - z)); }
   vec2 cdizeta(vec2 z) { return cdiv(czeta_derv(z), czeta(z)); }
 
+  vec2 polylog(vec2 s, vec2 z) {
+    if (s.x == 1.0 && s.y == 0.0) { return -clog(vec2(1.0, 0.0) - z); }
+    if (s.x == 0.0 && s.y == 0.0) { return cdiv(z, vec2(1.0, 0.0) - z); }
+    if (s.x == -1.0 && s.y == 0.0) { return cdiv(z, csq(vec2(1.0, 0.0) - z)); }
+    if (s.x == -2.0 && s.y == 0.0) { return cdiv(cmul(z, vec2(1.0, 0.0) + z), cmul(vec2(1.0, 0.0) - z, csq(vec2(1.0, 0.0) - z))); }
+    if (s.x == -3.0 && s.y == 0.0) { return cdiv(cmul(z, vec2(1.0, 0.0) + 4.0 * z + csq(z)), csq(csq(vec2(1.0, 0.0) - z))); }
+    if (s.x == -4.0 && s.y == 0.0) { return cdiv(cmul(z, vec2(1.0, 0.0) + 11.0 * z + 11.0 * csq(z) + cmul(z, csq(z))), cmul(csq(csq(vec2(1.0, 0.0) - z)), vec2(1.0, 0.0) - z)); }
+    if (s.x == -5.0 && s.y == 0.0) { vec2 z2 = csq(z); return cdiv(cmul(z, cadd(cadd(vec2(1.0, 0.0), cmul(vec2(26.0, 0.0), z)), cadd(cmul(vec2(66.0, 0.0), z2), cadd(cmul(vec2(26.0, 0.0), cmul(z2, z)), csq(z2))))), cmul(csq(csq(vec2(1.0, 0.0) - z)), csq(vec2(1.0, 0.0) - z))); }
+    if (z.x == 0.0 && z.y == 0.0) { return vec2(0.0); }
+    if (z.x == 1.0 && z.y == 0.0) { return czeta(s); }
+    if (z.x == -1.0 && z.y == 0.0) { return -ceta(s); }
+    vec2 sum = vec2(0.0);
+    vec2 z_pow = z;
+    for (int k = 1; k < 20; k++) {
+      vec2 term = cdiv(z_pow, cpow(vec2(float(k), 0.0), s));
+      sum = cadd(sum, term);
+      z_pow = cmul(z_pow, z);
+      if (length(term) < 1e-7) break;
+    }
+    return sum;
+  }
+
   vec2 clambertw(vec2 z) {
     vec2 l1 = clog(z);
     vec2 est = length(z.xy) > 3.0 ? l1 - clog(l1) : csqrt(2.71828182846 * z + vec2(1.0, 0.0)) - vec2(1.0, 0.0);
@@ -648,13 +671,13 @@ let mathcode = `
     return cdiv(w, cmul(z, vec2(1.0, 0.0) + w));
   }
 
-  vec2 cnome(vec2 z) { return cmul_i(clog(z)) * -0.159154943092; }
+  vec2 cnome(vec2 z) { return -cmul_i(clog(z)) * 0.159154943092; }
   vec2 invert_tau(vec2 z) {
     vec2 rt_k = csqrt(csqrt(vec2(1.0, 0.0) - csq(z)));
     vec2 ell = 0.5 * cdiv(vec2(1.0, 0.0) - rt_k, vec2(1.0, 0.0) + rt_k);
     vec2 logl = clog(ell);
     vec2 q = ell + 2.0 * cexp(5.0 * logl) + 15.0 * cexp(9.0 * logl);
-    return -cmul_i(clog(q)) / PI;
+    return -cmul_i(clog(q)) * 0.318309886184;
   }
   vec2 theta3(vec2 z, vec2 w) {
     vec2 result = vec2(1.0, 0.0);
@@ -699,7 +722,7 @@ let mathcode = `
     vec2 e2 = -(PI*PI/3.0) * (csq(t102) + csq(t002));
     return PI*PI*cmul(cmul(t002, t102), csq(cdiv(theta2(zz, w), theta1(zz, w)))) + e2;
   }
-  vec2 cnome_derv(vec2 z) { return cmul_i(-0.159154943092 * cinv(z)); }
+  vec2 cnome_derv(vec2 z) { return cmul_i(-cinv(z) * 0.159154943092); }
   vec2 cwp_derv(vec2 z, vec2 w) {
     const float PI2_3 = PI * PI / 3.0;
     vec2 t004 = csq(csq(theta3_z0(w)));
