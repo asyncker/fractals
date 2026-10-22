@@ -375,6 +375,23 @@ let mathcode = `
   }
   vec2 cgammat(vec2 z) { return z.x >= 0.5 ? cgammat_right(z) : cgammat_left(z); }
   vec2 chi(vec2 z) { return cmul(cgammat(z), cexp(1.14472988585 * (vec2(-0.5, 0.0) + z))); }
+  vec2 ceta_right1(vec2 z) {
+    vec2 s = vec2(0.0, 0.0);
+    for (int i = 1; i < 100; i++) {
+      float n = float(i);
+      s += cexp(vec2(0.0, PI) * (n - 1.0) - z * log(n)); // if s * log(n) so strange fractal on czeta1(|Re(z)| + |Im(z)| * i) - 1.6180339887
+    }
+    return s;
+  }
+  vec2 ceta1(vec2 z) {
+    if (z.x < 0.0) {
+      vec2 num = vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z); 
+      vec2 den = vec2(1.0, 0.0) - 1.0 * cexp( 0.69314718056 * z);
+      return cmul(chi(z), cmul(cdiv(num, den), ceta_right1(vec2(1.0, 0.0) - z)));
+    }
+    return ceta_right1(z);
+  }
+  vec2 czeta1(vec2 z) { return cmul(ceta1(z), cinv(vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z))); }
 
   vec2 cinvgamma(vec2 z) {
     vec2 result = cmul(z, cexp(EULER_GAMMA * z));
