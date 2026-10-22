@@ -167,8 +167,8 @@
     <canvas id="canvas"></canvas>
   </div>
   <script>
-  function seqRand(n, minn = 0, maxn = 6) { const seq = []; for (let i = 0; i < n; i++) { seq.push(Math.floor(Math.random() * (maxn - minn + 1)) + minn); } return seq; }
-  function seqRandGrow(n, minn = 0, maxn = 6) { return seqRand(n, minn, maxn).sort((a, b) => a - b); }
+  function seqRand(n, minn = 0, maxn = 144) { const seq = []; for (let i = 0; i < n; i++) { seq.push(Math.floor(Math.random() * (maxn - minn + 1)) + minn); } return seq; }
+  function seqRandGrow(n, minn = 0, maxn = 144) { return seqRand(n, minn, maxn).sort((a, b) => a - b); }
   function seqPrimes(n) { const seq = [0]; let i = 2; while (seq.length < n) { let isPrime = true; for (let j = 2; j * j <= i; j++) { if (i % j === 0) { isPrime = false; break; } } if (isPrime) { seq.push(i); } i++; } return seq; }
   function seqSquares(n) { const seq = [0]; for (let i = 1; i < n; i++) { seq.push(i * i); } return seq; }
   function seqNaturals(n) { const seq = [0]; for (let i = 1; i < n; i++) { seq.push(i); } return seq; }
@@ -1756,7 +1756,7 @@ function getfractal(formula, type, iteration, isseq = false) {
     isseq = e.target.value != "";
     if (isseq) {
       const floatExt = gl.getExtension('OES_texture_float');
-      const arr = e.target.value.replace(" ", "").split(",").map(x => x.replace(" ", "") == "" ? 0 : parseInt(x));
+      const arr = e.target.value.replace(" ", "").split(",").map(x => x.replace(" ", "") == "" ? 0 : x);
       updateSequenceTexture(arr);
     }
     applyFormula(); // maybe its rewrite texture any input it's not good!
@@ -2217,7 +2217,7 @@ function getfractal(formula, type, iteration, isseq = false) {
       gl.uniform1f(rangeLocation, rangecalc);
       gl.uniform1i(colorschemeindexLocation, colorschemeindex);
       if (seqInput.value != "") {
-        const arr = seqInput.value.replace(" ", "").split(",").map(x => x.replace(" ", "") == "" ? 0 : parseInt(x));
+        const arr = seqInput.value.replace(" ", "").split(",").map(x => x.replace(" ", "") == "" ? 0 : x);
         updateSequenceTexture(arr);
       }
       isRender = true;
