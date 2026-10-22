@@ -339,7 +339,7 @@ let mathcode = `
   vec2 ctosh(vec2 z, vec2 w, vec2 s) { return cmul(cpow(csinh(z), s), cpow(ccosh(z), w)); }
   vec2 ctanh(vec2 z) { return cdiv(csinh(z), ccosh(z)); } // return vec2(1.0, 0.0) - 2.0 / (vec2(1.0, 0.0) + cexp(2.0 * z));
   vec2 ccoth(vec2 z) { return cdiv(ccosh(z), csinh(z)); }
-  vec2 ctan(vec2 z) { return cdiv(csin(z), ccos(z)); }
+  vec2 ctan(vec2 z) { float abs_y = abs(z.y); if (abs_y > 20.0) { return vec2(0.0, sign(z.y)); } float denom = cos(2.0 * z.x) + cosh(2.0 * z.y); return vec2(sin(2.0 * z.x) / denom, sinh(2.0 * z.y) / denom); }
   vec2 ccot(vec2 z) { float abs_y = abs(z.y); if (abs_y > 20.0) { return vec2(0.0, -sign(z.y)); } float denom = cosh(2.0 * z.y) - cos(2.0 * z.x); return vec2(sin(2.0 * z.x) / denom, -sinh(2.0 * z.y) / denom); }
   vec2 carcsin(vec2 z) { vec2 a = csqrt(vec2(1.0, 0.0) - csq(z)); return z.y < 0.0 ? -cmul_i(clog(a + cmul_i(z))) : -cmul_i(-clog(a - cmul_i(z))); }
   vec2 carccos(vec2 z) { return vec2(0.5 * PI, 0.0) - carcsin(z); }
