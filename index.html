@@ -85,6 +85,7 @@
       body.fullscreen-mode #graph { bottom: 0; }
       .hint { display: none; }
     }
+    #grid-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
   </style>
 </head>
 <body>
@@ -96,7 +97,7 @@
         <div id="fullscreen-btn" class="btn" onclick="toggleFullscreen();" title="Fullscreen (ESC - escape)" style="border-top-left-radius:0; border-bottom-left-radius:0;">⛶</div>
       </div>
     </div>
-    <input id="formula-input" type="text" spellcheck="false" value="z^(2 * w) + c" />
+    <input id="formula-input" type="text" spellcheck="false" value="2^(z * w) + c" />
     <div id="formula-status"></div>
     <div class="var-buttons">
       <div class="var-btn btn" data-var="c">c<small>mandelbrot</small></div>
@@ -165,6 +166,7 @@
       </div>
     </div>
     <canvas id="canvas"></canvas>
+    <canvas id="grid-canvas"></canvas>
   </div>
   <script>
   function seqRand(n, minn = 0, maxn = 144) { const seq = []; for (let i = 0; i < n; i++) { seq.push(Math.floor(Math.random() * (maxn - minn + 1)) + minn); } return seq; }
@@ -360,38 +362,6 @@ let mathcode = `
   vec2 cgamma_right(vec2 z) { vec2 t = z + vec2(6.5, 0.0); return 2.50662827463 * cmul(clanczos(z), cexp(cmul(clog(t), z - vec2(0.5, 0.0)) - t)); }
   vec2 cgamma_left(vec2 z) { return PI * cinv(cmul(csin(z * PI), cgamma_right(vec2(1.0, 0.0) - z))); }
   vec2 cgamma(vec2 z) { return z.x < 0.5 ? cgamma_left(z) : cgamma_right(z); }
-  vec2 cgammat_right(vec2 z) {
-    vec2 t = z + vec2(6.5, 0.0);
-    vec2 Q = cmul(z - vec2(0.5, 0.0), clog(t)) - t - (z - vec2(1.0, 0.0)) * 0.6931471805599453;
-    vec2 i_pi_z_2 = 1.5707963267948966 * vec2(-z.y, z.x);
-    return 1.4142135623730951 * cinv(cmul(clanczos(z), cexp(Q + i_pi_z_2) + cexp(Q - i_pi_z_2)));
-  }
-  vec2 cgammat_left(vec2 z) {
-    vec2 u = vec2(1.0, 0.0) - z;
-    vec2 t = u + vec2(6.5, 0.0);
-    vec2 P = (cmul(u - vec2(0.5, 0.0), clog(t)) - t) + z * 0.6931471805599453;
-    vec2 i_pi_z_2 = 1.5707963267948966 * vec2(-z.y, z.x);
-    return cmul(clanczos(u), -cmul_i(cexp(P + i_pi_z_2) - cexp(P - i_pi_z_2))) * 0.7071067811865475;
-  }
-  vec2 cgammat(vec2 z) { return z.x >= 0.5 ? cgammat_right(z) : cgammat_left(z); }
-  vec2 chi(vec2 z) { return cmul(cgammat(z), cexp(1.14472988585 * (vec2(-0.5, 0.0) + z))); }
-  vec2 ceta_right1(vec2 z) {
-    vec2 s = vec2(0.0, 0.0);
-    for (int i = 1; i < 100; i++) {
-      float n = float(i);
-      s += cexp(vec2(0.0, PI) * (n - 1.0) - z * log(n)); // if s * log(n) so strange fractal on czeta1(|Re(z)| + |Im(z)| * i) - 1.6180339887
-    }
-    return s;
-  }
-  vec2 ceta1(vec2 z) {
-    if (z.x < 0.0) {
-      vec2 num = vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z); 
-      vec2 den = vec2(1.0, 0.0) - 1.0 * cexp( 0.69314718056 * z);
-      return cmul(chi(z), cmul(cdiv(num, den), ceta_right1(vec2(1.0, 0.0) - z)));
-    }
-    return ceta_right1(z);
-  }
-  vec2 czeta1(vec2 z) { return cmul(ceta1(z), cinv(vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z))); }
 
   vec2 cinvgamma(vec2 z) {
     vec2 result = cmul(z, cexp(EULER_GAMMA * z));
@@ -523,9 +493,74 @@ let mathcode = `
   vec2 cbeta(vec2 z, vec2 w) { return cmul(cmul(cgamma(z), cgamma(w)), cinv(cgamma(z + w))); }
   vec2 cdihi(vec2 z) { return vec2(1.83787706641, 0.0) + 1.57079632679 * ccot(z * 1.57079632679) - cdigamma(vec2(1.0, 0.0) - z); } // X'(z) / X(z) = ln(2 * pi) + pi/2 * cot(z * pi/2) - psi(1.0 - z)
 
+  vec2 cgammat_right(vec2 z) {
+    vec2 t = z + vec2(6.5, 0.0);
+    vec2 Q = cmul(z - vec2(0.5, 0.0), clog(t)) - t - (z - vec2(1.0, 0.0)) * 0.6931471805599453;
+    vec2 i_pi_z_2 = 1.5707963267948966 * vec2(-z.y, z.x);
+    return 1.4142135623730951 * cinv(cmul(clanczos(z), cexp(Q + i_pi_z_2) + cexp(Q - i_pi_z_2)));
+  }
+  vec2 cgammat_left(vec2 z) {
+    vec2 u = vec2(1.0, 0.0) - z;
+    vec2 t = u + vec2(6.5, 0.0);
+    vec2 P = (cmul(u - vec2(0.5, 0.0), clog(t)) - t) + z * 0.6931471805599453;
+    vec2 i_pi_z_2 = 1.5707963267948966 * vec2(-z.y, z.x);
+    return cmul(clanczos(u), -cmul_i(cexp(P + i_pi_z_2) - cexp(P - i_pi_z_2))) * 0.7071067811865475;
+  }
+  vec2 cgammat(vec2 z) { return z.x >= 0.5 ? cgammat_right(z) : cgammat_left(z); }
+  vec2 chi(vec2 z) { return cmul(cgammat(z), cexp(1.14472988585 * (vec2(-0.5, 0.0) + z))); }
+  vec2 ceta_right1(vec2 z) {
+    vec2 s = vec2(0.0, 0.0);
+    for (int i = 1; i < 100; i++) {
+      float n = float(i);
+      s += cexp(vec2(0.0, PI) * (n - 1.0) - z * log(n)); // if s * log(n) so strange fractal on czeta1(|Re(z)| + |Im(z)| * i) - 1.6180339887
+    }
+    return s;
+  }
+  vec2 ceta1(vec2 z) {
+    if (z.x < 0.0) {
+      vec2 num = vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z); 
+      vec2 den = vec2(1.0, 0.0) - 1.0 * cexp( 0.69314718056 * z);
+      return cmul(chi(z), cmul(cdiv(num, den), ceta_right1(vec2(1.0, 0.0) - z)));
+    }
+    return ceta_right1(z);
+  }
+  vec2 czeta1(vec2 z) { return cmul(ceta1(z), cinv(vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z))); }
+
+  vec2 czeta2(vec2 z) {
+    vec2 gt = vec2(0.0, 0.0);
+    vec2 w = vec2(1.0, 0.0) - z;
+    if (z.x >= 0.5) {
+      vec2 t = z + vec2(6.5, 0.0);
+      vec2 Q = cmul(z - vec2(0.5, 0.0), clog(t)) - t - (z - vec2(1.0, 0.0)) * 0.6931471805599453;
+      vec2 ip = 1.5707963267948966 * vec2(-z.y, z.x);
+      gt = 1.4142135623730951 * cinv(cmul(clanczos(z), cexp(Q + ip) + cexp(Q - ip)));
+    } else {
+      vec2 t = w + vec2(6.5, 0.0);
+      vec2 P = cmul(w - vec2(0.5, 0.0), clog(t)) - t + z * 0.6931471805599453;
+      vec2 ip = 1.5707963267948966 * vec2(-z.y, z.x);
+      gt = cmul(clanczos(w), -cmul_i(cexp(P + ip) - cexp(P - ip))) * 0.7071067811865475;
+    }
+    vec2 ch = cmul(gt, cexp(1.14472988585 * (vec2(-0.5, 0.0) + z)));
+    vec2 et = vec2(0.0, 0.0);
+    if (z.x < 0.0) {
+      vec2 s = vec2(0.0, 0.0);
+      for (int i = 1; i < 100; i++) {
+        float n = float(i);
+        s += cexp(vec2(0.0, PI) * (n - 1.0) - w * log(n));
+      }
+      et = cmul(ch, cmul(cdiv(vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z), vec2(1.0, 0.0) - cexp(0.69314718056 * z)), s));
+    } else {
+      for (int i = 1; i < 100; i++) {
+        float n = float(i);
+        et += cexp(vec2(0.0, PI) * (n - 1.0) - z * log(n));
+      }
+    }
+    return cmul(et, cinv(vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z)));
+  }
+
   vec2 cgammaphi(vec2 z) { return cexp(cmul(z, vec2(-3.53102424697, 1.57079632679) + clog(vec2(1.0, 0.0) - 2.0 * z)) - 0.5 * clog(z) + vec2(1.4189385332, 0.0)); }
 
-  vec4 czeta_helper_4(vec2 z, mat4 bases, mat4 ns) {
+  vec4 ceta_helper_4(vec2 z, mat4 bases, mat4 ns) {
     mat4 phases = z.y * bases;
     float cutoff = sqrt(z.y * 0.159154943092) + 100.0 * step(z.y, 120.0);
     float cutoffscale = 0.884 * cutoff + 0.442;
@@ -542,7 +577,7 @@ let mathcode = `
     return res;
   }
 
-  vec2 czeta_helper_2(vec2 z, mat4 bases, mat4 coeffs) {
+  vec2 ceta_helper_2(vec2 z, mat4 bases, mat4 coeffs) {
     mat4 phases = z.y * bases;
     vec2 res = vec2(0.0, 0.0);
     for (int row = 0; row < 4; row++) {
@@ -554,12 +589,12 @@ let mathcode = `
     return res;
   }
 
-  vec2 czeta_strip(vec2 z) {
+  vec2 ceta_strip(vec2 z) {
     vec4 zeta_est = vec4(1.0, 0.0, 1.0, 0.0);
-    zeta_est += czeta_helper_4(z,
+    zeta_est += ceta_helper_4(z,
     mat4(-0.69314718056,-1.09861228866811,-1.38629436111989,-1.6094379124341,-1.79175946922805,-1.94591014905531,-2.07944154167984,-2.19722457733622,-2.30258509299405,-2.39789527279837,-2.48490664978800,-2.56494935746154,-2.63905732961526,-2.70805020110221,-2.77258872223978,-2.83321334405622),
     mat4(2.,3.,4.,5.,6.,7.,8.,9.,10.,11.,12.,13.,14.,15.,16.,17.));
-    zeta_est += czeta_helper_4(z,
+    zeta_est += ceta_helper_4(z,
     mat4(-2.89037175789616,-2.94443897916644,-2.99573227355399,-3.04452243772342,-3.09104245335832,-3.13549421592915,-3.17805383034795,-3.21887582486820,-3.25809653802148,-3.29583686600433,-3.33220451017520,-3.36729582998647,-3.40119738166216,-3.43398720448515,-3.46573590279973,-3.49650756146648),
     mat4(18.,19.,20.,21.,22.,23.,24.,25.,26.,27.,28.,29.,30.,31.,32.,33.));
     vec2 zetaA = zeta_est.xy;
@@ -572,14 +607,14 @@ let mathcode = `
     return zetaA + zetaB;
   }
 
-  vec2 ceta_strip(vec2 z) { return cmul(czeta_strip(z), vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z)); }
+  vec2 ceta_stripz(vec2 z) { return cmul(ceta_strip(z), vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z)); }
   vec2 ceta_right(vec2 z) {
-    if (z.x < 3.0 && z.y > 54.0) { return ceta_strip(z); }
+    if (z.x < 3.0 && z.y > 54.0) { return ceta_stripz(z); }
     vec2 result = vec2(1.0, 0.0);
-    result += czeta_helper_2(z,
+    result += ceta_helper_2(z,
     mat4(-0.69314718056,-1.09861228866811,-1.38629436111989,-1.6094379124341,-1.79175946922805,-1.94591014905531,-2.07944154167984,-2.19722457733622,-2.30258509299405,-2.39789527279837,-2.48490664978800,-2.56494935746154,-2.63905732961526,-2.70805020110221,-2.77258872223978,-2.83321334405622),
     mat4(-1.00000000000000,1.00000000000000,-1.00000000000000,1.00000000000000,-0.99999999999995,0.99999999999847,-0.99999999996425,0.99999999937104,-0.99999999142280,0.99999990708781,-0.99999918494666,0.99999411949279,-0.99996466193028,0.99982127062071,-0.99923254216349,0.99718148818347));
-    result += czeta_helper_2(z,
+    result += ceta_helper_2(z,
     mat4(-2.89037175789616,-2.94443897916644,-2.99573227355399,-3.04452243772342,-3.09104245335832,-3.13549421592915,-3.17805383034795,-3.21887582486820,-3.25809653802148,-3.29583686600433,-3.33220451017520,-3.36729582998647,-3.40119738166216,-3.43398720448515,-3.46573590279973,-3.49650756146648),
     mat4(-0.99109047939434,0.97562125072353,-0.94195422388664,0.87910910712444,-0.77852772396727,0.64073335549827,-0.47964042231228,0.31968999219853,-0.18572334624203,0.09196690020310,-0.03784892366350,0.01254701255408,-0.00320994916827,0.00059346134942,-0.00007044051625,0.00000402517236));
     return result;
@@ -1919,20 +1954,21 @@ function getfractal(formula, type, iteration, isseq = false) {
     'dn(z^w, z^w) + c',
     'wp(z^w, mul_i(1)) + c',
     // 1 / (z^2 - z - 1) || 1 / (1 - z - z^2) || z / (z^2 - z - 1) || z / (1 - z - z^2)
-    'zeta(z^w)*zeta(-z^w) + c',
+    //'zeta(z^w)*zeta(-z^w) + c',
     '((7 * z^w + 2) - exp(z^w) * (5 * z^w + 2)) * 0.25 + c',
     '((7 * z^w + 2) - exp(mul_i(z^w * PI)) * (5 * z^w + 2)) * 0.25 + c',
     '((7 * z^w + 2) - cos(PI * z^w) * (5 * z^w + 2)) * 0.25 + c',
     '1 - (1+w)^(0.5-z) + c',
-    '(w+1)^z + c',
+    //'(w+1)^z + c',
     '1 / (1 - z^w) + c',
     '1 / (2^z - 1) + c',
     '1 - hi(z^w) + c',
     //'zeta(mul_i(z)) - cmul_i(15/32) + c',
     'zeta(z^w) * zeta(1-z^w) + c',
     'serp(z)^w',
+    'nome(z^(w)) + c',
+    'mul_i(ln(w * z^(-w))) / w + c', // '-mul_i(ln(z)) * 0.159154943092'
     //'kox(z)^w',
-    //nome(z^(4 * w)) + c
     'pgamma(z^w) - 1.38629436112 + c'
     //pgamma((1 - z) / 2)^w
   ];
@@ -2226,10 +2262,171 @@ function getfractal(formula, type, iteration, isseq = false) {
     }
   }
 
+let isDisplayGrid = 0;
+const gridCanvas = document.getElementById('grid-canvas');
+const gctx = gridCanvas.getContext('2d');
+
+function niceStep(rawStep) {
+  if (rawStep <= 0 || !isFinite(rawStep)) return 1;
+  const exp = Math.floor(Math.log10(rawStep));
+  const base = Math.pow(10, exp);
+  const f = rawStep / base;
+  let n;
+  if (f < 1.5) n = 1;
+  else if (f < 3.5) n = 2;
+  else if (f < 7.5) n = 5;
+  else n = 10;
+  return n * base;
+}
+
+function getGridView() {
+  const rect = graph.getBoundingClientRect();
+  const w = Math.max(1, Math.floor(rect.width));
+  const h = Math.max(1, Math.floor(rect.height));
+  const zoom = ismandel ? zoomMandel : zoomJulia;
+  const cx = ismandel ? cxval : zxval;
+  const cy = ismandel ? cyval : zyval;
+  const scale = zoom / h;
+  return { w, h, cx, cy, scale };
+}
+
+function worldToScreen(x, y, view) {
+  const sx = (x - view.cx) / view.scale + view.w * 0.5;
+  const sy = view.h * 0.5 - (y - view.cy) / view.scale;
+  return [sx, sy];
+}
+
+function formatLabel(v) {
+  if (v === 0) return '0';
+  const a = Math.abs(v);
+  let s;
+  if (a >= 1e4 || a < 1e-3) s = v.toExponential(1).replace('e+', 'e');
+  else s = (Math.round(v * 1e6) / 1e6).toString();
+  return s;
+}
+
+function drawGridLabel(text, x, y, align) {
+  gctx.textAlign = align;
+  gctx.lineWidth = 3;
+  gctx.strokeStyle = 'rgba(0,0,0,0.35)';
+  gctx.strokeText(text, x, y);
+  gctx.fillStyle = '#ffffff';
+  gctx.fillText(text, x, y);
+}
+
+function drawGrid() {
+  const view = getGridView();
+  const { w, h, cx, cy, scale } = view;
+  if (gridCanvas.width !== w || gridCanvas.height !== h) {
+    gridCanvas.width = w;
+    gridCanvas.height = h;
+    gridCanvas.style.width = w + 'px';
+    gridCanvas.style.height = h + 'px';
+  }
+  gctx.clearRect(0, 0, w, h);
+  const majorStep = niceStep(80 * scale);
+  const minorStep = majorStep / 5;
+  const worldLeft   = cx - (w * 0.5) * scale;
+  const worldRight  = cx + (w * 0.5) * scale;
+  const worldTop    = cy + (h * 0.5) * scale;
+  const worldBottom = cy - (h * 0.5) * scale;
+  gctx.lineWidth = 1;
+  gctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  gctx.beginPath();
+  const minorStartX = Math.floor(worldLeft / minorStep);
+  const minorEndX   = Math.ceil(worldRight / minorStep);
+  for (let k = minorStartX; k <= minorEndX; k++) {
+    const x = k * minorStep;
+    const [sx] = worldToScreen(x, 0, view);
+    const px = Math.round(sx) + 0.5;
+    gctx.moveTo(px, 0);
+    gctx.lineTo(px, h);
+  }
+  const minorStartY = Math.floor(worldBottom / minorStep);
+  const minorEndY   = Math.ceil(worldTop / minorStep);
+  for (let k = minorStartY; k <= minorEndY; k++) {
+    const y = k * minorStep;
+    const [, sy] = worldToScreen(0, y, view);
+    const py = Math.round(sy) + 0.5;
+    gctx.moveTo(0, py);
+    gctx.lineTo(w, py);
+  }
+  gctx.stroke();
+  gctx.strokeStyle = 'rgba(0,0,0,0.14)';
+  gctx.lineWidth = 1;
+  gctx.beginPath();
+  const majorStartX = Math.floor(worldLeft / majorStep);
+  const majorEndX   = Math.ceil(worldRight / majorStep);
+  for (let k = majorStartX; k <= majorEndX; k++) {
+    const x = k * majorStep;
+    const [sx] = worldToScreen(x, 0, view);
+    const px = Math.round(sx) + 0.5;
+    gctx.moveTo(px, 0);
+    gctx.lineTo(px, h);
+  }
+  const majorStartY = Math.floor(worldBottom / majorStep);
+  const majorEndY   = Math.ceil(worldTop / majorStep);
+  for (let k = majorStartY; k <= majorEndY; k++) {
+    const y = k * majorStep;
+    const [, sy] = worldToScreen(0, y, view);
+    const py = Math.round(sy) + 0.5;
+    gctx.moveTo(0, py);
+    gctx.lineTo(w, py);
+  }
+  gctx.stroke();
+  gctx.strokeStyle = 'rgba(0,0,0,0.55)';
+  gctx.lineWidth = 1.4;
+  gctx.beginPath();
+  const [axisX] = worldToScreen(0, 0, view);
+  const [, axisY] = worldToScreen(0, 0, view);
+  if (axisX >= 0 && axisX <= w) {
+    const px = Math.round(axisX) + 0.5;
+    gctx.moveTo(px, 0);
+    gctx.lineTo(px, h);
+  }
+  if (axisY >= 0 && axisY <= h) {
+    const py = Math.round(axisY) + 0.5;
+    gctx.moveTo(0, py);
+    gctx.lineTo(w, py);
+  }
+  gctx.stroke();
+  gctx.font = '11px Consolas, monospace';
+  gctx.textBaseline = 'middle';
+  const [originX, originY] = worldToScreen(0, 0, view);
+  const labelOffsetY = 9;
+  const labelOffsetX = 6;
+  const yBase = (originY >= 0 && originY <= h) ? originY + labelOffsetY : h - 8;
+  for (let k = majorStartX; k <= majorEndX; k++) {
+    const x = k * majorStep;
+    if (Math.abs(k) === 0) continue;
+    const [sx] = worldToScreen(x, 0, view);
+    if (sx < 18 || sx > w - 18) continue;
+    drawGridLabel(formatLabel(x), sx, yBase, 'center');
+  }
+
+  const xBase = (originX >= 0 && originX <= w) ? originX + labelOffsetX : 8;
+  for (let k = majorStartY; k <= majorEndY; k++) {
+    const y = k * majorStep;
+    if (Math.abs(k) === 0) continue;
+    const [, sy] = worldToScreen(0, y, view);
+    if (sy < 10 || sy > h - 10) continue;
+    let label;
+    if (k === 1) label = 'i';
+    else if (k === -1) label = '-i';
+    else label = formatLabel(y) + 'i';
+    drawGridLabel(label, xBase, sy, 'left');
+  }
+
+  if (originX >= 0 && originX <= w && originY >= 0 && originY <= h) {
+    drawGridLabel('0', originX - 4, originY + 10, 'right');
+  }
+}
+
   function render(currentTimeMs) {
     animFrameId = requestAnimationFrame(render);
     const isAnyPress = Object.values(keysPressed).some(v => v);
     updateControls();
+    if (currentProgram && isDisplayGrid) drawGrid();
     if (!isRender && !isAnyPress) return;
     isRender = false;
     if (currentProgram) {
