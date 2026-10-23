@@ -139,6 +139,7 @@
     <div class="btn-row">
       <div class="extra-btn btn" id="julia-btn">Julia</div>
       <div class="extra-btn btn" id="rotate-btn">Rotate z=pi/2</div>
+      <div class="extra-btn btn" id="grid-btn">Checkerboard</div>
     </div>
     <div class="iter-row">
       <label for="iter-input">iteration</label>
@@ -1784,6 +1785,7 @@ function getfractal(formula, type, iteration, isseq = false) {
   const juliaBtn = document.getElementById('julia-btn');
   const rotateBtn = document.getElementById('rotate-btn');
   const powerRow = document.getElementById('power-row');
+  const gridBtn = document.getElementById('grid-btn');
   const fullscreenBtn = document.getElementById('fullscreen-btn');
   const fsFormulaInput = document.getElementById('fs-formula-input');
   const fsVarButtons = document.querySelectorAll('.fs-var-btn');
@@ -1924,6 +1926,12 @@ function getfractal(formula, type, iteration, isseq = false) {
       btn.classList.add('active');
       updateControls(true);
     });
+  });
+
+  gridBtn.addEventListener('click', () => { 
+    isDisplayGrid = isDisplayGrid == 0 ? 1 : 0;
+    gridCanvas.style.display = isDisplayGrid == 0 ? "none" : "block";
+    isRender = true;
   });
 
   colorButtons.forEach(btn => {
