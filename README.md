@@ -2,7 +2,7 @@
 
 Go to <a href="https://asyncker.github.io/fractals/index.html">web fractal</a> and find your fractal!
 
-All fractal in <a href="https://github.com/asyncker/fractals/blob/main/index.html">one html file</a>! Download the file and find fractal without internet for free!
+All fractal in <a href="https://github.com/asyncker/fractals/blob/main/index.html">one html file</a>!
 
 2d fractal:
 1. Mandelbrot
