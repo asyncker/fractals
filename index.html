@@ -1618,6 +1618,8 @@ function getDerivative(f, v = 'z') {
 function convertformulatowebgl(f, vecf = "vec2") {
   const Z_POW = { '0': '1', '1': 'z', '2': 'sq(z)', '3': 'mul(z, sq(z))', '4': 'mul(sq(z), sq(z))', '(-1)': 'inv(z)', '(-2)': 'inv(sq(z))', '(-3)': 'inv(mul(sq(z), z))' };
   const CONSTANTS = { 'pi': Math.PI, 'e': Math.E, 'phi': 1.61803398875 };
+  f = f.replace(/(\d+(?:\.\d+)?)\s*i\b/g, (m, num) => `mul_i(${num})`);
+  f = f.replace(/(?<![\w])i(?![\w])/g, 'mul_i(1)');
   f = f.replace(/\b(pi|e|phi)\b/g, (m, name) => { const val = CONSTANTS[name]; return val !== undefined ? String(val) : m; });
   f = f.replace(/\/\s*(\d+(?:\.\d+)?)/g, (m, d) => `* ${1 / d}`);
   f = f.replace(/pow\s*\(\s*z\s*,\s*(-?\d+)\s*\)/g, (m, n) => Z_POW[n] ?? m).replace(/\bz\s*\^\s*(-?\d+)/g, (m, n) => Z_POW[n] ?? m);
