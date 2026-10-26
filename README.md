@@ -65,11 +65,11 @@ All fractal in <a href="https://github.com/asyncker/fractals/blob/main/index.htm
 ![](render/zeta(+-zi)-0.46875i.png)
 29. Pgamma(z)
 ![](render/primewgamma24.png)
-30. ln(2 * z^(-2)) * 2i
+30. ln(2 * z^(-2)) * i / 2
 ![](render/ln(2(z^(-2)))2i.png)
-31. ln(4 * z^(-4)) * 4i
+31. ln(4 * z^(-4)) * i / 4
 ![](render/ln(4(z^(-4)))4i.png)
-32. ln(z^4) * -2pi * i (nome(z^4))‎
+32. ln(z^4) / (2pi * i) (nome(z^4))‎
 ![](render/nome_power4_3.0.png)
 33. sn(z)‎
 ![](render/sn.png)
