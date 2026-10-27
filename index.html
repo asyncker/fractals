@@ -1070,6 +1070,7 @@ let mathcode = `
     float cz = cosh(z.z); // or cos
     return vec4(cz * chy * cx, cz * shy * sx, sz * sx, z.w);
   }
+  vec4 ttan(vec4 z) { return tdiv(tsin(z), tcos(z)); }
   vec4 tpow(vec4 z, float w) { if (w == 1.0) { return z; } else if (w == 2.0) { return tsq(z); } return texp(w * tlog(z)); }
   vec4 tpow(vec4 z, vec4 w) { 
     if (z.y == 0.0 && z.z == 0.0 && z.w == 0.0) {
