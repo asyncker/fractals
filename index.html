@@ -823,9 +823,10 @@ let mathcode = `
     vec2 tau = invert_tau(cdiv(B, A));
     return raw_wp_derv(jacobi_reduce(cmul(z, A), tau), A, tau);
   }
-  vec2 csn_derv(vec2 z, vec2 w) { float eps = 1e-5; return (csn(z + vec2(eps, 0.0), w) - csn(z - vec2(eps, 0.0), w)) / (2.0 * eps); }
-  vec2 ccn_derv(vec2 z, vec2 w) { float eps = 1e-5; return (csn(z + vec2(eps, 0.0), w) - csn(z - vec2(eps, 0.0), w)) / (2.0 * eps); }
-  vec2 cdn_derv(vec2 z, vec2 w) { float eps = 1e-5; return (csn(z + vec2(eps, 0.0), w) - csn(z - vec2(eps, 0.0), w)) / (2.0 * eps); }
+  vec2 csn_derv(vec2 z, vec2 w) { vec2 tau = invert_tau(w); vec2 zz = jacobi_reduce(z, tau); return  cmul(raw_cn(zz, tau), raw_dn(zz, tau)); }
+  vec2 ccn_derv(vec2 z, vec2 w) { vec2 tau = invert_tau(w); vec2 zz = jacobi_reduce(z, tau); return -cmul(raw_sn(zz, tau), raw_dn(zz, tau)); }
+  vec2 cdn_derv(vec2 z, vec2 w) { vec2 tau = invert_tau(w); vec2 zz = jacobi_reduce(z, tau); return -cmul(cmul(cdiv(csq(csq(theta2(vec2(0.0, 0.0), tau))), csq(csq(theta3_z0(tau)))), raw_sn(zz, tau)), raw_cn(zz, tau)); }
+  vec2 cdn_derv1(vec2 z, vec2 w) { float eps = 1e-5; return (cdn(z + vec2(eps, 0.0), w) - cdn(z - vec2(eps, 0.0), w)) / (2.0 * eps); }
 
   float qabs_sq(vec4 z) { return dot(z, z); }
   float qarg(vec4 z) { float qlen = length(z); if (qlen < 1e-8) return 0.0; return acos(clamp(z.x / qlen, -1.0, 1.0)); }
