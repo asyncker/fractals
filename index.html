@@ -1052,6 +1052,24 @@ let mathcode = `
   vec4 tdiv(vec4 z, vec4 w) { return texp(tlog(z) - tlog(w)); }
   vec4 tsinh(vec4 z) { return (texp(z) - texp(-z)) * 0.5; }
   vec4 tcosh(vec4 z) { return (texp(z) + texp(-z)) * 0.5; }
+  vec4 tsin(vec4 z) {
+    float sx = sin(z.x);
+    float cx = cos(z.x);
+    float shy = sinh(z.y);
+    float chy = cosh(z.y);
+    float sz = sinh(z.z); // or sin
+    float cz = cosh(z.z); // or cos or -cosh(z.z)
+    return vec4(cz * chy * sx, cz * shy * cx, sz * cx, z.w);
+  }
+  vec4 tcos(vec4 z) {
+    float sx = sin(z.x);
+    float cx = cos(z.x);
+    float shy = sinh(z.y);
+    float chy = cosh(z.y);
+    float sz = sinh(z.z); // or sin
+    float cz = cosh(z.z); // or cos
+    return vec4(cz * chy * cx, cz * shy * sx, sz * sx, z.w);
+  }
   vec4 tpow(vec4 z, float w) { if (w == 1.0) { return z; } else if (w == 2.0) { return tsq(z); } return texp(w * tlog(z)); }
   vec4 tpow(vec4 z, vec4 w) { 
     if (z.y == 0.0 && z.z == 0.0 && z.w == 0.0) {
