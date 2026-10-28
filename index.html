@@ -364,6 +364,10 @@ let mathcode = `
   vec2 cgamma_left(vec2 z) { return PI * cinv(cmul(csin(z * PI), cgamma_right(vec2(1.0, 0.0) - z))); }
   vec2 cgamma(vec2 z) { return z.x < 0.5 ? cgamma_left(z) : cgamma_right(z); }
 
+  vec2 cgamma_right1(vec2 z) { vec2 cinvz = cinv(z); return cmul(cpow(cmul(z * 0.36787944117144233, csqrt(cmul(z, csinh(cinvz)))), z), csqrt(6.283185307179586 * cinvz)); }
+  vec2 cgamma_left1(vec2 z) { return PI * cinv(cmul(csin(z * PI), cgamma_right1(vec2(1.0, 0.0) - z))); }
+  vec2 cgamma1(vec2 z) { return z.x < 0.5 ? cgamma_left1(z) : cgamma_right1(z); }
+
   vec2 cinvgamma(vec2 z) {
     vec2 result = cmul(z, cexp(EULER_GAMMA * z));
     for (int n = 1; n <= 32; n++) {
@@ -401,7 +405,7 @@ let mathcode = `
     return s;
   }
   vec2 cpgamma(vec2 z) { return cinv(cinvpgamma(z)); }
-
+  vec2 cpmirror(vec2 z) { return cmul(cpgamma(z), cpgamma(vec2(1.0, 0.0) - z)); }
   vec2 gfunc(vec2 x) {
     if (length(x) < 0.1) {
       vec2 x2 = csq(x);
@@ -589,6 +593,21 @@ let mathcode = `
       }
     }
     return cmul(et, cinv(vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z)));
+  }
+
+  vec2 czeta3(vec2 z) {
+    vec2 w = z.x < 0.0 ? vec2(1.0, 0.0) - z : z;
+    vec2 s = vec2(0.0, 0.0);
+    for (int i = 1; i < 100; i++) {
+      s += cexp(vec2(0.0, PI * float(i - 1)) - w * log(float(i)));
+    }
+    if (z.x < 0.0) {
+      s = cmul(s, cinv(vec2(1.0, 0.0) - cexp(-0.69314718056 * -z)));
+      s = cmul(s, cmul(cgammat(z), cexp(1.14472988585 * (vec2(-0.5, 0.0) + z)))); // hi = gamma(1/2 - z/2) / gamma(z/2) * pi^(-1/2 + z)
+    } else {
+      s = cmul(s, cinv(vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z)));
+    }
+    return s;
   }
 
   vec2 cgammaphi(vec2 z) { return cexp(cmul(z, vec2(-3.53102424697, 1.57079632679) + clog(vec2(1.0, 0.0) - 2.0 * z)) - 0.5 * clog(z) + vec2(1.4189385332, 0.0)); }
@@ -1065,7 +1084,6 @@ let mathcode = `
     float cz = cosh(z.z); // or cos or -cosh(z.z)
     return vec4(cz * chy * sx, cz * shy * cx, sz * cx, z.w);
   }
-
   vec4 tcos(vec4 z) {
     float sx = sin(z.x);
     float cx = cos(z.x);
@@ -1076,7 +1094,6 @@ let mathcode = `
     return vec4(cz * chy * cx, -cz * shy * sx, -sz * sx, z.w);
   }
   vec4 ttan(vec4 z) { return tdiv(tsin(z), tcos(z)); }
-  
   vec4 tpow(vec4 z, float w) { if (w == 1.0) { return z; } else if (w == 2.0) { return tsq(z); } return texp(w * tlog(z)); }
   vec4 tpow(vec4 z, vec4 w) { 
     if (z.y == 0.0 && z.z == 0.0 && z.w == 0.0) {
