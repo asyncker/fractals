@@ -389,6 +389,8 @@ let mathcode = `
 
   vec2 cinvpgamma(vec2 z) {
     vec2 s = cmul(z, cexp(EULER_GAMMA * z));
+    //vec2 s = cmul(z, cexp(0.261497 * z));
+    //vec2 s = z;
     mat4 prime16 = 1.0 / mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
     mat4 prime32 = 1.0 / mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
     for (int col = 0; col < 4; col++) {
@@ -492,7 +494,7 @@ let mathcode = `
     result -= inv14 * (1.0 / 12.0);
     return result + s;
   }
-  vec2 cdigamma_derv(vec2 z) {
+  vec2 cdigamma_derv(vec2 z) { // trigamma
     vec2 s = vec2(0.0, 0.0);
     for (int k = 0; k < 32; ++k) {
       s += csq(cinv(z));
@@ -2055,13 +2057,15 @@ function getfractal(formula, type, iteration, isseq = false) {
     '1 - (1+w)^(0.5-z) + c',
     //'(w+1)^z + c',
     '1 / (1 - z^w) + c',
-    '1 / (2^z - 1) + c',
+    '1 / (w^z - 1) + c', // '1 / (exp(z) - 1) + c' // zeta function toy model 4
     '1 - hi(z^w) + c',
+    //'z^w / (exp(z) - 1) + c',
     //'zeta(mul_i(z)) - cmul_i(15/32) + c',
     'zeta(z^w) * zeta(1-z^w) + c',
     'serp(z)^w',
     'nome(z^(w)) + c',
     'mul_i(ln(w * z^(-w))) / w + c', // '-mul_i(ln(z)) * 0.159154943092'
+    //zeta(z + w) - w
     //'kox(z)^w',
     'pgamma(z^w) - 1.38629436112 + c'
     //pgamma((1 - z) / 2)^w
