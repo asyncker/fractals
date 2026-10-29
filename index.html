@@ -2577,7 +2577,7 @@ function drawGrid() {
       if (p.has('mn')) { isminusone  = +p.get('mn') ? 1 : 0; minusoneBtn.classList.toggle('active', !!isminusone); }
       if (p.has('ms')) { isminus     = +p.get('ms') ? 1 : 0; minusBtn.classList.toggle('active', !!isminus); }
       if (p.has('iv')) { inverse     = +p.get('iv') ? 1 : 0; inverseBtn.classList.toggle('active', !!inverse); inverseBtn.textContent = '1/c ' + (inverse ? 'ON' : 'OFF'); }
-      if (p.has('mb')) { ismandelbox = +p.get('mb') ? 1 : 0; mandelboxBtn.classList.toggle('active', !!ismandelbox); }
+      if (p.has('mb')) { ismandelbox = +p.get('mb') ? 1 : 0; mandelboxBtn.classList.toggle('active', !!ismandelbox); mandelboxBtn.textContent = 'mandelbox ' + (ismandelbox ? 'ON' : 'OFF'); }
       if (p.has('gr')) {isDisplayGrid= +p.get('gr') ? 1 : 0; gridCanvas.style.display = isDisplayGrid == 0 ? "none" : "block"; }
       if (p.has('im')) { ismandel    = +p.get('im') ? 1 : 0; juliaBtn.classList.toggle('active', !ismandel); }
       ['ml','cx','cy','zm','zx','zy','zj','cw','zw','rx','rz'].forEach(k => {
