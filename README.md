@@ -53,20 +53,20 @@ All fractal in <a href="https://github.com/asyncker/fractals/blob/main/index.htm
 ![](render/pic21.png)
 23. ln(sin((|Re(z)| + |Im(z)| * i) ^ -1)) + c (c ~= -0.4670670970289143 + 0.008333333333333333i)
 ![](render/log_sin_test.png)
-24. Zeta(|Re(z)| + |Im(z)| * i) + c (c = -2 * ln(2))
-![](render/zeta-inv-conj-burning-ship-0.724775731.png)
-25. Zeta((z^2) ^ (1/2)) + c (c = -2 * ln(2))
-![](render/zeta_abs.png)
-26. Zeta((z^2) ^ (1/2)) + c (c ~= -2 * ln(2) - 0.128i)
-![](render/zeta_abs_zoom.png)
-27. 1 - exp(1/2 - (|Re(z)| + |Im(z)| * i))
-![](render/t((w^2)^(0.5),0.5).png)
-28. Zeta(±zi) - 0.46875i‎
-![](render/zeta(+-zi)-0.46875i.png)
-29. zeta(1 + |Re(z)| - |Im(z)| * i) - 1
+24. Zeta(|Re(z)| + |Im(z)|*i + 1) - 1
 ![](render/abszeta(1-z)-1.png)
-30. ‎1 / (exp(|Re(z)| + |Im(z)|) - 1)
+25. ‎1 / (exp(|Re(z)| + |Im(z)|*i) - 1)
 ![](render/abs1div(exp(z)-1).png)
+26. Zeta(|Re(z)| + |Im(z)| * i) + c (c = -2 * ln(2))
+![](render/zeta-inv-conj-burning-ship-0.724775731.png)
+27. Zeta((z^2) ^ (1/2)) + c (c = -2 * ln(2))
+![](render/zeta_abs.png)
+28. Zeta((z^2) ^ (1/2)) + c (c ~= -2 * ln(2) - 0.128i)
+![](render/zeta_abs_zoom.png)
+29. 1 - exp(1/2 - (|Re(z)| + |Im(z)| * i))
+![](render/t((w^2)^(0.5),0.5).png)
+30. Zeta(±zi) - 0.46875i‎
+![](render/zeta(+-zi)-0.46875i.png)
 31. Pgamma(z)
 ![](render/primewgamma24.png)
 32. ln(2 * z^(-2)) * i / 2
