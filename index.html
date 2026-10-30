@@ -374,23 +374,8 @@ let mathcode = `
     return result;
   }
 
-  vec2 cinvmergamma(vec2 z) {
-    vec2 result = cmul(z, cexp(EULER_GAMMA * z));
-    mat3 mer16 = 1.0 / mat3(2, 3, 7, 31, 127, 8191, 131071, 524287, 2147483647);
-    for (int col = 0; col < 3; col++) {
-      for (int row = 0; row < 3; row++) {
-        vec2 zinvn = z * mer16[row][col];
-        result = cmul(result, cmul(vec2(1.0, 0.0) + zinvn, cexp(-zinvn)));
-      }
-    }
-    return result;
-  }
-  vec2 cmergamma(vec2 z) { return cinv(cinvmergamma(z)); }
-
-  vec2 cinvpgamma(vec2 z) {
-    vec2 s = cmul(z, cexp(EULER_GAMMA * z));
-    //vec2 s = cmul(z, cexp(0.261497 * z));
-    //vec2 s = z;
+  vec2 cinvpgamma(vec2 z, vec2 w) {
+    vec2 s = w;
     mat4 prime16 = 1.0 / mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
     mat4 prime32 = 1.0 / mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
     for (int col = 0; col < 4; col++) {
@@ -403,8 +388,8 @@ let mathcode = `
     }
     return s;
   }
-  vec2 cpgamma(vec2 z) { return cinv(cinvpgamma(z)); }
-  vec2 cpmirror(vec2 z) { return cmul(cpgamma(z), cpgamma(vec2(1.0, 0.0) - z)); }
+  vec2 cpgamma(vec2 z) { return cinv(cinvpgamma(z, z)); }
+
   vec2 gfunc(vec2 x) {
     if (length(x) < 0.1) {
       vec2 x2 = csq(x);
@@ -422,13 +407,14 @@ let mathcode = `
   vec2 cpgammat(vec2 z) {
     vec2 a = z * 0.5;
     vec2 b = vec2(0.5, 0.0) - a;
-    vec2 logresult = clog(cdiv(a, b)) + EULER_GAMMA * (a - b);
+    //vec2 logresult = clog(cdiv(a, b)) + EULER_GAMMA * (a - b);
+    vec2 logresult = clog(cdiv(a, b));
     mat4 prime16 = 1.0 / mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
     mat4 prime32 = 1.0 / mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
     for (int col = 0; col < 4; col++) {
       for (int row = 0; row < 4; row++) {
         float invp = prime16[row][col];
-        logresult += gfunc(a * invp) - gfunc(b * invp);     
+        logresult += gfunc(a * invp) - gfunc(b * invp);
         invp = prime32[row][col];
         logresult += gfunc(a * invp) - gfunc(b * invp);
       }
@@ -437,7 +423,8 @@ let mathcode = `
   }
 
   vec2 cdipgamma(vec2 z) {
-    vec2 s = cinv(z) + vec2(EULER_GAMMA, 0.0);
+    //vec2 s = cinv(z) + vec2(EULER_GAMMA, 0.0);
+    vec2 s = cinv(z);
     mat4 prime16 = mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
     mat4 prime32 = mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
     for (int col = 0; col < 4; col++) {
@@ -450,11 +437,26 @@ let mathcode = `
     }
     return -s;
   }
-  vec2 cpbeta(vec2 z, vec2 w) { return cmul(cmul(cpgamma(z), cpgamma(w)), cinvpgamma(z + w)); }
-  vec2 cpg1(vec2 z, vec2 w) { return cdiv(cpgamma(-z), cpgamma(z)); } // ~~ -eta(-|Re(z)| - |Im(z)| * i)
+  vec2 cpmirror(vec2 z) { return cmul(cpgamma(z), cpgamma(vec2(1.0, 0.0) - z)); }
+  vec2 cpbeta(vec2 z, vec2 w) { return cmul(cmul(cpgamma(z), cpgamma(w)), cinv(cpgamma(z + w))); }
+  vec2 cpgsym(vec2 z, vec2 w) { return cdiv(cpgamma(-z), cpgamma(z)); } // ~~ -eta(-|Re(z)| - |Im(z)| * i)
+  vec2 cpmgamma(vec2 z) { return cinv(cinvpgamma(z, cmul(z, cexp(z * 0.2614972128476427)))); }
+  vec2 cpngamma(vec2 z) { return cinv(cinvpgamma(z, cmul(z, cexp(z * EULER_GAMMA)))); }
 
-  vec2 cinvrandgamma(vec2 z) { // calc with log
+  vec2 cinvmergamma(vec2 z) {
     vec2 result = cmul(z, cexp(EULER_GAMMA * z));
+    mat3 mer16 = 1.0 / mat3(2, 3, 7, 31, 127, 8191, 131071, 524287, 2147483647);
+    for (int col = 0; col < 3; col++) {
+      for (int row = 0; row < 3; row++) {
+        vec2 zinvn = z * mer16[row][col];
+        result = cmul(result, cmul(vec2(1.0, 0.0) + zinvn, cexp(-zinvn)));
+      }
+    }
+    return result;
+  }
+  vec2 cmergamma(vec2 z) { return cinv(cinvmergamma(z)); }
+  vec2 cinvrandgamma(vec2 z) { // calc with log
+    vec2 result = cmul(z, cexp(` + Math.random() + ` * z));
     mat4 rand16 = 1.0 / mat4(` + (seqRand(16, 1, 1200).join(',')) + `);
     mat4 rand32 = 1.0 / mat4(` + (seqRand(16, 1, 1200).join(',')) + `);
     for (int col = 0; col < 4; col++) {
