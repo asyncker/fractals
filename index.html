@@ -543,8 +543,7 @@ let mathcode = `
     return result + s;
   }
   vec2 cbeta(vec2 z, vec2 w) { return cmul(cmul(cgamma(z), cgamma(w)), cinv(cgamma(z + w))); }
-  vec2 cdihi(vec2 z) { return vec2(1.83787706641, 0.0) + 1.57079632679 * ccot(z * 1.57079632679) - cdigamma(vec2(1.0, 0.0) - z); } // X'(z) / X(z) = ln(2 * pi) + pi/2 * cot(z * pi/2) - psi(1.0 - z)
-
+  
   vec2 cgammat_right(vec2 z) {
     vec2 t = z + vec2(6.5, 0.0);
     vec2 Q = cmul(z - vec2(0.5, 0.0), clog(t)) - t - (z - vec2(1.0, 0.0)) * 0.6931471805599453;
@@ -560,6 +559,10 @@ let mathcode = `
   }
   vec2 cgammat(vec2 z) { return z.x >= 0.5 ? cgammat_right(z) : cgammat_left(z); }
   vec2 chi(vec2 z) { return cmul(cgammat(z), cexp(1.14472988585 * (vec2(-0.5, 0.0) + z))); }
+  vec2 cdihi(vec2 z) { return vec2(1.83787706641, 0.0) + 1.57079632679 * ccot(1.57079632679 * z) - cdigamma(vec2(1.0, 0.0) - z); } // X'(z) / X(z) = ln(2 * pi) + pi/2 * cot(z * pi/2) - psi(1.0 - z)
+  vec2 cgammat_derv(vec2 z) { return cmul(-cinv(z) - PI * ccot(PI * z) + cdigamma(-z) * 2.0, cgammat(z)); } // (psi(z) + psi(-z)) * gammat(z)
+  vec2 cpgammat_derv(vec2 z) { return cmul(cdipgamma(z) + cdipgamma(-z), cpgammat(z)); }
+
   vec2 ceta_right1(vec2 z) {
     vec2 s = vec2(0.0, 0.0);
     for (int i = 1; i < 100; i++) {
@@ -1189,9 +1192,9 @@ return `void mandelbrot_calc() {
     z_prev = z;
     znorm = dot(z, z);
     if (znorm > range) { n = i; break; }
-    if (isabs == 1) { z = cpow(csq(z), vec2(0.5, 0.0)); }
     if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); }
     if (isminus == 1) { z = -z; }
+    if (isabs == 1) { z = cpow(csq(z), vec2(0.5, 0.0)); }
     if (isconj == 1) { z.x = z.x; z.y = -z.y; }
     if (isminusone == 1) { z = vec2(1.0, 0.0) - z; }
     if (ismandelbox == 1) {
@@ -1253,9 +1256,9 @@ return `void newton_calc() {
   vec2 zpos = vec2(1.0, 0.0);
   for (int i = 0; i < iter; i++) {
     z_prev = z;
-    if (isabs == 1) { z = csqrt(csq(z)); }
     if (isburning == 1) { z.x = abs(z.x); z.y = -abs(z.y); }
     if (isminus == 1) { z = -z; }
+    if (isabs == 1) { z = csqrt(csq(z)); }
     if (isconj == 1) { z.x = z.x; z.y = -z.y; }
     if (isminusone == 1) { z = vec2(1.0, 0.0) - z; }
     if (ismandelbox == 1) {
@@ -1981,7 +1984,6 @@ function getfractal(formula, type, iteration, isseq = false) {
     updateControls(true);
   });
 
-  
   absBtn.addEventListener('click', () => {
     isabs = isabs ? 0 : 1;
     absBtn.classList.toggle('active', isabs === 1);
