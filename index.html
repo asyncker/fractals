@@ -437,6 +437,22 @@ let mathcode = `
     }
     return -s;
   }
+  vec2 cdipgamma_derv(vec2 z) {
+    vec2 s = cinv(csq(z));
+    mat4 prime16 = mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
+    mat4 prime32 = mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
+    for (int col = 0; col < 4; col++) {
+      for (int row = 0; row < 4; row++) {
+        float p = prime16[row][col];
+        vec2 zp = z + vec2(p, 0.0);
+        s += cinv(csq(zp));
+        p = prime32[row][col];
+        zp = z + vec2(p, 0.0);
+        s += cinv(csq(zp));
+      }
+    }
+    return s;
+  }
   vec2 cpmirror(vec2 z) { return cmul(cpgamma(z), cpgamma(vec2(1.0, 0.0) - z)); }
   vec2 cpbeta(vec2 z, vec2 w) { return cmul(cmul(cpgamma(z), cpgamma(w)), cinv(cpgamma(z + w))); }
   vec2 cpgsym(vec2 z, vec2 w) { return cdiv(cpgamma(-z), cpgamma(z)); } // ~~ -eta(-|Re(z)| - |Im(z)| * i)
