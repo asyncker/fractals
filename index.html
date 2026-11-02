@@ -560,8 +560,9 @@ let mathcode = `
   vec2 cgammat(vec2 z) { return z.x >= 0.5 ? cgammat_right(z) : cgammat_left(z); }
   vec2 chi(vec2 z) { return cmul(cgammat(z), cexp(1.14472988585 * (vec2(-0.5, 0.0) + z))); }
   vec2 cdihi(vec2 z) { return vec2(1.83787706641, 0.0) + 1.57079632679 * ccot(1.57079632679 * z) - cdigamma(vec2(1.0, 0.0) - z); } // X'(z) / X(z) = ln(2 * pi) + pi/2 * cot(z * pi/2) - psi(1.0 - z)
+  vec2 cdihi_derv(vec2 z) { return -(PI * PI * 0.25) * cpow(csin(z * 1.57079632679), vec2(-2.0, 0.0)) + cdigamma_derv(vec2(1.0, 0.0) - z); }
   vec2 cgammat_derv(vec2 z) { return cmul(-cinv(z) - PI * ccot(PI * z) + cdigamma(-z) * 2.0, cgammat(z)); } // (psi(z) + psi(-z)) * gammat(z)
-  vec2 cpgammat_derv(vec2 z) { return cmul(cdipgamma(z) + cdipgamma(-z), cpgammat(z)); }
+  vec2 cpgammat_derv(vec2 z) { return -0.5 * cmul(cdipgamma(z * 0.5) + cdipgamma(vec2(0.5, 0.0) - z * 0.5), cpgammat(z)); } // -0.5 * (psi(z * 0.5) + psi(0.5 - z * 0.5)) * pgammat(z)
 
   vec2 ceta_right1(vec2 z) {
     vec2 s = vec2(0.0, 0.0);
