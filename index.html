@@ -755,8 +755,8 @@ let mathcode = `
   vec2 czeta_derv(vec2 z) { vec2 dz = vec2(0.0, 0.001); return cmul(czeta(z + dz) - czeta(z - dz), cinv(2.0 * dz)); }
   vec2 ceta_derv(vec2 z) { vec2 dz = vec2(0.0, 0.001); return cmul(ceta(z + dz) - ceta(z - dz), cinv(2.0 * dz)); }
   vec2 cmul_i_derv(vec2 z) { return vec2(0.0, 1.0); }
-  vec2 cdzsinh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czsinh(z + dz, t) - czsinh(z - dz, t), cinv(2.0 * dz)); }
-  vec2 cdzcosh(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czcosh(z + dz, t) - czcosh(z - dz, t), cinv(2.0 * dz)); }
+  vec2 czsinh_derv(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czsinh(z + dz, t) - czsinh(z - dz, t), cinv(2.0 * dz)); }
+  vec2 czcosh_derv(vec2 z, vec2 t) { vec2 dz = vec2(0.0, 0.001); return cmul(czcosh(z + dz, t) - czcosh(z - dz, t), cinv(2.0 * dz)); }
   vec2 cdieta(vec2 z) { return cdiv(ceta_derv(z), ceta(z)); }
   vec2 cdizeta3(vec2 z) { return cdieta(z) - cdiv(cpow(vec2(2.0, 0.0), vec2(1.0, 0.0) - z) * 0.69314718056, vec2(1.0, 0.0) - cpow(vec2(2.0, 0.0), vec2(1.0, 0.0) - z)); }
   vec2 cdizeta5(vec2 z) { return cdiv(czeta_derv(z), czeta(z)); }
@@ -801,6 +801,8 @@ let mathcode = `
 
   vec2 cnon(vec2 z, vec2 w) { return cdiv(cmul_i(clog(cdiv(w, z))), w); }
   vec2 cnon_derv(vec2 z, vec2 w) { return cmul(vec2(0.0, -1.0), cinv(cmul(z, w))); }
+  vec2 cdinon(vec2 z, vec2 w) { return -cinv(cmul(z, clog(cdiv(w, z)))); } // non'(z, w) / non(z, w)
+  vec2 cdinon_derv(vec2 z, vec2 w) { vec2 di = cdinon(z, w); return -cmul(di, di + cinv(z)); }
   vec2 cnome(vec2 z) { return -cmul_i(clog(z)) * 0.159154943092; }
   vec2 cnome_derv(vec2 z) { return cmul_i(-cinv(z) * 0.159154943092); }
   vec2 invert_tau(vec2 z) {
