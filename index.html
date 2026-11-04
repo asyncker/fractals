@@ -378,6 +378,42 @@ let mathcode = `
     return result;
   }
 
+  vec2 cexp1(vec2 z) {
+    vec2 s = vec2(1.0, 0.0);
+    mat4 prime16 = mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
+    mat4 prime32 = mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
+    vec2 z2 = csq(z) / (PI * PI);
+    for (int col = 0; col < 4; col++) {
+      for (int row = 0; row < 4; row++) {
+        float n = prime16[row][col];
+        s = cmul(s, vec2(1.0, 0.0) + z2 * (1.0 / (n * n)));
+        n = prime32[row][col];
+        s = cmul(s, vec2(1.0, 0.0) + z2 * (1.0 / (n * n)));
+      }
+    }
+    return vec2(1.0, 0.0) + cmul(cmul(z, cexp(z * 0.5)), s);
+  }
+
+  vec2 csinh1(vec2 z) {
+    vec2 s = vec2(1.0, 0.0);
+    mat4 prime16 = mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
+    mat4 prime32 = mat4(59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131);
+    vec2 z2 = csq(z) / (PI * PI);
+    for (int col = 0; col < 4; col++) {
+      for (int row = 0; row < 4; row++) {
+        float n = prime16[row][col];
+        s = cmul(s, vec2(1.0, 0.0) + z2 * (1.0 / (n * n)));
+        n = prime32[row][col];
+        s = cmul(s, vec2(1.0, 0.0) + z2 * (1.0 / (n * n)));
+      }
+    }
+    return cmul(z, s);
+  }
+
+  vec2 csinh2(vec2 z) {
+    return (cexp1(z) - cexp1(-z)) * 0.5;
+  }
+
   vec2 cinvpgamma(vec2 z, vec2 w) {
     vec2 s = cmul(z, cexp(PRIME_GAMMA * z));
     mat4 prime16 = 1.0 / mat4(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53);
