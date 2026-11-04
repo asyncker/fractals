@@ -1782,7 +1782,8 @@ function convertformulatowebgl(f, vecf = "vec2") {
   };
 
   const constVal = (node) => {
-    if (node.t === 'n') return parseFloat(node.v);
+    if (node.t === 'n') return node.v;
+    if (node.t === 'u' && node.c.t === 'n') return -node.c.v;
     if (node.t === 'u') { const v = constVal(node.c); return v === null ? null : -v; }
     if (node.t === 'b') {
       const lv = constVal(node.l), rv = constVal(node.r);
