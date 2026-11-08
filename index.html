@@ -113,7 +113,6 @@
     </div>
     <div class="btn-row">
       <div class="extra-btn btn" id="burning-btn">|Re(z)| + |Im(z)| * i OFF</div>
-      <div class="extra-btn btn" style="display:none;" id="abs-btn">±z OFF</div>
     </div>
     <div class="btn-row power-row" id="power-row">
       <div class="extra-btn btn" data-power="-2">-2</div>
@@ -141,6 +140,7 @@
       <div class="extra-btn btn" id="mandelbox-btn" title="insert formula in 3d: z * -2 + c (with 90 iteration)">mandelbox OFF</div>
     </div>
     <div class="btn-row">
+      <div class="extra-btn btn" id="abs-btn">±z</div>
       <div class="extra-btn btn" id="julia-btn">Julia</div>
       <div class="extra-btn btn" id="rotate-btn">Rotate z=pi/2</div>
       <div class="extra-btn btn" id="grid-btn">Checkerboard</div>
@@ -855,7 +855,7 @@ let mathcode = `
   }
 
   vec2 cnon(vec2 z, vec2 w) { return cdiv(cmul_i(clog(cdiv(w, z))), w); }
-  vec2 cnon_derv(vec2 z, vec2 w) { return cmul(vec2(0.0, -1.0), cinv(cmul(z, w))); }
+  vec2 cnon_derv(vec2 z, vec2 w) { return -cmul_i(cinv(cmul(z, w))); }
   vec2 cdinon(vec2 z, vec2 w) { return -cinv(cmul(z, clog(cdiv(w, z)))); } // non'(z, w) / non(z, w)
   vec2 cdinon_derv(vec2 z, vec2 w) { vec2 di = cdinon(z, w); return -cmul(di, di + cinv(z)); }
   vec2 cnome(vec2 z) { return -cmul_i(clog(z)) * 0.159154943092; }
@@ -2059,7 +2059,7 @@ function getfractal(formula, type, iteration, isseq = false) {
   absBtn.addEventListener('click', () => {
     isabs = isabs ? 0 : 1;
     absBtn.classList.toggle('active', isabs === 1);
-    absBtn.textContent = '±z ' + (isabs ? 'ON' : 'OFF');
+    //absBtn.textContent = '±z ' + (isabs ? 'ON' : 'OFF');
     updateControls(true);
   });
 
@@ -2160,16 +2160,16 @@ function getfractal(formula, type, iteration, isseq = false) {
     '1 / (w^z - 1) + c', // '1 / (exp(z) - 1) + c' // zeta function toy model 4
     '1 - hi(z^w) + c',
     //'z^w / (exp(z) - 1) + c',
+    // exp(i * w - ln(z)) + c
     //'zeta(mul_i(z)) - cmul_i(15/32) + c',
     'zeta(z^w) * zeta(1-z^w) + c',
     'serp(z)^w',
     'nome(z^(w)) + c',
-    'mul_i(ln(w * z^(-w))) / w + c', // '-mul_i(ln(z)) * 0.159154943092'
+    'mul_i(ln(w * z^(-w))) / w + c', // non(z^w, w) '-mul_i(ln(z)) * 0.159154943092'
     //zeta(z + w) - w
     //'kox(z)^w',
     'pgamma(z^w) - 1.38629436112 + c',
     'z^z * ln(z)^z * exp(-z) + c' // z^z * ln(z)^z * exp(-z) - 0.2614972128476427
-
     // exp(z * (ln(z) + ln(ln(z)) - 1 + (ln(ln(z)) - 2) / ln(z) - ((ln(ln(z)) ^ 2) - 6 * ln(ln(z)) + 11) / (2 * (ln(z) ^ 2)))) + c
 
     //pgamma((1 - z) / 2)^w
@@ -2694,7 +2694,7 @@ function drawGrid() {
       if (p.has('cs')) { colorschemeindex = +p.get('cs') || 0; colorButtons.forEach(b => b.classList.toggle('active', +b.dataset.color === colorschemeindex)); }
       if (p.has('p')) { power = +p.get('p') || 1; powerRow.querySelectorAll('.extra-btn').forEach(b => b.classList.toggle('active', +b.dataset.power === power)); }
       if (p.has('b'))  { isburning   = +p.get('b')  ? 1 : 0; burningBtn.classList.toggle('active', !!isburning); burningBtn.textContent = '|Re(z)| + |Im(z)| * i ' + (isburning ? 'ON' : 'OFF'); }
-      if (p.has('ab')) { isabs       = +p.get('ab') ? 1 : 0; absBtn.classList.toggle('active', !!isabs); absBtn.textContent = '±z ' + (isabs ? 'ON' : 'OFF'); }
+      if (p.has('ab')) { isabs       = +p.get('ab') ? 1 : 0; absBtn.classList.toggle('active', !!isabs); /*absBtn.textContent = '±z ' + (isabs ? 'ON' : 'OFF');*/ }
       if (p.has('cj')) { isconj      = +p.get('cj') ? 1 : 0; conjBtn.classList.toggle('active', !!isconj); conjBtn.textContent = 'z̄ ' + (isconj ? 'ON' : 'OFF'); }
       if (p.has('mn')) { isminusone  = +p.get('mn') ? 1 : 0; minusoneBtn.classList.toggle('active', !!isminusone); }
       if (p.has('ms')) { isminus     = +p.get('ms') ? 1 : 0; minusBtn.classList.toggle('active', !!isminus); }
