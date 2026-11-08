@@ -665,6 +665,10 @@ let mathcode = `
     return cmul(et, cinv(vec2(1.0, 0.0) - 2.0 * cexp(-0.69314718056 * z)));
   }
 
+  vec2 cpg(vec2 z) { return cmul(cpow(clog(z), z), cexp(cmul(clog(z), z) - z)); }
+  vec2 cpg2(vec2 z) { return cexp(cmul(z, clog(z) + clog(clog(z)) - vec2(1.0, 0.0))); }
+  vec2 cpg1(vec2 z) { return cexp(cmul(z, clog(z) + clog(clog(z)) - vec2(1.0, 0.0) + cmul(clog(clog(z)) - vec2(2.0, 0.0), cinv(clog(z))) - cmul(cpow(clog(clog(z)), vec2(2.0, 0.0)) - 6.0 * clog(clog(z)) + vec2(11.0, 0.0), cinv(2.0 * cpow(clog(z), vec2(2.0, 0.0)))))); }
+  vec2 cpgt(vec2 z) { return cdiv(cpg1(vec2(0.5, 0.0) - z * 0.5), cpg1(z * 0.5)); }
   vec2 cgamma_right1(vec2 z) { vec2 cinvz = cinv(z); return cmul(cpow(cmul(z * 0.36787944117144233, csqrt(cmul(z, csinh(cinvz)))), z), csqrt(6.283185307179586 * cinvz)); }
   vec2 cgamma_left1(vec2 z) { return PI * cinv(cmul(csin(z * PI), cgamma_right1(vec2(1.0, 0.0) - z))); }
   vec2 cgamma1(vec2 z) { return z.x < 0.5 ? cgamma_left1(z) : cgamma_right1(z); }
